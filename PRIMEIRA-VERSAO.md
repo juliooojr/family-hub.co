@@ -1,7 +1,7 @@
 # FAMILY HUB - PRIMEIRA VERSÃO
 
 > Documento consolidado de contexto da primeira versao funcional.
-> Atualizado em 11/06/2026.
+> Atualizado em 14/06/2026.
 > Antes de continuar o projeto, leia este arquivo junto com `AGENTS.md`.
 
 ## 1. Objetivo do produto
@@ -100,7 +100,7 @@ E-mails com acesso completo:
 - `juliojr0410@gmail.com`
 - `carolinneagro@gmail.com`
 
-Ambos devem possuir papel `admin` na mesma familia. Julio ja possui usuario e vinculo no banco. A conta da Carol sera criada no primeiro login Google e o gatilho do banco criara automaticamente seu vinculo como administradora.
+Ambos possuem papel `admin` na mesma familia. Os logins de Julio e Carol foram validados em producao, incluindo logout, compartilhamento da mesma familia e das mesmas listas. Uma conta nao autorizada tambem foi testada e teve o acesso recusado.
 
 Rotas publicas:
 
@@ -115,6 +115,8 @@ Configuracao de URLs no Supabase:
 - Site URL: `http://localhost:3000`
 - Redirect URL: `http://localhost:3000/auth/callback`
 - Redirect URL de rede: `http://192.168.0.101:3000/auth/callback`
+- Site URL de producao: `https://family-hub-co.vercel.app`
+- Redirect URL de producao: `https://family-hub-co.vercel.app/auth/callback`
 
 Nunca usar `0.0.0.0` como URL de retorno no navegador.
 
@@ -323,16 +325,33 @@ Concluido:
 - Modulo de compras completo para a primeira publicacao.
 - Dados de teste do modulo.
 - Ajustes responsivos principais.
+- Deploy de producao na Vercel: `https://family-hub-co.vercel.app`.
+- Variaveis publicas do Supabase configuradas na Vercel, sem enviar `SUPABASE_SERVICE_ROLE_KEY`.
+- URLs OAuth de producao configuradas no Supabase.
+- Login e logout de Julio validados em producao.
+- Primeiro login de Carol e vinculo automatico validados em producao.
+- Julio e Carol acessam a mesma familia e as mesmas listas.
+- Bloqueio de conta nao autorizada validado.
+- Sistema em uso real, com a base de testes de Compras limpa e uma lista real iniciada.
 
-Ainda pendente para publicacao:
+Pendente para consolidacao da primeira versao:
 
-- Revisao manual final em aparelhos reais.
-- Teste de login da Carol e confirmacao do vinculo automatico.
-- Revisao de seguranca com os dois usuarios.
-- Configuracao e deploy na Vercel.
-- Variaveis de ambiente de producao.
-- URLs OAuth de producao no Google e no Supabase.
-- Dominio, monitoramento e estrategia de backup.
+- Integrar `codex/primeira-versao` em `master` por Pull Request.
+- Configurar `master` como branch de producao na Vercel.
+- Confirmar novo deploy de producao apos o merge.
+
+Fila de protecao operacional, sem urgencia nesta etapa:
+
+- Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+- Revisar membros e permissoes dessas plataformas.
+- Definir uma rotina de backup do Supabase.
+- Evitar manipulacoes manuais frequentes no banco de producao.
+
+Fila de monitoramento, sem urgencia nesta etapa:
+
+- Acompanhar logs da Vercel e do Supabase.
+- Verificar erros de autenticacao e banco.
+- Considerar Vercel Speed Insights.
 
 ## 15. Checklist para continuar
 
