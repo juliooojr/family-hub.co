@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#111210;--bg2:#1a1c19;--bg3:#222420;
+  --surface:#1e201d;--surface2:#252722;
+  --border:#2e302b;--border2:#3a3d36;
+  --text:#e8e9e4;--text2:#9a9c94;--text3:#5a5c54;
+  --accent:#e8760a;--accent2:#f59332;--accent-dim:#3d2004;
+  --red:#c0392b;--red-dim:#2d0e0b;
+  --green:#4a9e6b;--green-dim:#0e2918;
+  --blue:#3a7fbf;--blue-dim:#0a1e2d;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.5;}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* HUB */
+#screen-hub{background:radial-gradient(ellipse 60% 50% at 30% 60%,rgba(232,118,10,0.04),transparent 70%),radial-gradient(ellipse 40% 40% at 75% 25%,rgba(58,127,191,0.04),transparent 60%),var(--bg);align-items:center;justify-content:center;overflow:hidden;}
+.hub-header{position:absolute;top:0;left:0;right:0;padding:28px 40px;display:flex;align-items:center;justify-content:space-between;z-index:10;}
+.hub-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.08em;}
+.hub-logo span{color:var(--accent);}
+.hub-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:0.06em;}
+.hub-user{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border2);padding:6px 14px 6px 6px;border-radius:30px;cursor:pointer;}
+.hub-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+.hub-user-name{font-size:13px;font-weight:500;}
+
+/* ORBITAL */
+.orbital-wrap{position:relative;width:620px;height:620px;display:flex;align-items:center;justify-content:center;}
+.hub-center{position:absolute;width:110px;height:110px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;cursor:default;box-shadow:0 0 0 16px rgba(232,118,10,0.04),0 0 0 32px rgba(232,118,10,0.02);}
+.hub-center-icon{font-size:28px;margin-bottom:4px;}
+.hub-center-label{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.1em;color:var(--text2);}
+.orbit-ring{position:absolute;border-radius:50%;border:1px solid var(--border);animation:spin linear infinite;}
+.ring1{width:240px;height:240px;animation-duration:40s;border-style:dashed;border-color:rgba(46,48,43,0.6);}
+.ring2{width:420px;height:420px;animation-duration:70s;animation-direction:reverse;border-color:rgba(46,48,43,0.4);}
+.ring3{width:570px;height:570px;animation-duration:110s;border-style:dashed;border-color:rgba(46,48,43,0.25);}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* BUBBLES — default (animatable) */
+.mod-bubble{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.25s ease;user-select:none;z-index:6;}
+.mod-bubble:hover{transform:scale(1.12)!important;}
+.mod-bubble:hover .bubble-glow{opacity:1;}
+.bubble-inner{width:100%;height:100%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--border2);background:var(--surface2);position:relative;overflow:hidden;transition:border-color 0.2s;}
+.mod-bubble:hover .bubble-inner{border-color:var(--accent);}
+.bubble-inner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,0.04),transparent 60%);}
+.bubble-icon{font-size:22px;position:relative;z-index:1;}
+.bubble-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.1em;color:var(--text2);position:relative;z-index:1;transition:color 0.2s;}
+.mod-bubble:hover .bubble-label{color:var(--accent);}
+.bubble-glow{position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle,rgba(232,118,10,0.2),transparent 70%);opacity:0;transition:opacity 0.25s;pointer-events:none;}
+.bubble-dot{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* SOS bubble — sem animação de hover, borda vermelha pulsando */
+.bub-emergencia{transition:none!important;}
+.bub-emergencia:hover{transform:none!important;}
+.bub-emergencia .bubble-glow{display:none;}
+.bub-emergencia .bubble-inner{border-color:var(--red)!important;background:linear-gradient(135deg,#1e201d,#1e0e0b);}
+.bub-emergencia:hover .bubble-inner{border-color:#e05a4a!important;}
+.bub-emergencia .bubble-label{color:#e05a4a!important;}
+.sos-pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--red);animation:sos-ring 1.8s ease-out infinite;opacity:0;}
+@keyframes sos-ring{0%{transform:scale(1);opacity:0.6;}100%{transform:scale(1.25);opacity:0;}}
+
+/* positions & sizes */
+.bub-inicio{width:100px;height:100px;top:70px;left:80px;}
+.bub-financeiro{width:120px;height:120px;top:60px;right:80px;}
+.bub-calendario{width:100px;height:100px;top:50%;right:10px;transform:translateY(-50%);}
+.bub-compras{width:90px;height:90px;bottom:90px;right:110px;}
+.bub-pets{width:85px;height:85px;bottom:50px;left:50%;transform:translateX(-50%);}
+.bub-documentos{width:95px;height:95px;bottom:85px;left:95px;}
+.bub-emergencia{width:80px;height:80px;top:50%;left:10px;transform:translateY(-50%);}
+
+/* tints */
+.bub-financeiro .bubble-inner{background:linear-gradient(135deg,#1e201d,#231800);}
+.bub-calendario .bubble-inner{background:linear-gradient(135deg,#1e201d,#0d1a28);}
+.bub-compras .bubble-inner{background:linear-gradient(135deg,#1e201d,#0e1e18);}
+.bub-pets .bubble-inner{background:linear-gradient(135deg,#1e201d,#1d1008);}
+.bub-documentos .bubble-inner{background:linear-gradient(135deg,#1e201d,#1a1020);}
+.bub-inicio .bubble-inner{background:linear-gradient(135deg,#1e201d,#1d1a10);}
+
+/* FLOAT NAV */
+.float-nav{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:50px;padding:6px;box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.03);z-index:100;}
+.fn-btn{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:40px;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text2);transition:all 0.15s;white-space:nowrap;}
+.fn-btn:hover{background:var(--bg3);color:var(--text);}
+.fn-btn.active{background:var(--accent);color:#fff;}
+.fn-btn svg{width:14px;height:14px;flex-shrink:0;}
+.fn-sep{width:1px;height:24px;background:var(--border);margin:0 2px;}
+.fn-home{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all 0.15s;}
+.fn-home:hover{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.fn-home.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* INNER */
+.inner-screen{display:none;flex-direction:column;height:100%;}
+.inner-screen.active{display:flex;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 36px;background:var(--bg);border-bottom:1px solid var(--border);position:relative;flex-shrink:0;}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.3;}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.back-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all 0.15s;}
+.back-btn:hover{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.tb-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.06em;}
+.tb-sub{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.tb-tabs{display:flex;gap:2px;background:var(--bg3);padding:3px;border-radius:8px;}
+.tb-tab{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);font-family:'Inter',sans-serif;transition:all 0.15s;}
+.tb-tab.active{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+.tb-actions{display:flex;gap:8px;align-items:center;}
+.btn{padding:8px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all 0.15s;letter-spacing:0.02em;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-danger{background:var(--red-dim);border:1px solid var(--red);color:#e05a4a;}
+
+.page{padding:28px 36px;overflow-y:auto;flex:1;animation:fadeUp 0.2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:20px;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.card-accent{border-left:3px solid var(--accent);}
+.card-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.card-val{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.04em;line-height:1;}
+.card-sub{font-size:11px;color:var(--text2);margin-top:5px;}
+.stat-row{display:flex;align-items:flex-start;gap:12px;}
+.stat-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+
+.tag{display:inline-block;font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;margin-top:5px;letter-spacing:0.03em;font-family:'JetBrains Mono',monospace;}
+.tag-accent{background:var(--accent-dim);color:var(--accent2);}
+.tag-red{background:var(--red-dim);color:#e05a4a;}
+.tag-green{background:var(--green-dim);color:var(--green);}
+.tag-blue{background:var(--blue-dim);color:var(--blue);}
+
+.pbar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin:10px 0 5px;}
+.pfill{height:100%;border-radius:2px;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sh-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.06em;}
+
+/* TX LIST */
+.tx-list{display:flex;flex-direction:column;gap:2px;}
+.tx{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.1s;}
+.tx:hover{background:var(--surface2);}
+.tx-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.tx-info{flex:1;}
+.tx-name{font-size:13px;font-weight:500;}
+.tx-cat{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.tx-amt{font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em;font-size:15px;}
+.tx-amt.inc{color:var(--green);}
+.tx-amt.exp{color:#e05a4a;}
+.tx-meta{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* EV LIST */
+.ev-list{display:flex;flex-direction:column;gap:8px;}
+.ev{display:flex;gap:12px;align-items:center;padding:10px 12px;background:var(--bg2);border-radius:var(--radius-sm);border-left:2px solid var(--accent);cursor:pointer;}
+.ev.blue{border-left-color:var(--blue);}
+.ev.green{border-left-color:var(--green);}
+.ev.red{border-left-color:#e05a4a;}
+.ev-date{text-align:center;min-width:28px;}
+.ev-day{font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1;}
+.ev-mon{font-size:9px;color:var(--text3);letter-spacing:0.08em;font-family:'JetBrains Mono',monospace;}
+.ev-info{flex:1;}
+.ev-title{font-size:13px;font-weight:500;}
+.ev-meta{font-size:11px;color:var(--text3);}
+.ev-avs{display:flex;gap:3px;}
+.ev-av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;}
+.ev-av.c{background:var(--blue);}
+
+/* QA */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.qa{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;text-align:center;transition:all 0.15s;}
+.qa:hover{border-color:var(--accent);background:var(--surface2);}
+.qa:hover .qa-lbl{color:var(--accent);}
+.qa-ic{font-size:20px;margin-bottom:6px;}
+.qa-lbl{font-size:11px;color:var(--text2);font-weight:500;transition:color 0.15s;}
+
+/* CHART */
+.chart-area{height:130px;display:flex;align-items:flex-end;gap:6px;padding:0 2px;margin:10px 0;}
+.bar-grp{display:flex;gap:2px;align-items:flex-end;flex:1;}
+.bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;cursor:pointer;transition:opacity 0.15s;}
+.bar:hover{opacity:0.75;}
+.bar.inc{background:var(--green);}
+.bar.exp{background:var(--accent);}
+.cl{display:flex;gap:6px;padding:0 2px;}
+.cl-item{flex:1;text-align:center;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* CAT BARS */
+.cat-list{display:flex;flex-direction:column;gap:10px;}
+.cat-row{display:flex;align-items:center;gap:10px;}
+.cat-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.cat-name{font-size:12px;flex:1;color:var(--text2);}
+.cat-bw{flex:2;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.cat-bf{height:100%;border-radius:2px;}
+.cat-val{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+
+/* OWNER CHIPS */
+.owner-tog{display:flex;gap:6px;}
+.oc{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all 0.15s;font-family:'Inter',sans-serif;}
+.oc.a-all{background:var(--accent);border-color:var(--accent);color:#fff;}
+.oc.a-j{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.oc.a-c{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+
+/* ── FORM ELEMENTS ── */
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+.form-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--accent);}
+.form-input::placeholder{color:var(--text3);}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a5c54' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.form-row{display:grid;gap:14px;}
+.form-row.cols2{grid-template-columns:1fr 1fr;}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr;}
+
+/* type toggle */
+.type-toggle{display:flex;gap:0;background:var(--bg3);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px;}
+.type-btn{flex:1;padding:10px;border-radius:6px;border:none;background:none;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.08em;color:var(--text3);cursor:pointer;transition:all 0.15s;}
+.type-btn.active-exp{background:var(--red-dim);color:#e05a4a;}
+.type-btn.active-inc{background:var(--green-dim);color:var(--green);}
+
+/* big value input */
+.amount-input-wrap{position:relative;margin-bottom:20px;}
+.amount-prefix{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text3);letter-spacing:0.04em;}
+.amount-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 18px 18px 60px;font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:0.04em;color:var(--text);outline:none;transition:border-color 0.15s;}
+.amount-input:focus{border-color:var(--accent);}
+.amount-input::placeholder{color:var(--text3);}
+
+/* category chips */
+.cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
+.cat-chip{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.cat-chip:hover{border-color:var(--accent);color:var(--text);}
+.cat-chip.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent2);}
+
+/* recurrence */
+.rec-options{display:flex;gap:8px;flex-wrap:wrap;}
+.rec-opt{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all 0.15s;font-family:'JetBrains Mono',monospace;}
+.rec-opt:hover{border-color:var(--accent2);color:var(--text);}
+.rec-opt.sel{background:var(--accent-dim);border-color:var(--accent);color:var(--accent2);}
+
+/* investment card */
+.inv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all 0.15s;}
+.inv-card:hover{border-color:var(--accent);}
+.inv-name{font-size:14px;font-weight:600;margin-bottom:3px;}
+.inv-type{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;}
+.inv-vals{display:flex;justify-content:space-between;align-items:flex-end;}
+.inv-label{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;margin-bottom:2px;}
+.inv-value{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;}
+.inv-gain{font-size:12px;font-weight:500;}
+
+/* budget semaphore */
+.bud-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.bud-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.bud-name{font-size:13px;flex:1;}
+.bud-bar-wrap{flex:2;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.bud-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.bud-vals{text-align:right;min-width:90px;}
+.bud-spent{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.bud-limit{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* modal overlay */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:all 0.15s;}
+.modal-close:hover{background:var(--red-dim);color:#e05a4a;border-color:var(--red);}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);}
+
+/* ── COMPRAS ── */
+.list-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
+@media(max-width:700px){.list-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:400px){.list-grid{grid-template-columns:1fr;}}
+.lcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.15s;position:relative;}
+.lcard:hover{border-color:var(--accent);}
+.lcard.new{border:1px dashed var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text3);font-size:13px;min-height:120px;}
+.lcard.new:hover{border-color:var(--accent);color:var(--accent);}
+.lcard-name{font-weight:600;font-size:13px;margin-bottom:3px;}
+.lcard-meta{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px;}
+.chk-list{display:flex;flex-direction:column;gap:3px;}
+.chk{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;cursor:pointer;font-size:12px;transition:background 0.1s;user-select:none;position:relative;}
+.chk:hover{background:var(--surface2);}
+.chk:hover .del-item-btn{opacity:1;}
+.chk.done{color:var(--text3);}
+.chk.done span{text-decoration:line-through;}
+.chk-box{width:16px;height:16px;min-width:16px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 0.1s;flex-shrink:0;}
+.chk.done .chk-box{background:var(--green);border-color:var(--green);color:#fff;}
+.chk span{flex:1;min-width:0;}
+.del-item-btn{opacity:0;border:none;background:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;transition:all 0.1s;flex-shrink:0;border-radius:4px;}
+.del-item-btn:hover{color:#e05a4a;background:var(--red-dim);}
+@media(hover:none){.del-item-btn{opacity:0.55;}}
+.lcard-header-zone{cursor:pointer;}
+.lcard-header-zone:hover .lcard-name{color:var(--accent);}
+.lcard{cursor:default;}
+.add-item-inline{
+  display:block;width:100%;margin-top:8px;
+  padding:5px 8px;border-radius:6px;
+  border:1px dashed var(--border2);background:none;
+  color:var(--text3);font-size:11px;cursor:pointer;
+  transition:all 0.15s;font-family:'Inter',sans-serif;
+  text-align:left;
+}
+.add-item-inline:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+/* dropdown itens arquivados */
+.arquivo-dropdown{display:none;margin-top:10px;padding:10px 0;border-top:1px solid var(--border);}
+.arquivo-dropdown.open{display:block;}
+.arquivo-item{font-size:12px;color:var(--text2);padding:4px 0;display:flex;align-items:center;gap:6px;}
+.arquivo-item::before{content:'·';color:var(--text3);}
+/* modal reabrir */
+
+/* MODO MERCADO */
+.mercado-item{display:flex;align-items:center;gap:14px;padding:16px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
+.mercado-item:active{transform:scale(0.98);}
+.mercado-item.done{opacity:0.4;}
+.mercado-item.done .mercado-item-nome{text-decoration:line-through;color:var(--text3);}
+.mercado-check{width:36px;height:36px;min-width:36px;border-radius:10px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.15s;flex-shrink:0;}
+.mercado-item.done .mercado-check{background:var(--green);border-color:var(--green);color:#fff;}
+.mercado-item-nome{font-size:18px;font-weight:500;flex:1;}
+.mercado-del{width:34px;height:34px;border-radius:8px;border:none;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.15s;flex-shrink:0;}
+.mercado-del:hover{background:var(--red-dim);color:#e05a4a;}
+/* EMOJI PICKER */
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:4px;}
+.emoji-opt{font-size:20px;padding:5px;border-radius:7px;cursor:pointer;text-align:center;border:2px solid transparent;transition:all 0.12s;}
+.emoji-opt:hover{background:var(--surface2);}
+.emoji-opt.sel{border-color:var(--accent);background:var(--accent-dim);}
+
+
+/* PET */
+.pet-hdr{display:flex;align-items:center;gap:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+.pet-av{width:64px;height:64px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid var(--accent);}
+.pet-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.06em;}
+.pet-breed{font-size:12px;color:var(--text2);}
+.pet-stats-row{display:flex;gap:20px;margin-top:6px;}
+.pstat-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;}
+.pstat-lbl{font-size:10px;color:var(--text3);}
+.vax-list{display:flex;flex-direction:column;gap:8px;}
+.vax{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.vax-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.vax-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.vax-dot.due{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.vax-name{font-size:13px;font-weight:500;flex:1;}
+.vax-date{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* DOCS */
+.doc-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.doc-cat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all 0.15s;}
+.doc-cat:hover{border-color:var(--accent);}
+.doc-cat.new{border-style:dashed;background:transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);min-height:100px;}
+.doc-cat.new:hover{border-color:var(--accent);color:var(--accent);}
+.doc-ico{font-size:22px;margin-bottom:8px;}
+.doc-cat-name{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--text3);text-transform:uppercase;margin-bottom:4px;}
+.doc-count{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.04em;}
+
+/* EMERGENCY */
+.emg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.emg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.emg-card.new{border-style:dashed;background:transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);cursor:pointer;transition:all 0.15s;min-height:140px;}
+.emg-card.new:hover{border-color:var(--accent);color:var(--accent);}
+.emg-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.emg-ico{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.emg-name{font-size:14px;font-weight:600;}
+.emg-role{font-size:11px;color:var(--text3);}
+.emg-phone{font-size:13px;color:var(--text2);margin-bottom:5px;font-family:'JetBrains Mono',monospace;}
+.emg-loc{font-size:11px;color:var(--text3);}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;}
+.cal-dn{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:4px 0;letter-spacing:0.06em;}
+.cal-d{font-size:12px;padding:5px 0;border-radius:5px;cursor:pointer;color:var(--text2);position:relative;transition:background 0.1s;}
+.cal-d:hover{background:var(--surface2);}
+.cal-d.today{background:var(--accent);color:#fff;font-weight:600;}
+.cal-d.has::after{content:'';width:4px;height:4px;background:var(--accent2);border-radius:50%;position:absolute;bottom:1px;left:50%;transform:translateX(-50%);}
+.cal-d.today.has::after{background:#fff;}
+.cal-d.other{color:var(--text3);opacity:0.4;}
+
+.div{height:1px;background:var(--border);margin:18px 0;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── LOCKED BUBBLES ── */
+.mod-bubble.locked{cursor:not-allowed;pointer-events:all;}
+.mod-bubble.locked:hover{transform:none!important;}
+.mod-bubble.locked .bubble-inner{
+  background:var(--bg2)!important;
+  border-color:var(--border)!important;
+  opacity:0.55;
+}
+.mod-bubble.locked:hover .bubble-inner{border-color:var(--border)!important;}
+.lock-icon{
+  position:absolute;
+  bottom:10px;right:10px;
+  font-size:10px;
+  opacity:0.6;
+  z-index:2;
+}
+
+
+/* ── MES/ANO PICKER ── */
+.month-picker{display:flex;align-items:center;gap:6px;background:var(--bg3);padding:4px 6px;border-radius:10px;}
+.mp-btn{width:26px;height:26px;border-radius:6px;border:none;background:none;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.mp-btn:hover{background:var(--surface2);color:var(--text);}
+.mp-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;min-width:90px;text-align:center;cursor:pointer;color:var(--text);}
+.mp-val:hover{color:var(--accent);}
+
+/* ── CONTAS ── */
+.contas-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.conta-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;position:relative;}
+.conta-item:hover{border-color:var(--border2);background:var(--surface2);}
+.conta-item.paga{border-left:3px solid var(--green);}
+.conta-item.pendente{border-left:3px solid var(--accent);}
+.conta-item.vencida{border-left:3px solid var(--red);}
+.conta-check{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:11px;}
+.conta-item.paga .conta-check{background:var(--green);border-color:var(--green);color:#fff;}
+.conta-item.pendente .conta-check{border-color:var(--accent);}
+.conta-item.vencida .conta-check{border-color:var(--red);}
+.conta-nome{font-size:13px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conta-cat{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.conta-venc{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.conta-valor{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.04em;text-align:right;white-space:nowrap;}
+.conta-valor.pago{color:var(--green);}
+.conta-valor.pend{color:var(--accent);}
+.conta-valor.venc{color:#e05a4a;}
+.conta-section-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin:16px 0 6px;}
+.conta-section-label:first-child{margin-top:0;}
+
+/* ── RESERVA CARD ── */
+.reserva-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.reserva-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.reserva-config-btn{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);cursor:pointer;border:1px solid var(--border2);background:var(--surface2);padding:5px 10px;border-radius:6px;transition:all .15s;}
+.reserva-config-btn:hover{color:var(--accent);border-color:var(--accent);}
+.reserva-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;}
+.reserva-stat-val{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.04em;}
+.reserva-stat-lbl{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+
+/* ── VISAO GERAL EXTRAS ── */
+.visao-grid-top{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+@media(max-width:900px){.visao-grid-top{grid-template-columns:1fr 1fr;}.contas-summary{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.visao-grid-top{grid-template-columns:1fr 1fr;}.contas-summary{grid-template-columns:1fr;}}
+@media(max-width:360px){.visao-grid-top{grid-template-columns:1fr;}}
+
+/* ── MONTH PICKER ── */
+.month-picker{display:flex;align-items:center;gap:4px;background:var(--bg3);padding:3px 6px;border-radius:10px;flex-shrink:0;}
+.mp-btn{width:24px;height:24px;border-radius:6px;border:none;background:none;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:all .15s;}
+.mp-btn:hover{background:var(--surface2);color:var(--accent);}
+.mp-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;min-width:76px;text-align:center;color:var(--text);white-space:nowrap;}
+
+/* ── CONTA ITEMS ── */
+.conta-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;}
+.conta-item:hover{background:var(--surface2);}
+.conta-item.paga{border-left-color:var(--green);}
+.conta-item.pendente{border-left-color:var(--accent);}
+.conta-item.vencida{border-left-color:var(--red);}
+.conta-check{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:11px;flex-shrink:0;}
+.conta-item.paga .conta-check{background:var(--green);border-color:var(--green);color:#fff;}
+.conta-item.pendente .conta-check{border-color:var(--accent);}
+.conta-item.vencida .conta-check{border-color:var(--red);}
+.conta-nome{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conta-cat{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px;}
+.conta-valor{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.04em;white-space:nowrap;}
+.conta-valor.pago{color:var(--green);}
+.conta-valor.pend{color:var(--accent);}
+.conta-valor.venc{color:#e05a4a;}
+.conta-venc{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+
+/* ── CURSOR GLOBAL — sem cursor de texto em nenhum elemento não-editável ── */
+body, .screen, .sidebar, .hub-header, .hub-logo, .hub-date, .hub-user,
+.orbital-wrap, .hub-center, .orbit-ring, .mod-bubble, .bubble-inner,
+.bubble-icon, .bubble-label, .bubble-glow, .bubble-dot,
+.float-nav, .fn-btn, .fn-sep, .fn-home,
+.topbar, .tb-left, .tb-title, .tb-sub, .tb-tabs, .tb-tab,
+.page, .card, .card-label, .card-val, .card-sub, .stat-row, .stat-ico,
+.tag, .pbar, .pfill, .sh, .sh-title,
+.tx-list, .tx, .tx-ico, .tx-info, .tx-name, .tx-cat, .tx-amt, .tx-meta,
+.ev-list, .ev, .ev-date, .ev-day, .ev-mon, .ev-info, .ev-title, .ev-meta,
+.qa-grid, .qa, .qa-ic, .qa-lbl,
+.chart-area, .bar-grp, .bar, .cl, .cl-item,
+.cat-list, .cat-row, .cat-dot, .cat-name, .cat-bw, .cat-bf, .cat-val,
+.lcard, .lcard-name, .lcard-meta,
+.chk, .chk-box, .chk span,
+.conta-item, .conta-check, .conta-nome, .conta-cat, .conta-valor, .conta-venc,
+.mercado-item, .mercado-check, .mercado-item-nome,
+.inv-card, .inv-name, .inv-type, .inv-vals, .inv-label, .inv-value, .inv-gain,
+.bud-row, .bud-dot, .bud-name, .bud-bar-wrap, .bud-bar-fill, .bud-vals,
+.bud-spent, .bud-limit,
+.pet-hdr, .pet-av, .pet-name, .pet-breed, .pet-stats-row,
+.vax-list, .vax, .vax-dot, .vax-name, .vax-date,
+.doc-cats, .doc-cat, .doc-ico, .doc-cat-name, .doc-count,
+.emg-grid, .emg-card, .emg-top, .emg-ico, .emg-name, .emg-role, .emg-phone, .emg-loc,
+.cal-grid, .cal-dn, .cal-d,
+.month-picker, .mp-val,
+.modal-overlay, .modal, .modal-header, .modal-title, .modal-footer,
+.type-toggle, .cat-chips, .cat-chip, .rec-options, .rec-opt,
+.reserva-card, .reserva-top, .reserva-stats, .reserva-stat-val, .reserva-stat-lbl,
+.emoji-grid, .emoji-opt,
+.compras-header-zone,
+div[style], span[style], .g2, .g3, .g4, .g21, .inner-screen {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Exceções: elementos interativos e editáveis */
+input, textarea, select { cursor: text !important; user-select: text !important; -webkit-user-select: text !important; }
+button, .btn, .back-btn, .fn-btn, .fn-home, .mp-btn,
+.mod-bubble:not(.locked), .qa:not(.qa-locked), .chk, .chk-box,
+.lcard, .lcard.new, .conta-item, .conta-check,
+.mercado-item, .mercado-del, .del-item-btn, .add-item-inline,
+.inv-card, .doc-cat, .emg-card, .cal-d, .tx, .ev,
+.emoji-opt, .rec-opt, .cat-chip, .reserva-config-btn,
+.tb-tab, .period-tab, .ptab, .oc, .owner-chip,
+a, [onclick] { cursor: pointer !important; }
+.mod-bubble.locked { cursor: not-allowed !important; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVIDADE GLOBAL
+   Testado: 360px (mobile), 768px (tablet), 1024px+ (desktop)
+═══════════════════════════════════════ */
+
+/* Tablet: ≤ 1024px */
+@media(max-width:1024px){
+  .g4{grid-template-columns:repeat(2,1fr);}
+  .g21{grid-template-columns:1fr;}
+  .topbar{flex-wrap:wrap;gap:8px;}
+  .tb-left{flex-wrap:wrap;}
+}
+
+/* Mobile grande: ≤ 768px */
+@media(max-width:768px){
+  .g4{grid-template-columns:repeat(2,1fr);}
+  .g3{grid-template-columns:repeat(2,1fr);}
+  .g2{grid-template-columns:1fr;}
+  .g21{grid-template-columns:1fr;}
+  .inv-grid{grid-template-columns:repeat(2,1fr);}
+  .list-grid{grid-template-columns:repeat(2,1fr);}
+  .doc-cats{grid-template-columns:repeat(2,1fr);}
+  .emg-grid{grid-template-columns:repeat(2,1fr);}
+  .cal-grid-wrap{grid-template-columns:1fr;}
+  .topbar{padding:12px 14px;}
+  .page{padding:14px 14px 80px;}
+  .tb-tabs{max-width:calc(100vw - 120px);}
+  .owner-tog{display:none;}
+  .float-nav{bottom:10px;padding:4px;}
+  .fn-btn{padding:6px 8px;font-size:10px;}
+  .fn-sep{display:none;}
+}
+
+/* Mobile pequeno: ≤ 480px */
+@media(max-width:480px){
+  .g4{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .g2{grid-template-columns:1fr;}
+  .inv-grid{grid-template-columns:1fr 1fr;}
+  .list-grid{grid-template-columns:1fr 1fr;}
+  .emg-grid{grid-template-columns:1fr 1fr;}
+  .doc-cats{grid-template-columns:1fr 1fr;}
+  .qa-grid{grid-template-columns:1fr 1fr;}
+  .form-row.cols2,.form-row.cols3{grid-template-columns:1fr;}
+  .modal{border-radius:14px;}
+  .tb-actions .btn-ghost{display:none;}
+  .sh{flex-wrap:wrap;gap:6px;}
+}
+
+/* Mobile mínimo: ≤ 360px */
+@media(max-width:360px){
+  .g4{grid-template-columns:1fr;}
+  .g3{grid-template-columns:1fr;}
+  .inv-grid{grid-template-columns:1fr;}
+  .list-grid{grid-template-columns:1fr;}
+  .emg-grid{grid-template-columns:1fr;}
+  .doc-cats{grid-template-columns:1fr;}
+  .qa-grid{grid-template-columns:1fr 1fr;}
+  .hub-user-name{display:none;}
+  .tb-title{font-size:16px;}
+  .tb-sub{display:none;}
+  .bud-bar-wrap{display:none;}
+  .cat-val{display:none;}
+  .fn-btn{padding:5px 7px;font-size:10px;gap:3px;}
+  .card-val{font-size:18px;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════ HUB ══════════ -->
+<div class="screen active" id="screen-hub">
+  <div class="hub-header">
+    <div class="hub-logo">FAMILY<span>.</span>HUB</div>
+    <div class="hub-date" id="hub-date" style="pointer-events:none;user-select:none"></div>
+    <div class="hub-user"><div class="hub-avatar">J</div><span class="hub-user-name">Julio</span></div>
+  </div>
+  <div class="orbital-wrap">
+    <div class="orbit-ring ring1"></div>
+    <div class="orbit-ring ring2"></div>
+    <div class="orbit-ring ring3"></div>
+    <div class="hub-center" style="pointer-events:none;user-select:none;"><div class="hub-center-icon">🏠</div><div class="hub-center-label">HUB</div></div>
+
+    <!-- INÍCIO — ativo -->
+    <div class="mod-bubble bub-inicio" onclick="goPage('inicio')">
+      <div class="bubble-glow"></div>
+      <div class="bubble-inner"><div class="bubble-dot"></div><div class="bubble-icon">📊</div><div class="bubble-label">INÍCIO</div></div>
+    </div>
+
+    <!-- FINANCEIRO — ativo -->
+    <div class="mod-bubble bub-financeiro" onclick="goPage('financeiro')">
+      <div class="bubble-glow"></div>
+      <div class="bubble-inner"><div class="bubble-dot"></div><div class="bubble-icon">💰</div><div class="bubble-label">FINANÇAS</div></div>
+    </div>
+
+    <!-- BLOQUEADOS — cadeado, sem clique, aparência dimmed -->
+    <div class="mod-bubble bub-calendario locked" style="pointer-events:none;">
+      <div class="bubble-inner"><div class="bubble-icon" style="filter:grayscale(1);opacity:0.4">📅</div><div class="bubble-label" style="opacity:0.35">AGENDA</div><div class="lock-icon">🔒</div></div>
+    </div>
+    <div class="mod-bubble bub-compras" onclick="goPage('compras')">
+      <div class="bubble-glow"></div>
+      <div class="bubble-inner"><div class="bubble-dot"></div><div class="bubble-icon">🛒</div><div class="bubble-label">COMPRAS</div></div>
+    </div>
+    <div class="mod-bubble bub-pets locked">
+      <div class="bubble-inner"><div class="bubble-icon" style="filter:grayscale(1);opacity:0.4">🐾</div><div class="bubble-label" style="opacity:0.35">FLORA</div><div class="lock-icon">🔒</div></div>
+    </div>
+    <div class="mod-bubble bub-documentos locked">
+      <div class="bubble-inner"><div class="bubble-icon" style="filter:grayscale(1);opacity:0.4">📁</div><div class="bubble-label" style="opacity:0.35">DOCS</div><div class="lock-icon">🔒</div></div>
+    </div>
+
+    <!-- SOS — sempre ativo, sem animação de hover -->
+    <div class="mod-bubble bub-emergencia" onclick="goPage('emergencia')">
+      <div class="sos-pulse"></div>
+      <div class="bubble-inner"><div class="bubble-icon">🚨</div><div class="bubble-label">SOS</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ INNER ══════════ -->
+<div class="screen" id="screen-inner">
+
+  <!-- FLOAT NAV -->
+  <div class="float-nav">
+    <div class="fn-home active" id="fn-hub" onclick="goHub()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    </div>
+    <div class="fn-sep"></div>
+    <button class="fn-btn" data-page="inicio" onclick="goPage('inicio')">📊 Início</button>
+    <button class="fn-btn" data-page="financeiro" onclick="goPage('financeiro')">💰 Finanças</button>
+    <button class="fn-btn fn-locked" title="Em breve" style="cursor:not-allowed;opacity:0.4">📅 Agenda</button>
+    <button class="fn-btn" data-page="compras" onclick="goPage('compras')">🛒 Compras</button>
+    <div class="fn-sep"></div>
+    <button class="fn-btn fn-locked" title="Em breve" style="cursor:not-allowed;opacity:0.4">🐾 Flora</button>
+    <button class="fn-btn fn-locked" title="Em breve" style="cursor:not-allowed;opacity:0.4">📁 Docs</button>
+    <button class="fn-btn" data-page="emergencia" onclick="goPage('emergencia')" style="color:#e05a4a;">🚨 SOS</button>
+  </div>
+
+  <!-- ═══ INÍCIO ═══ -->
+  <div class="inner-screen active" id="page-inicio">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div>
+        <div><div class="tb-title">INÍCIO</div><div class="tb-sub">Domingo, 07 Jun 2026</div></div>
+      </div>
+      <div class="tb-actions">
+        <button class="btn btn-ghost" onclick="openModal('modal-tx')">+ Transação</button>
+        <button class="btn btn-locked" title="Módulo Agenda em breve" style="cursor:not-allowed">+ Evento 🔒</button>
+      </div>
+    </div>
+    <div class="page">
+      <div class="qa-grid">
+        <div class="qa" onclick="openModal('modal-tx')"><div class="qa-ic">💸</div><div class="qa-lbl">Nova despesa</div></div>
+        <div class="qa" style="cursor:not-allowed;opacity:0.4" title="Agenda em breve"><div class="qa-ic">📅</div><div class="qa-lbl">Novo evento 🔒</div></div>
+        <div class="qa" onclick="goPage('compras')"><div class="qa-ic">🛒</div><div class="qa-lbl">Add à lista</div></div>
+        <div class="qa" style="cursor:not-allowed;opacity:0.4" title="Docs em breve"><div class="qa-ic">📄</div><div class="qa-lbl">Upload doc 🔒</div></div>
+      </div>
+      <div class="g4">
+        <div class="card card-accent stat-row"><div class="stat-ico" style="background:rgba(232,118,10,0.12)">💰</div><div><div class="card-label">Saldo Familiar</div><div class="card-val" style="color:var(--accent)">R$8.420</div><div class="tag tag-accent">+R$1.200 vs mês ant.</div></div></div>
+        <div class="card stat-row"><div class="stat-ico" style="background:var(--red-dim)">📉</div><div><div class="card-label">Gastos Junho</div><div class="card-val" style="color:#e05a4a">R$4.780</div><div class="tag tag-red">73% do orçamento</div></div></div>
+        <div class="card stat-row"><div class="stat-ico" style="background:rgba(74,158,107,0.12)">🛡️</div><div><div class="card-label">Reserva Emerg.</div><div class="card-val" style="color:var(--green)">R$22.500</div><div class="pbar"><div class="pfill" style="width:75%;background:var(--green)"></div></div><div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">75% · faltam R$7.500</div></div></div>
+        <div class="card stat-row"><div class="stat-ico" style="background:var(--blue-dim)">📈</div><div><div class="card-label">Investimentos</div><div class="card-val" style="color:var(--blue)">R$34.200</div><div class="tag tag-blue">+2,3% no mês</div></div></div>
+      </div>
+      <div class="g21">
+        <div class="card">
+          <div class="sh"><div class="sh-title">ÚLTIMAS TRANSAÇÕES</div><button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="goPage('financeiro')">Ver tudo</button></div>
+          <div class="tx-list">
+            <div class="tx"><div class="tx-ico" style="background:rgba(74,158,107,0.12)">💼</div><div class="tx-info"><div class="tx-name">Salário Julio</div><div class="tx-cat">RENDA · 01/06</div></div><div class="tx-amt inc">+R$8.200</div></div>
+            <div class="tx"><div class="tx-ico" style="background:var(--red-dim)">🏠</div><div class="tx-info"><div class="tx-name">Aluguel</div><div class="tx-cat">MORADIA · 05/06</div></div><div class="tx-amt exp">−R$1.800</div></div>
+            <div class="tx"><div class="tx-ico" style="background:rgba(232,118,10,0.1)">🐕</div><div class="tx-info"><div class="tx-name">Veterinário – Flora</div><div class="tx-cat">PET · 06/06</div></div><div class="tx-amt exp">−R$280</div></div>
+            <div class="tx"><div class="tx-ico" style="background:var(--bg3)">🛒</div><div class="tx-info"><div class="tx-name">Mercado · Carol</div><div class="tx-cat">ALIMENTAÇÃO · 06/06</div></div><div class="tx-amt exp">−R$420</div></div>
+            <div class="tx"><div class="tx-ico" style="background:var(--blue-dim)">👶</div><div class="tx-info"><div class="tx-name">Fralda + Creme Tomás</div><div class="tx-cat">BEBÊ · 07/06</div></div><div class="tx-amt exp">−R$155</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sh"><div class="sh-title">PRÓXIMOS</div><span class="tag" style="background:var(--bg3);color:var(--text3)">Agenda 🔒</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 0;gap:8px;color:var(--text3)">
+            <div style="font-size:32px;opacity:0.25">📅</div>
+            <div style="font-size:11px;text-align:center;line-height:1.5">Módulo Agenda<br>disponível em breve</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FINANCEIRO ═══ -->
+  <div class="inner-screen" id="page-financeiro">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div>
+        <div><div class="tb-title">FINANCEIRO</div><div class="tb-sub">Junho 2026</div></div>
+        <div class="tb-tabs">
+          <button class="tb-tab active" onclick="showFinTab('visao',this)">Visão Geral</button>
+          <button class="tb-tab" onclick="showFinTab('transacoes',this)">Transações</button>
+          <button class="tb-tab" onclick="showFinTab('contas',this)">Contas</button>
+          <button class="tb-tab" onclick="showFinTab('orcamento',this)">Orçamento</button>
+          <button class="tb-tab" onclick="showFinTab('investimentos',this)">Investimentos</button>
+        </div>
+      </div>
+      <div class="tb-actions">
+        <div class="owner-tog">
+          <button class="oc a-all">Família</button>
+          <button class="oc">Julio</button>
+          <button class="oc">Carol</button>
+        </div>
+        <button class="btn btn-ghost">Exportar</button>
+        <button class="btn btn-primary" id="btn-fin-primary" onclick="openModal('modal-tx')">+ Transação</button>
+      </div>
+    </div>
+
+    <!-- sub-tab: VISÃO GERAL -->
+    <div class="page fin-tab active" id="fin-visao">
+      <div class="g4">
+        <div class="card"><div class="card-label">Receita Julho</div><div class="card-val" style="color:var(--green)">R$12.400</div><div class="card-sub">Julio R$8.200 · Carol R$4.200</div></div>
+        <div class="card"><div class="card-label">Despesas Julho</div><div class="card-val" style="color:#e05a4a">R$6.540</div><div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap"><span class="tag tag-blue" style="margin-top:0">Fixo R$4.100</span><span class="tag tag-accent" style="margin-top:0">Variável R$2.440</span></div></div>
+        <div class="card"><div class="card-label">Contas do Mês</div><div class="card-val">R$8.320</div><div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap"><span class="tag tag-green" style="margin-top:0">R$5.200 pagas</span><span class="tag tag-accent" style="margin-top:0">R$3.120 pend.</span></div></div>
+        <div class="card"><div class="card-label">Saldo do Mês</div><div class="card-val" style="color:var(--blue)">R$5.860</div><div class="tag tag-green">47,2% da receita</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sh" style="margin-bottom:4px"><div class="sh-title">FLUXO DE CAIXA</div><div style="display:flex;gap:12px;font-size:10px;font-family:'JetBrains Mono',monospace"><span style="color:var(--green)">▮ Receita</span><span style="color:var(--accent)">▮ Despesa</span></div></div>
+          <div class="chart-area">
+            <div class="bar-grp"><div class="bar inc" style="height:60px"></div><div class="bar exp" style="height:45px"></div></div>
+            <div class="bar-grp"><div class="bar inc" style="height:0"></div><div class="bar exp" style="height:55px"></div></div>
+            <div class="bar-grp"><div class="bar inc" style="height:0"></div><div class="bar exp" style="height:30px"></div></div>
+            <div class="bar-grp"><div class="bar inc" style="height:80px"></div><div class="bar exp" style="height:62px"></div></div>
+            <div class="bar-grp"><div class="bar inc" style="height:20px;opacity:0.25"></div><div class="bar exp" style="height:38px;opacity:0.25"></div></div>
+          </div>
+          <div class="cl"><span class="cl-item">S1</span><span class="cl-item">S2</span><span class="cl-item">S3</span><span class="cl-item">S4</span><span class="cl-item">PREV</span></div>
+        </div>
+        <div class="card">
+          <div class="sh-title" style="margin-bottom:14px">GASTOS POR CATEGORIA</div>
+          <div class="cat-list">
+            <div class="cat-row"><div class="cat-dot" style="background:var(--blue)"></div><div class="cat-name">Moradia</div><div class="cat-bw"><div class="cat-bf" style="width:80%;background:var(--blue)"></div></div><div class="cat-val">R$1.800</div></div>
+            <div class="cat-row"><div class="cat-dot" style="background:var(--accent)"></div><div class="cat-name">Alimentação</div><div class="cat-bw"><div class="cat-bf" style="width:55%;background:var(--accent)"></div></div><div class="cat-val">R$1.240</div></div>
+            <div class="cat-row"><div class="cat-dot" style="background:var(--green)"></div><div class="cat-name">Bebê – Tomás</div><div class="cat-bw"><div class="cat-bf" style="width:35%;background:var(--green)"></div></div><div class="cat-val">R$780</div></div>
+            <div class="cat-row"><div class="cat-dot" style="background:#9a6fba"></div><div class="cat-name">Saúde</div><div class="cat-bw"><div class="cat-bf" style="width:30%;background:#9a6fba"></div></div><div class="cat-val">R$680</div></div>
+            <div class="cat-row"><div class="cat-dot" style="background:#c0833a"></div><div class="cat-name">Pet – Flora</div><div class="cat-bw"><div class="cat-bf" style="width:18%;background:#c0833a"></div></div><div class="cat-val">R$400</div></div>
+            <div class="cat-row"><div class="cat-dot" style="background:var(--text3)"></div><div class="cat-name">Outros</div><div class="cat-bw"><div class="cat-bf" style="width:25%;background:var(--text3)"></div></div><div class="cat-val">R$560</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- reserva expandida -->
+      <div class="card" style="margin-bottom:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+          <div><div class="sh-title">RESERVA DE EMERGÊNCIA</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Atualizado em 07/07/2026</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="tag tag-accent">75% da meta</span>
+            <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px;display:flex;align-items:center;gap:5px" onclick="openModal('modal-reserva')">⚙ Configurar meta</button>
+          </div>
+        </div>
+        <div class="pbar" style="height:8px"><div class="pfill" style="width:75%;background:linear-gradient(90deg,var(--green),var(--accent))"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;margin-bottom:14px;flex-wrap:wrap;gap:4px">
+          <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">R$22.500 acumulado</span>
+          <span style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">Meta: R$30.000 · ~4 meses</span>
+        </div>
+        <div class="g3" style="margin-bottom:14px">
+          <div class="card" style="background:var(--bg2);border-color:var(--border);text-align:center"><div class="card-label">Saldo Atual</div><div class="card-val" style="color:var(--green)">R$22.500</div></div>
+          <div class="card" style="background:var(--bg2);border-color:var(--border);text-align:center"><div class="card-label">Meta</div><div class="card-val">R$30.000</div><div style="font-size:10px;color:var(--text3);margin-top:2px">6× custo mensal</div></div>
+          <div class="card" style="background:var(--bg2);border-color:var(--border);text-align:center"><div class="card-label">Aporte Médio/Mês</div><div class="card-val" style="color:var(--accent)">R$1.875</div></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="openModal('modal-tx')" style="flex:1;min-width:120px">+ Depositar na Reserva</button>
+          <button class="btn btn-ghost" onclick="openModal('modal-tx')" style="flex:1;min-width:120px">− Retirar da Reserva</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- sub-tab: TRANSAÇÕES -->
+    <div class="page fin-tab" id="fin-transacoes" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <input class="form-input" style="flex:1;min-width:130px" placeholder="🔍  Buscar...">
+        <select class="form-input form-select" style="width:145px"><option>Todas categorias</option><option>Moradia</option><option>Alimentação</option><option>Saúde</option><option>Pet</option><option>Bebê</option><option>Lazer</option><option>Reserva</option><option>Outros</option></select>
+        <select class="form-input form-select" style="width:115px"><option>Todos os tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select>
+        <div class="month-picker">
+          <button class="mp-btn" onclick="changeMonth('tx',-1)">‹</button>
+          <div class="mp-val" id="mp-tx-val">Jul / 2026</div>
+          <button class="mp-btn" onclick="changeMonth('tx',1)">›</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-tx')">+ Nova</button>
+      </div>
+      <div style="margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase">RECEITAS</div>
+      <div class="tx-list" style="margin-bottom:16px">
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:rgba(74,158,107,0.12)">💼</div><div class="tx-info"><div class="tx-name">Salário Julio</div><div class="tx-cat">RENDA · Recorrente</div></div><div style="text-align:right"><div class="tx-amt inc">+R$8.200</div><div class="tx-meta">01/07/2026</div></div></div>
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:rgba(74,158,107,0.12)">💼</div><div class="tx-info"><div class="tx-name">Salário Carol</div><div class="tx-cat">RENDA · Recorrente</div></div><div style="text-align:right"><div class="tx-amt inc">+R$4.200</div><div class="tx-meta">05/07/2026</div></div></div>
+      </div>
+      <div style="margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase">DESPESAS</div>
+      <div class="tx-list" style="margin-bottom:16px">
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:var(--red-dim)">🏠</div><div class="tx-info"><div class="tx-name">Aluguel</div><div class="tx-cat">MORADIA · Recorrente · Julio</div></div><div style="text-align:right"><div class="tx-amt exp">−R$1.800</div><div class="tx-meta">01/07/2026</div></div></div>
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:var(--bg3)">🛒</div><div class="tx-info"><div class="tx-name">Mercado</div><div class="tx-cat">ALIMENTAÇÃO · Carol</div></div><div style="text-align:right"><div class="tx-amt exp">−R$420</div><div class="tx-meta">06/07/2026</div></div></div>
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:rgba(232,118,10,0.1)">🐕</div><div class="tx-info"><div class="tx-name">Veterinário – Flora</div><div class="tx-cat">PET · Carol</div></div><div style="text-align:right"><div class="tx-amt exp">−R$280</div><div class="tx-meta">06/07/2026</div></div></div>
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:var(--blue-dim)">👶</div><div class="tx-info"><div class="tx-name">Fralda + Creme Tomás</div><div class="tx-cat">BEBÊ · Julio</div></div><div style="text-align:right"><div class="tx-amt exp">−R$155</div><div class="tx-meta">07/07/2026</div></div></div>
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:var(--green-dim)">🏥</div><div class="tx-info"><div class="tx-name">Plano de saúde</div><div class="tx-cat">SAÚDE · Recorrente · Família</div></div><div style="text-align:right"><div class="tx-amt exp">−R$680</div><div class="tx-meta">10/07/2026</div></div></div>
+      </div>
+      <div style="margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase">RESERVA</div>
+      <div class="tx-list">
+        <div class="tx" onclick="openModal('modal-tx-detail')"><div class="tx-ico" style="background:rgba(74,158,107,0.12)">🛡️</div><div class="tx-info"><div class="tx-name">Aporte Reserva Emergência</div><div class="tx-cat">RESERVA · Recorrente · Família</div></div><div style="text-align:right"><div class="tx-amt inc">+R$1.875</div><div class="tx-meta">01/07/2026</div></div></div>
+      </div>
+    </div>
+
+    <!-- sub-tab: CONTAS -->
+    <div class="page fin-tab" id="fin-contas" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px;flex-wrap:wrap">
+        <div>
+          <div class="sh-title">CONTAS</div>
+          <div style="font-size:11px;color:var(--text3)">Compromissos recorrentes · <span style="color:var(--text2)" id="contas-mes-label">Julho 2026</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="month-picker">
+            <button class="mp-btn" onclick="changeMonth('contas',-1)">‹</button>
+            <div class="mp-val" id="mp-contas-val">Jul / 2026</div>
+            <button class="mp-btn" onclick="changeMonth('contas',1)">›</button>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-tx')">+ Conta</button>
+        </div>
+      </div>
+      <!-- resumo -->
+      <div class="g3" style="margin-bottom:16px">
+        <div class="card" style="text-align:center"><div class="card-label">Total do Mês</div><div class="card-val">R$8.320</div><div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace">8 contas</div></div>
+        <div class="card" style="text-align:center"><div class="card-label">Já Pagas</div><div class="card-val" style="color:var(--green)">R$5.200</div><div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace">5 contas · 62%</div></div>
+        <div class="card" style="text-align:center"><div class="card-label">Pendentes</div><div class="card-val" style="color:var(--accent)">R$3.120</div><div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace">3 contas</div></div>
+      </div>
+      <!-- vencidas / pendentes -->
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">⏳ Pendentes</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+        <div class="conta-item vencida" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)"></div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Maçonaria</div><div class="conta-cat">OUTROS · Vence dia 05 · Julio</div></div>
+          <div style="text-align:right"><div class="conta-valor venc">R$269</div><div class="conta-venc" style="color:#e05a4a">Vencida há 2 dias</div></div>
+        </div>
+        <div class="conta-item pendente" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)"></div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Nubank — Fatura</div><div class="conta-cat">CARTÃO · Vence dia 15 · Julio</div></div>
+          <div style="text-align:right"><div class="conta-valor pend">R$1.840</div><div class="conta-venc">Falta 8 dias</div></div>
+        </div>
+        <div class="conta-item pendente" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)"></div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Plano de Saúde</div><div class="conta-cat">SAÚDE · Vence dia 20 · Família</div></div>
+          <div style="text-align:right"><div class="conta-valor pend">R$680</div><div class="conta-venc">Falta 13 dias</div></div>
+        </div>
+      </div>
+      <!-- pagas -->
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">✅ Pagas</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="conta-item paga" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)">✓</div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Aluguel</div><div class="conta-cat">MORADIA · Pago em 01/07 · Julio</div></div>
+          <div style="text-align:right"><div class="conta-valor pago">R$1.800</div><div class="conta-venc" style="color:var(--green)">Pago ✓</div></div>
+        </div>
+        <div class="conta-item paga" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)">✓</div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Empréstimo</div><div class="conta-cat">OUTROS · Pago em 04/07 · Julio</div></div>
+          <div style="text-align:right"><div class="conta-valor pago">R$550</div><div class="conta-venc" style="color:var(--green)">Pago ✓</div></div>
+        </div>
+        <div class="conta-item paga" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)">✓</div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">IPTV</div><div class="conta-cat">MORADIA · Pago em 03/07 · Família</div></div>
+          <div style="text-align:right"><div class="conta-valor pago">R$75</div><div class="conta-venc" style="color:var(--green)">Pago ✓</div></div>
+        </div>
+        <div class="conta-item paga" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)">✓</div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">Personal Trainer</div><div class="conta-cat">SAÚDE · Pago em 05/07 · Carol</div></div>
+          <div style="text-align:right"><div class="conta-valor pago">R$420</div><div class="conta-venc" style="color:var(--green)">Pago ✓</div></div>
+        </div>
+        <div class="conta-item paga" onclick="openModal('modal-conta-detalhe')">
+          <div class="conta-check" onclick="event.stopPropagation();toggleConta(this)">✓</div>
+          <div style="flex:1;min-width:0"><div class="conta-nome">IPTU Parcela 7/10</div><div class="conta-cat">MORADIA · Pago em 02/07 · Família</div></div>
+          <div style="text-align:right"><div class="conta-valor pago">R$220</div><div class="conta-venc" style="color:var(--green)">Pago ✓</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- sub-tab: ORÇAMENTO -->
+    <div class="page fin-tab" id="fin-orcamento" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:8px;flex-wrap:wrap">
+        <div>
+          <div class="sh-title">ORÇAMENTO</div>
+          <div style="font-size:11px;color:var(--text3)">Semáforo de controle · <span style="color:var(--text2)" id="orc-mes-label">Julho 2026</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="month-picker">
+            <button class="mp-btn" onclick="changeMonth('orc',-1)">‹</button>
+            <div class="mp-val" id="mp-orc-val">Jul / 2026</div>
+            <button class="mp-btn" onclick="changeMonth('orc',1)">›</button>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-budget')">+ Categoria</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+        <div class="bud-row"><div class="bud-dot" style="background:var(--green)"></div><div class="bud-name">Moradia</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:75%;background:var(--blue)"></div></div><div class="bud-vals"><div class="bud-spent" style="color:var(--blue)">R$1.800</div><div class="bud-limit">de R$2.400</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:#f5a623"></div><div class="bud-name">Alimentação</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:82%;background:#f5a623"></div></div><div class="bud-vals"><div class="bud-spent" style="color:#f5a623">R$1.240</div><div class="bud-limit">de R$1.500</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:var(--green)"></div><div class="bud-name">Bebê – Tomás</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:52%;background:var(--green)"></div></div><div class="bud-vals"><div class="bud-spent" style="color:var(--green)">R$780</div><div class="bud-limit">de R$1.500</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:var(--green)"></div><div class="bud-name">Saúde</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:68%;background:var(--green)"></div></div><div class="bud-vals"><div class="bud-spent" style="color:var(--green)">R$680</div><div class="bud-limit">de R$1.000</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:var(--green)"></div><div class="bud-name">Pet – Flora</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:40%;background:var(--green)"></div></div><div class="bud-vals"><div class="bud-spent" style="color:var(--green)">R$400</div><div class="bud-limit">de R$1.000</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:#e05a4a"></div><div class="bud-name">Lazer</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:96%;background:#e05a4a"></div></div><div class="bud-vals"><div class="bud-spent" style="color:#e05a4a">R$480</div><div class="bud-limit">de R$500</div></div></div>
+        <div class="bud-row"><div class="bud-dot" style="background:var(--text3)"></div><div class="bud-name">Outros</div><div class="bud-bar-wrap"><div class="bud-bar-fill" style="width:56%;background:var(--text3)"></div></div><div class="bud-vals"><div class="bud-spent">R$560</div><div class="bud-limit">de R$1.000</div></div></div>
+      </div>
+      <div class="g3">
+        <div class="card" style="text-align:center"><div class="card-label">Total orçado</div><div class="card-val">R$8.900</div></div>
+        <div class="card" style="text-align:center"><div class="card-label">Total gasto</div><div class="card-val" style="color:#e05a4a">R$5.940</div></div>
+        <div class="card" style="text-align:center"><div class="card-label">Disponível</div><div class="card-val" style="color:var(--green)">R$2.960</div></div>
+      </div>
+    </div>
+
+    <!-- sub-tab: INVESTIMENTOS -->
+    <div class="page fin-tab" id="fin-investimentos" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div><div class="sh-title">CARTEIRA DE INVESTIMENTOS</div><div style="font-size:12px;color:var(--text3)">Atualização manual · Junho 2026</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-inv')">+ Aporte</button>
+      </div>
+      <div class="g4" style="margin-bottom:20px">
+        <div class="card"><div class="card-label">Patrimônio Total</div><div class="card-val" style="color:var(--accent)">R$34.200</div><div class="tag tag-green">+2,3% no mês</div></div>
+        <div class="card"><div class="card-label">Rendimento Acum.</div><div class="card-val" style="color:var(--green)">R$4.200</div><div class="card-sub">12,3% do investido</div></div>
+        <div class="card"><div class="card-label">Total Investido</div><div class="card-val">R$30.000</div><div class="card-sub">Aportes acumulados</div></div>
+        <div class="card"><div class="card-label">Aporte do Mês</div><div class="card-val" style="color:var(--accent)">R$2.000</div><div class="pbar"><div class="pfill" style="width:80%;background:var(--accent)"></div></div><div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">Meta: R$2.500</div></div>
+      </div>
+      <div class="g3">
+        <div class="inv-card">
+          <div class="inv-name">Tesouro Selic 2029</div>
+          <div class="inv-type">Renda Fixa · Julio</div>
+          <div class="inv-vals">
+            <div><div class="inv-label">Investido</div><div class="inv-value">R$10.000</div></div>
+            <div style="text-align:right"><div class="inv-label">Atual</div><div class="inv-value" style="color:var(--green)">R$11.240</div><div class="inv-gain" style="color:var(--green)">+12,4%</div></div>
+          </div>
+        </div>
+        <div class="inv-card">
+          <div class="inv-name">CDB Banco Inter 120% CDI</div>
+          <div class="inv-type">Renda Fixa · Carol</div>
+          <div class="inv-vals">
+            <div><div class="inv-label">Investido</div><div class="inv-value">R$8.000</div></div>
+            <div style="text-align:right"><div class="inv-label">Atual</div><div class="inv-value" style="color:var(--green)">R$8.760</div><div class="inv-gain" style="color:var(--green)">+9,5%</div></div>
+          </div>
+        </div>
+        <div class="inv-card">
+          <div class="inv-name">FII HGLG11</div>
+          <div class="inv-type">FII · Julio</div>
+          <div class="inv-vals">
+            <div><div class="inv-label">Investido</div><div class="inv-value">R$5.000</div></div>
+            <div style="text-align:right"><div class="inv-label">Atual</div><div class="inv-value" style="color:var(--green)">R$5.480</div><div class="inv-gain" style="color:var(--green)">+9,6%</div></div>
+          </div>
+        </div>
+        <div class="inv-card">
+          <div class="inv-name">Previdência Privada</div>
+          <div class="inv-type">Previdência · Família</div>
+          <div class="inv-vals">
+            <div><div class="inv-label">Investido</div><div class="inv-value">R$7.000</div></div>
+            <div style="text-align:right"><div class="inv-label">Atual</div><div class="inv-value" style="color:#e05a4a">R$6.900</div><div class="inv-gain" style="color:#e05a4a">−1,4%</div></div>
+          </div>
+        </div>
+        <div class="inv-card">
+          <div class="inv-name">Ações ITUB4</div>
+          <div class="inv-type">Renda Variável · Carol</div>
+          <div class="inv-vals">
+            <div><div class="inv-label">Investido</div><div class="inv-value">R$2.000</div></div>
+            <div style="text-align:right"><div class="inv-label">Atual</div><div class="inv-value" style="color:var(--green)">R$1.820</div><div class="inv-gain" style="color:#e05a4a">−9,0%</div></div>
+          </div>
+        </div>
+        <div class="inv-card" style="border-style:dashed;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:100px;" onclick="openModal('modal-inv')" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+          <div style="text-align:center;color:var(--text3)"><div style="font-size:24px">+</div><div style="font-size:11px;margin-top:4px">Novo aporte</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CALENDÁRIO ═══ -->
+  <div class="inner-screen" id="page-calendario">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div>
+        <div><div class="tb-title">AGENDA FAMILIAR</div><div class="tb-sub">Junho 2026</div></div>
+      </div>
+      <div class="tb-actions"><button class="btn btn-ghost">Sync Google</button><button class="btn btn-locked" title="Módulo Agenda em breve" style="cursor:not-allowed">+ Evento 🔒</button></div>
+    </div>
+    <div class="page">
+      <div class="g21">
+        <div class="card">
+          <div class="sh-title" style="margin-bottom:14px">JUNHO 2026</div>
+          <div class="cal-grid">
+            <div class="cal-dn">DOM</div><div class="cal-dn">SEG</div><div class="cal-dn">TER</div><div class="cal-dn">QUA</div><div class="cal-dn">QUI</div><div class="cal-dn">SEX</div><div class="cal-dn">SÁB</div>
+            <div class="cal-d other">1</div><div class="cal-d other">2</div><div class="cal-d other">3</div><div class="cal-d other">4</div><div class="cal-d other">5</div><div class="cal-d other">6</div><div class="cal-d today has">7</div>
+            <div class="cal-d has">8</div><div class="cal-d">9</div><div class="cal-d has">10</div><div class="cal-d">11</div><div class="cal-d has">12</div><div class="cal-d">13</div><div class="cal-d">14</div>
+            <div class="cal-d has">15</div><div class="cal-d">16</div><div class="cal-d">17</div><div class="cal-d">18</div><div class="cal-d">19</div><div class="cal-d has">20</div><div class="cal-d">21</div>
+            <div class="cal-d">22</div><div class="cal-d">23</div><div class="cal-d">24</div><div class="cal-d">25</div><div class="cal-d has">26</div><div class="cal-d">27</div><div class="cal-d">28</div>
+            <div class="cal-d">29</div><div class="cal-d">30</div>
+          </div>
+          <div class="div"></div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:var(--green)"></div>Saúde / Médico</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:var(--accent)"></div>Veterinário</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:var(--blue)"></div>Trabalho</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:#e05a4a"></div>Família / Lazer</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sh-title" style="margin-bottom:14px">PRÓXIMOS EVENTOS</div>
+          <div class="ev-list">
+            <div class="ev blue"><div class="ev-date"><div class="ev-day">08</div><div class="ev-mon">JUN</div></div><div class="ev-info"><div class="ev-title">Reunião Claro Flex</div><div class="ev-meta">10h00 · Meet</div></div><div class="ev-avs"><div class="ev-av">J</div></div></div>
+            <div class="ev green"><div class="ev-date"><div class="ev-day">10</div><div class="ev-mon">JUN</div></div><div class="ev-info"><div class="ev-title">Pediatra – Tomás</div><div class="ev-meta">14h00 · Dr. Marcos</div></div><div class="ev-avs"><div class="ev-av">J</div><div class="ev-av c">C</div></div></div>
+            <div class="ev"><div class="ev-date"><div class="ev-day">12</div><div class="ev-mon">JUN</div></div><div class="ev-info"><div class="ev-title">Vacina Flora – V10</div><div class="ev-meta">09h00 · Pet Life</div></div><div class="ev-avs"><div class="ev-av c">C</div></div></div>
+            <div class="ev red"><div class="ev-date"><div class="ev-day">15</div><div class="ev-mon">JUN</div></div><div class="ev-info"><div class="ev-title">🎂 Aniversário Carol</div><div class="ev-meta">Dia todo</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ COMPRAS ═══ -->
+  <div class="inner-screen" id="page-compras">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="back-btn" id="compras-back-btn" onclick="comprasVoltar()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div>
+        <div>
+          <div class="tb-title" id="compras-title">LISTA DE COMPRAS</div>
+          <div class="tb-sub" id="compras-sub">2 listas ativas</div>
+        </div>
+      </div>
+      <div class="tb-actions" id="compras-actions">
+        <button class="btn btn-primary" onclick="openModal('modal-nova-lista')">+ Nova Lista</button>
+      </div>
+    </div>
+
+    <!-- VIEW: LISTAS (default) -->
+    <div id="view-listas" class="page">
+
+      <!-- link discreto de arquivo -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;opacity:0.6;border-color:var(--border)" onclick="showComprasView('arquivo')">📦 Arquivo</button>
+      </div>
+
+      <div class="list-grid" id="lista-cards-grid">
+
+        <!-- Lista 0 -->
+        <div class="lcard" id="lcard-0">
+          <!-- zona clicável para abrir detalhe -->
+          <div class="lcard-header-zone" onclick="abrirLista(0)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+              <div class="lcard-name">🛒 Mercado da Semana</div>
+              <div style="font-size:10px;color:var(--accent);font-family:'JetBrains Mono',monospace;white-space:nowrap;margin-left:8px">hoje</div>
+            </div>
+            <div class="lcard-meta">JULIO &amp; CAROL · 08/07</div>
+            <div class="pbar"><div class="pfill" style="width:37%;background:var(--green)"></div></div>
+            <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px">3 DE 8 COMPRADOS</div>
+          </div>
+          <!-- itens — não propagam click para o card -->
+          <div class="chk-list" id="chk-list-0" onclick="event.stopPropagation()">
+            <div class="chk done" data-item="Arroz 5kg" onclick="toggleItemCard(event,0,'Arroz 5kg',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Arroz 5kg',this)">✓</div><span>Arroz 5kg</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk done" data-item="Frango 1kg" onclick="toggleItemCard(event,0,'Frango 1kg',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Frango 1kg',this)">✓</div><span>Frango 1kg</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk done" data-item="Leite integral x3" onclick="toggleItemCard(event,0,'Leite integral x3',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Leite integral x3',this)">✓</div><span>Leite integral x3</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Detergente x2" onclick="toggleItemCard(event,0,'Detergente x2',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Detergente x2',this)"></div><span>Detergente x2</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Feijão preto 1kg" onclick="toggleItemCard(event,0,'Feijão preto 1kg',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Feijão preto 1kg',this)"></div><span>Feijão preto 1kg</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Iogurte x4" onclick="toggleItemCard(event,0,'Iogurte x4',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Iogurte x4',this)"></div><span>Iogurte x4</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Pão de forma" onclick="toggleItemCard(event,0,'Pão de forma',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Pão de forma',this)"></div><span>Pão de forma</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Tomate 1kg" onclick="toggleItemCard(event,0,'Tomate 1kg',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,0,'Tomate 1kg',this)"></div><span>Tomate 1kg</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+          </div>
+          <button class="add-item-inline" onclick="addItemInline(event,0)">+ item</button>
+        </div>
+
+        <!-- Lista 1 -->
+        <div class="lcard" id="lcard-1">
+          <div class="lcard-header-zone" onclick="abrirLista(1)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+              <div class="lcard-name">🐕 Pet Shop – Flora</div>
+              <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;margin-left:8px">12/07</div>
+            </div>
+            <div class="lcard-meta">JULIO · 12/07</div>
+            <div class="pbar"><div class="pfill" style="width:0%"></div></div>
+            <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px">0 DE 4</div>
+          </div>
+          <div class="chk-list" id="chk-list-1" onclick="event.stopPropagation()">
+            <div class="chk" data-item="Antipulgas mensal" onclick="toggleItemCard(event,1,'Antipulgas mensal',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,1,'Antipulgas mensal',this)"></div><span>Antipulgas mensal</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Petisco dental" onclick="toggleItemCard(event,1,'Petisco dental',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,1,'Petisco dental',this)"></div><span>Petisco dental</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Ração Premium 15kg" onclick="toggleItemCard(event,1,'Ração Premium 15kg',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,1,'Ração Premium 15kg',this)"></div><span>Ração Premium 15kg</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+            <div class="chk" data-item="Shampoo hipoalergênico" onclick="toggleItemCard(event,1,'Shampoo hipoalergênico',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,1,'Shampoo hipoalergênico',this)"></div><span>Shampoo hipoalergênico</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>
+          </div>
+          <button class="add-item-inline" onclick="addItemInline(event,1)">+ item</button>
+        </div>
+
+        <!-- Nova lista -->
+        <div class="lcard new" onclick="openModal('modal-nova-lista')">
+          <span style="font-size:22px">+</span> Nova Lista
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VIEW: DETALHE DE UMA LISTA -->
+    <div id="view-detalhe" class="page" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.06em" id="detalhe-titulo">🛒 Mercado da Semana</div>
+            <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="detalhe-meta">8 ITENS · JULIO &amp; CAROL</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="openModal('modal-nova-lista')">✏ Editar</button>
+          <button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="ativarModoMercado()">🛒 Modo Mercado</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace">
+          <span id="detalhe-progresso-txt">3 de 8 comprados</span>
+          <span id="detalhe-pct">37%</span>
+        </div>
+        <div class="pbar" style="height:6px;margin:0"><div class="pfill" style="width:37%;background:var(--green)" id="detalhe-bar"></div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="sh-title" style="font-size:15px">ITENS</div>
+          <button class="btn btn-ghost" style="padding:5px 12px;font-size:11px" onclick="openModal('modal-add-item')">+ Adicionar item</button>
+        </div>
+        <div class="chk-list" id="detalhe-chk-list"></div>
+        <div id="detalhe-arquivo-btn" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:13px;font-weight:500">✅ Todos os itens comprados!</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">Deseja arquivar esta lista?</div>
+            </div>
+            <button class="btn btn-primary" style="background:var(--green)" onclick="arquivarLista()">Arquivar lista</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: ARQUIVO -->
+    <div id="view-arquivo" class="page" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="sh-title">LISTAS ARQUIVADAS</div>
+          <div style="font-size:11px;color:var(--text3)">Ordenadas pela mais recente</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="arquivo-container">
+
+        <!-- Arquivada 0 -->
+        <div class="card" style="padding:14px 18px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">🛒 Mercado da Semana</div>
+              <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">ARQUIVADO EM 01/07/2026 · 8 ITENS · CAROL</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="toggleDropdownArquivo(this,0)">▾ Ver itens</button>
+              <button class="btn btn-primary" style="padding:5px 11px;font-size:11px" onclick="abrirModalReabrir(0)">↺ Reabrir</button>
+            </div>
+          </div>
+          <div class="arquivo-dropdown" id="dropdown-arquivo-0">
+            <div class="arquivo-item">Arroz 5kg</div>
+            <div class="arquivo-item">Detergente x2</div>
+            <div class="arquivo-item">Feijão preto 1kg</div>
+            <div class="arquivo-item">Frango 1kg</div>
+            <div class="arquivo-item">Iogurte x4</div>
+            <div class="arquivo-item">Leite integral x3</div>
+            <div class="arquivo-item">Pão de forma</div>
+            <div class="arquivo-item">Tomate 1kg</div>
+          </div>
+        </div>
+
+        <!-- Arquivada 1 -->
+        <div class="card" style="padding:14px 18px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">💊 Farmácia</div>
+              <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">ARQUIVADO EM 20/06/2026 · 5 ITENS · JULIO</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="toggleDropdownArquivo(this,1)">▾ Ver itens</button>
+              <button class="btn btn-primary" style="padding:5px 11px;font-size:11px" onclick="abrirModalReabrir(1)">↺ Reabrir</button>
+            </div>
+          </div>
+          <div class="arquivo-dropdown" id="dropdown-arquivo-1">
+            <div class="arquivo-item">Antialérgico</div>
+            <div class="arquivo-item">Dipirona 500mg</div>
+            <div class="arquivo-item">Fraldas tamanho M</div>
+            <div class="arquivo-item">Pomada assadura</div>
+            <div class="arquivo-item">Termômetro</div>
+          </div>
+        </div>
+
+        <!-- Arquivada 2 -->
+        <div class="card" style="padding:14px 18px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">🐕 Pet Shop – Flora</div>
+              <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px">ARQUIVADO EM 10/06/2026 · 4 ITENS · JULIO</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              <button class="btn btn-ghost" style="padding:5px 11px;font-size:11px" onclick="toggleDropdownArquivo(this,2)">▾ Ver itens</button>
+              <button class="btn btn-primary" style="padding:5px 11px;font-size:11px" onclick="abrirModalReabrir(2)">↺ Reabrir</button>
+            </div>
+          </div>
+          <div class="arquivo-dropdown" id="dropdown-arquivo-2">
+            <div class="arquivo-item">Antipulgas mensal</div>
+            <div class="arquivo-item">Petisco dental</div>
+            <div class="arquivo-item">Ração Premium 15kg</div>
+            <div class="arquivo-item">Shampoo hipoalergênico</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VIEW: MODO MERCADO -->
+    <div id="view-mercado" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:50;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em" id="mercado-titulo">🛒 MERCADO DA SEMANA</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="mercado-progresso">5 de 8 restantes</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost" style="padding:7px 13px;font-size:12px" onclick="openModal('modal-add-item-mercado')">+ Item</button>
+          <button class="btn btn-danger" style="padding:7px 13px;font-size:12px" onclick="sairMercado()">✕ Sair</button>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px">
+        <div id="mercado-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
+
+  </div><!-- /page-compras -->
+  <!-- ═══ PETS ═══ -->
+  <div class="inner-screen" id="page-pets">
+    <div class="topbar">
+      <div class="tb-left"><div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div><div><div class="tb-title">FLORA</div><div class="tb-sub">Shih-Tzu · 1a 7m</div></div></div>
+      <div class="tb-actions"><button class="btn btn-ghost">+ Gasto</button><button class="btn btn-primary">+ Vacina</button></div>
+    </div>
+    <div class="page">
+      <div class="pet-hdr"><div class="pet-av">🐾</div><div style="flex:1"><div class="pet-name">FLORA</div><div class="pet-breed">Shih-Tzu · Fêmea · 06/11/2024</div><div class="pet-stats-row"><div><div class="pstat-val">1a 7m</div><div class="pstat-lbl">Idade</div></div><div><div class="pstat-val">5,2 kg</div><div class="pstat-lbl">Peso</div></div></div></div><div style="text-align:right"><div class="card-label">Gastos Junho</div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--accent);letter-spacing:0.04em">R$680</div><div class="tag tag-accent">Vet + Ração</div></div></div>
+      <div class="g2">
+        <div class="card"><div class="sh"><div class="sh-title">CARTEIRA DE VACINAÇÃO</div><span class="tag tag-green">EM DIA</span></div><div class="vax-list"><div class="vax"><div class="vax-dot ok"></div><div class="vax-name">V10 – Polivalente</div><div><div class="vax-date">Última: 12/06/2025</div><span class="tag tag-accent" style="margin-top:3px">Reforço: 12/06/2026</span></div></div><div class="vax"><div class="vax-dot ok"></div><div class="vax-name">Antirrábica</div><div><div class="vax-date">Última: 20/08/2025</div><span class="tag tag-green" style="margin-top:3px">Reforço: 20/08/2026</span></div></div><div class="vax"><div class="vax-dot due"></div><div class="vax-name">Gripe Canina</div><div><div class="vax-date">Última: 05/12/2024</div><span class="tag tag-accent" style="margin-top:3px">⚠ Vence em 12 dias</span></div></div></div></div>
+        <div class="card"><div class="sh-title" style="margin-bottom:14px">GASTOS FLORA</div><div class="tx-list"><div class="tx"><div class="tx-ico" style="background:var(--green-dim)">🏥</div><div class="tx-info"><div class="tx-name">Consulta veterinária</div><div class="tx-cat">06/06/2026</div></div><div class="tx-amt exp">−R$280</div></div><div class="tx"><div class="tx-ico" style="background:var(--accent-dim)">🥣</div><div class="tx-info"><div class="tx-name">Ração Premium</div><div class="tx-cat">01/06/2026</div></div><div class="tx-amt exp">−R$240</div></div><div class="tx"><div class="tx-ico" style="background:var(--bg3)">✂️</div><div class="tx-info"><div class="tx-name">Banho &amp; Tosa</div><div class="tx-cat">25/05/2026</div></div><div class="tx-amt exp">−R$120</div></div><div class="tx"><div class="tx-ico" style="background:var(--blue-dim)">💊</div><div class="tx-info"><div class="tx-name">Antipulgas</div><div class="tx-cat">20/05/2026</div></div><div class="tx-amt exp">−R$40</div></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DOCUMENTOS ═══ -->
+  <div class="inner-screen" id="page-documentos">
+    <div class="topbar">
+      <div class="tb-left"><div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div><div><div class="tb-title">DOCUMENTOS</div><div class="tb-sub">17 arquivos · 5 categorias</div></div></div>
+      <div class="tb-actions"><button class="btn btn-primary">+ Upload</button></div>
+    </div>
+    <div class="page">
+      <div class="doc-cats"><div class="doc-cat"><div class="doc-ico">👤</div><div class="doc-cat-name">Pessoal</div><div class="doc-count">4 docs</div><div class="card-sub">RG, CPF, Passaporte</div></div><div class="doc-cat"><div class="doc-ico">👶</div><div class="doc-cat-name">Bebê – Tomás</div><div class="doc-count">3 docs</div><div class="card-sub">Certidão, vacina</div></div><div class="doc-cat"><div class="doc-ico">❤️</div><div class="doc-cat-name">Saúde</div><div class="doc-count">6 docs</div><div class="card-sub">Plano, exames</div></div><div class="doc-cat"><div class="doc-ico">🏠</div><div class="doc-cat-name">Imóvel</div><div class="doc-count">2 docs</div><div class="card-sub">Contrato, IPTU</div></div><div class="doc-cat"><div class="doc-ico">🐾</div><div class="doc-cat-name">Flora</div><div class="doc-count">2 docs</div><div class="card-sub">Carteira, registro</div></div><div class="doc-cat new"><div style="font-size:20px">+</div><div style="font-size:11px">Nova categoria</div></div></div>
+      <div class="card"><div class="sh"><div class="sh-title">RECENTES</div><button class="btn btn-ghost" style="padding:5px 11px;font-size:11px">Buscar</button></div><div class="tx-list"><div class="tx"><div class="tx-ico" style="background:var(--red-dim);font-size:14px">📄</div><div class="tx-info"><div class="tx-name">Certidão de Nascimento – Tomás</div><div class="tx-cat">BEBÊ · 02/05/2026</div></div><span class="tag tag-green">PDF</span></div><div class="tx"><div class="tx-ico" style="background:var(--blue-dim);font-size:14px">📄</div><div class="tx-info"><div class="tx-name">Carteira Vacinação Flora</div><div class="tx-cat">FLORA · 15/04/2026</div></div><span class="tag tag-green">PDF</span></div><div class="tx"><div class="tx-ico" style="background:var(--accent-dim);font-size:14px">🖼️</div><div class="tx-info"><div class="tx-name">RG – Julio</div><div class="tx-cat">PESSOAL · 10/04/2026</div></div><span class="tag tag-accent">IMG</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ EMERGÊNCIA ═══ -->
+  <div class="inner-screen" id="page-emergencia">
+    <div class="topbar">
+      <div class="tb-left"><div class="back-btn" onclick="goHub()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></div><div><div class="tb-title">EMERGÊNCIA</div><div class="tb-sub">4 contatos cadastrados</div></div></div>
+      <div class="tb-actions"><button class="btn btn-primary">+ Contato</button></div>
+    </div>
+    <div class="page">
+      <div class="emg-grid">
+        <div class="emg-card"><div class="emg-top"><div class="emg-ico" style="background:var(--red-dim)">🏥</div><div><div class="emg-name">Dr. Marcos</div><div class="emg-role">Pediatra – Tomás</div></div></div><div class="emg-phone">📞 (34) 99123-4567</div><div class="emg-loc">Clínica Pediátrica Central</div><button class="btn btn-ghost" style="width:100%;margin-top:12px;font-size:12px">Ligar</button></div>
+        <div class="emg-card"><div class="emg-top"><div class="emg-ico" style="background:rgba(232,118,10,0.1)">🐕</div><div><div class="emg-name">Dra. Patrícia</div><div class="emg-role">Veterinária – Flora</div></div></div><div class="emg-phone">📞 (34) 98765-1234</div><div class="emg-loc">Pet Life Clínica Veterinária</div><button class="btn btn-ghost" style="width:100%;margin-top:12px;font-size:12px">Ligar</button></div>
+        <div class="emg-card"><div class="emg-top"><div class="emg-ico" style="background:var(--blue-dim)">🏠</div><div><div class="emg-name">Dona Maria</div><div class="emg-role">Vizinha de confiança</div></div></div><div class="emg-phone">📞 (34) 99876-5432</div><div class="emg-loc">Ap. 302 – mesmo prédio</div><button class="btn btn-ghost" style="width:100%;margin-top:12px;font-size:12px">Ligar</button></div>
+        <div class="emg-card"><div class="emg-top"><div class="emg-ico" style="background:var(--green-dim)">👩‍⚕️</div><div><div class="emg-name">Dr. Roberto</div><div class="emg-role">Clínico Geral – Família</div></div></div><div class="emg-phone">📞 (34) 98456-7890</div><div class="emg-loc">UPA Centro – Uberlândia</div><button class="btn btn-ghost" style="width:100%;margin-top:12px;font-size:12px">Ligar</button></div>
+        <div class="emg-card new"><div style="font-size:20px">+</div><div style="font-size:11px">Novo contato</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screen-inner -->
+
+<!-- ══════════════════════════════════════
+     MODAIS
+══════════════════════════════════════ -->
+
+<!-- Modal: Confirmar Reabrir Lista -->
+<div class="modal-overlay" id="modal-reabrir">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">REABRIR LISTA</div>
+      <div class="modal-close" onclick="closeModal('modal-reabrir')">✕</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:18px">
+      <div style="font-size:13px;font-weight:600" id="reabrir-nome">🛒 Mercado da Semana</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Os itens serão restaurados. Itens já comprados voltarão como pendentes para você revisar.</div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:18px">Deseja reabrir esta lista como ativa?</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reabrir')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarReabrir()">↺ Reabrir lista</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nova Lista -->
+<div class="modal-overlay" id="modal-nova-lista">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><div class="modal-title" id="modal-lista-titulo">NOVA LISTA</div><div class="modal-close" onclick="closeModal('modal-nova-lista')">✕</div></div>
+    <div class="form-group">
+      <label class="form-label">Emoji da Lista</label>
+      <div class="emoji-grid" id="emoji-grid">
+        <div class="emoji-opt sel" onclick="selEmoji(this,'🛒')">🛒</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🐕')">🐕</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'💊')">💊</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🏠')">🏠</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'👶')">👶</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🥩')">🥩</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🧹')">🧹</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🍕')">🍕</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'📦')">📦</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🎁')">🎁</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🌿')">🌿</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'⚡')">⚡</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🔧')">🔧</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🐾')">🐾</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🏋️')">🏋️</div>
+        <div class="emoji-opt" onclick="selEmoji(this,'🎮')">🎮</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nome da Lista</label>
+      <input class="form-input" id="nova-lista-nome" type="text" placeholder="Ex: Mercado da Semana, Farmácia...">
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Data prevista (opcional)</label>
+        <input class="form-input" id="nova-lista-data" type="date">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Responsável</label>
+        <select class="form-input form-select" id="nova-lista-resp"><option>Família</option><option>Julio</option><option>Carol</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nova-lista')">Cancelar</button>
+      <button class="btn btn-primary" onclick="criarLista()">Criar Lista</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Adicionar Item (na lista) -->
+<div class="modal-overlay" id="modal-add-item">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">ADICIONAR ITEM</div><div class="modal-close" onclick="closeModal('modal-add-item')">✕</div></div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Nome do Item</label>
+      <input class="form-input" id="add-item-nome" type="text" placeholder="Ex: Arroz 5kg, Detergente..." autofocus>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:'JetBrains Mono',monospace">Será inserido em ordem alfabética automaticamente</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-item')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addItemModal()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Adicionar Item (modo mercado) -->
+<div class="modal-overlay" id="modal-add-item-mercado">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">ADICIONAR ITEM</div><div class="modal-close" onclick="closeModal('modal-add-item-mercado')">✕</div></div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Nome do Item</label>
+      <input class="form-input" id="add-item-mercado-nome" type="text" placeholder="Nome do item..." autofocus>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-item-mercado')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addItemMercado()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Configurar Reserva -->
+<div class="modal-overlay" id="modal-reserva">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><div class="modal-title">CONFIGURAR RESERVA</div><div class="modal-close" onclick="closeModal('modal-reserva')">✕</div></div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:3px">Como funciona</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">Use a categoria <span style="color:var(--accent);font-weight:500">Reserva</span> ao registrar uma transação para somar ou retirar do saldo automaticamente.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Custo Mensal da Família (R$)</label>
+      <div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px">R$</div><input class="amount-input" id="reserva-custo" type="number" value="5000" oninput="calcMeta()" style="font-size:clamp(18px,4vw,22px);padding:10px 10px 10px 42px"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:'JetBrains Mono',monospace">Média dos últimos 3 meses: R$5.468</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Meses de Cobertura</label>
+      <div class="rec-options" id="meses-opts">
+        <div class="rec-opt" onclick="selectMeses(this,3)">3 meses</div>
+        <div class="rec-opt sel" onclick="selectMeses(this,6)">6 meses</div>
+        <div class="rec-opt" onclick="selectMeses(this,9)">9 meses</div>
+        <div class="rec-opt" onclick="selectMeses(this,12)">12 meses</div>
+      </div>
+    </div>
+    <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--accent2)">Meta calculada</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--accent);letter-spacing:0.04em" id="meta-calculada">R$30.000</div>
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Aporte Mensal Planejado (R$)</label>
+      <div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px">R$</div><input class="amount-input" type="number" placeholder="0,00" style="font-size:clamp(18px,4vw,22px);padding:10px 10px 10px 42px"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:'JetBrains Mono',monospace">Com R$1.875/mês atingirá a meta em ~4 meses</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reserva')">Cancelar</button>
+      <button class="btn btn-primary">Salvar configuração</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhe/Editar Conta -->
+<div class="modal-overlay" id="modal-conta-detalhe">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><div class="modal-title">DETALHE DA CONTA</div><div class="modal-close" onclick="closeModal('modal-conta-detalhe')">✕</div></div>
+    <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:0.08em;text-transform:uppercase">PENDENTE · CARTÃO</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent2);letter-spacing:0.04em">R$1.840</div>
+        <div style="font-size:13px;font-weight:500;margin-top:1px">Nubank — Fatura</div>
+      </div>
+      <button class="btn" style="background:var(--green);color:#fff;padding:10px 16px">✓ Marcar paga</button>
+    </div>
+    <div class="form-group"><label class="form-label">Nome da Conta</label><input class="form-input" type="text" value="Nubank — Fatura"></div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Valor</label><div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px">R$</div><input class="amount-input" type="number" value="1840" style="font-size:clamp(18px,4vw,22px);padding:10px 10px 10px 42px"></div></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Dia de Vencimento</label><input class="form-input" type="number" value="15" min="1" max="31" placeholder="Ex: 15"></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Categoria</label><select class="form-input form-select"><option>Cartão</option><option>Moradia</option><option>Saúde</option><option>Alimentação</option><option>Outros</option></select></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Responsável</label><select class="form-input form-select"><option>Julio</option><option>Carol</option><option>Família</option></select></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Recorrência</label>
+      <div class="rec-options"><div class="rec-opt">Semanal</div><div class="rec-opt sel">Mensal</div><div class="rec-opt">Bimestral</div><div class="rec-opt">Anual</div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger">Excluir</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-conta-detalhe')">Cancelar</button>
+      <button class="btn btn-primary">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nova Transação -->
+<div class="modal-overlay" id="modal-tx">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">NOVA TRANSAÇÃO</div>
+      <div class="modal-close" onclick="closeModal('modal-tx')">✕</div>
+    </div>
+    <!-- tipo -->
+    <div class="type-toggle">
+      <button class="type-btn active-exp" id="btn-exp" onclick="setType('exp')">▼ DESPESA</button>
+      <button class="type-btn" id="btn-inc" onclick="setType('inc')">▲ RECEITA</button>
+    </div>
+    <!-- valor -->
+    <div class="amount-input-wrap">
+      <div class="amount-prefix">R$</div>
+      <input class="amount-input" type="number" placeholder="0,00" step="0.01">
+    </div>
+    <!-- descrição -->
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input class="form-input" type="text" placeholder="Ex: Mercado, Aluguel, Salário...">
+    </div>
+    <!-- categoria -->
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <div class="cat-chips">
+        <div class="cat-chip selected">🏠 Moradia</div>
+        <div class="cat-chip">🛒 Alimentação</div>
+        <div class="cat-chip">💊 Saúde</div>
+        <div class="cat-chip">👶 Bebê</div>
+        <div class="cat-chip">🐾 Pet</div>
+        <div class="cat-chip">🎉 Lazer</div>
+        <div class="cat-chip">💼 Renda</div>
+        <div class="cat-chip">🛡️ Reserva</div>
+        <div class="cat-chip">📦 Outros</div>
+      </div>
+    </div>
+    <!-- linha: data + responsável -->
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Data</label>
+        <input class="form-input" type="date" value="2026-06-07">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Responsável</label>
+        <select class="form-input form-select">
+          <option>Família</option>
+          <option>Julio</option>
+          <option>Carol</option>
+        </select>
+      </div>
+    </div>
+    <div style="height:18px"></div>
+    <!-- recorrência -->
+    <div class="form-group">
+      <label class="form-label">Recorrência</label>
+      <div class="rec-options">
+        <div class="rec-opt sel">Único</div>
+        <div class="rec-opt">Semanal</div>
+        <div class="rec-opt">Mensal</div>
+        <div class="rec-opt">Anual</div>
+      </div>
+    </div>
+    <!-- observações -->
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Observações (opcional)</label>
+      <input class="form-input" type="text" placeholder="Notas adicionais...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tx')">Cancelar</button>
+      <button class="btn btn-primary">Salvar Transação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Detalhe / Editar Transação -->
+<div class="modal-overlay" id="modal-tx-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">DETALHE DA TRANSAÇÃO</div>
+      <div class="modal-close" onclick="closeModal('modal-tx-detail')">✕</div>
+    </div>
+    <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#e05a4a;letter-spacing:0.08em;text-transform:uppercase">DESPESA · MORADIA</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#e05a4a;letter-spacing:0.04em">−R$1.800</div>
+        <div style="font-size:13px;font-weight:500;margin-top:2px">Aluguel</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text3)">05/06/2026</div>
+        <div style="font-size:11px;color:var(--text3)">Julio · Fixo Mensal</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input class="form-input" type="text" value="Aluguel">
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Valor</label>
+        <div class="amount-input-wrap" style="margin-bottom:0">
+          <div class="amount-prefix" style="font-size:18px;color:var(--text3)">R$</div>
+          <input class="amount-input" type="number" value="1800" style="font-size:22px;padding:12px 12px 12px 46px">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Data</label>
+        <input class="form-input" type="date" value="2026-06-05">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger">Excluir</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-tx-detail')">Cancelar</button>
+      <button class="btn btn-primary">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Novo Investimento -->
+<div class="modal-overlay" id="modal-inv">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">NOVO APORTE</div>
+      <div class="modal-close" onclick="closeModal('modal-inv')">✕</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nome do Investimento</label>
+      <input class="form-input" type="text" placeholder="Ex: Tesouro Selic 2029, CDB XP...">
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Tipo</label>
+        <select class="form-input form-select">
+          <option>Renda Fixa</option>
+          <option>Renda Variável</option>
+          <option>FII</option>
+          <option>Previdência</option>
+          <option>Cripto</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Responsável</label>
+        <select class="form-input form-select">
+          <option>Julio</option>
+          <option>Carol</option>
+          <option>Família</option>
+        </select>
+      </div>
+    </div>
+    <div style="height:18px"></div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Valor Investido</label>
+        <div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px;color:var(--text3)">R$</div><input class="amount-input" type="number" placeholder="0,00" style="font-size:22px;padding:12px 12px 12px 46px"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Valor Atual</label>
+        <div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px;color:var(--text3)">R$</div><input class="amount-input" type="number" placeholder="0,00" style="font-size:22px;padding:12px 12px 12px 46px"></div>
+      </div>
+    </div>
+    <div style="height:18px"></div>
+    <div class="form-row cols2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Data do Aporte</label>
+        <input class="form-input" type="date" value="2026-06-07">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Observações</label>
+        <input class="form-input" type="text" placeholder="Ex: taxa, vencimento...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-inv')">Cancelar</button>
+      <button class="btn btn-primary">Salvar Aporte</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Orçamento categoria -->
+<div class="modal-overlay" id="modal-budget">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">DEFINIR ORÇAMENTO</div>
+      <div class="modal-close" onclick="closeModal('modal-budget')">✕</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <select class="form-input form-select">
+        <option>Moradia</option><option>Alimentação</option><option>Saúde</option>
+        <option>Bebê</option><option>Pet</option><option>Lazer</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teto Mensal</label>
+      <div class="amount-input-wrap" style="margin-bottom:0"><div class="amount-prefix" style="font-size:18px;color:var(--text3)">R$</div><input class="amount-input" type="number" placeholder="0,00" style="font-size:22px;padding:12px 12px 12px 46px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-budget')">Cancelar</button>
+      <button class="btn btn-primary">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Date
+const d = new Date();
+document.getElementById('hub-date').textContent =
+  d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+// Navigation
+function goPage(id) {
+  document.getElementById('screen-hub').classList.remove('active');
+  document.getElementById('screen-inner').classList.add('active');
+  document.querySelectorAll('.inner-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.fn-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.fn-btn[data-page="'+id+'"]').forEach(b => b.classList.add('active'));
+  document.getElementById('fn-hub').classList.remove('active');
+  if (id === 'compras') {
+    comprasHistorico = ['listas'];
+    _setComprasView('listas');
+  }
+}
+function goHub() {
+  document.getElementById('screen-inner').classList.remove('active');
+  document.getElementById('screen-hub').classList.add('active');
+  document.querySelectorAll('.fn-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fn-hub').classList.add('active');
+}
+
+// Financeiro sub-tabs
+// showFinTab movida para baixo
+// Financeiro sub-tabs
+function showFinTab(tab, btn) {
+  document.querySelectorAll('.fin-tab').forEach(t => { t.classList.remove('active'); t.style.display='none'; });
+  const el = document.getElementById('fin-' + tab);
+  if(el){ el.style.display='block'; el.classList.add('active'); }
+  document.querySelectorAll('#page-financeiro .tb-tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const primaryBtn = document.getElementById('btn-fin-primary');
+  if(primaryBtn){
+    const labels = {visao:'+ Transação', transacoes:'+ Transação', contas:'+ Conta', orcamento:'+ Categoria', investimentos:'+ Aporte'};
+    const actions = {visao:"openModal('modal-tx')", transacoes:"openModal('modal-tx')", contas:"openModal('modal-tx')", orcamento:"openModal('modal-budget')", investimentos:"openModal('modal-inv')"};
+    primaryBtn.textContent = labels[tab] || '+ Novo';
+    primaryBtn.setAttribute('onclick', actions[tab] || "openModal('modal-tx')");
+  }
+}
+
+// Month Picker
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MONTH_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const pickers = {
+  tx:     {m:6, y:2026, valId:'mp-tx-val',     labelId:null},
+  orc:    {m:6, y:2026, valId:'mp-orc-val',    labelId:'orc-mes-label'},
+  contas: {m:6, y:2026, valId:'mp-contas-val', labelId:'contas-mes-label'}
+};
+function renderPicker(key){
+  const p = pickers[key];
+  const el = document.getElementById(p.valId);
+  if(el) el.textContent = MONTHS[p.m] + ' / ' + p.y;
+  if(p.labelId){ const lbl = document.getElementById(p.labelId); if(lbl) lbl.textContent = MONTH_FULL[p.m] + ' ' + p.y; }
+}
+function changeMonth(key, dir){
+  const p = pickers[key];
+  p.m += dir;
+  if(p.m < 0){ p.m = 11; p.y--; }
+  if(p.m > 11){ p.m = 0; p.y++; }
+  if(p.y < 2026){ p.y = 2026; p.m = 0; }
+  if(p.y > 2050){ p.y = 2050; p.m = 11; }
+  renderPicker(key);
+}
+['tx','orc','contas'].forEach(k => renderPicker(k));
+
+// Toggle conta paga/pendente
+function toggleConta(checkEl){
+  const item = checkEl.closest('.conta-item');
+  const isPaga = item.classList.contains('paga');
+  item.classList.remove('paga','pendente','vencida');
+  checkEl.textContent = isPaga ? '' : '✓';
+  item.classList.add(isPaga ? 'pendente' : 'paga');
+  const valEl = item.querySelector('.conta-valor');
+  valEl.className = 'conta-valor ' + (isPaga ? 'pend' : 'pago');
+  const vencEl = item.querySelector('.conta-venc');
+  vencEl.style.color = isPaga ? '' : 'var(--green)';
+  vencEl.textContent = isPaga ? 'Pendente' : 'Pago ✓';
+}
+
+// Reserva: calcular meta ao vivo
+let mesesSelecionados = 6;
+function selectMeses(el, n){
+  mesesSelecionados = n;
+  document.querySelectorAll('#meses-opts .rec-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  calcMeta();
+}
+function calcMeta(){
+  const custo = parseFloat(document.getElementById('reserva-custo')?.value || 5000);
+  const meta = document.getElementById('meta-calculada');
+  if(meta) meta.textContent = 'R$' + (custo * mesesSelecionados).toLocaleString('pt-BR');
+}
+
+// Owner chips
+document.querySelectorAll('.owner-tog').forEach(wrap => {
+  wrap.querySelectorAll('.oc').forEach((c,i) => c.addEventListener('click', function() {
+    wrap.querySelectorAll('.oc').forEach(x => x.classList.remove('a-all','a-j','a-c'));
+    this.classList.add(['a-all','a-j','a-c'][i]);
+  }));
+});
+
+// Category chips
+document.querySelectorAll('.cat-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+    this.classList.add('selected');
+  });
+});
+
+// Recurrence options
+document.querySelectorAll('.rec-opt').forEach(opt => {
+  opt.addEventListener('click', function() {
+    this.closest('.rec-options').querySelectorAll('.rec-opt').forEach(o => o.classList.remove('sel'));
+    this.classList.add('sel');
+  });
+});
+
+// Type toggle (despesa/receita)
+function setType(t) {
+  const bE = document.getElementById('btn-exp');
+  const bI = document.getElementById('btn-inc');
+  bE.classList.remove('active-exp','active-inc');
+  bI.classList.remove('active-exp','active-inc');
+  if(t==='exp') bE.classList.add('active-exp');
+  else bI.classList.add('active-inc');
+}
+
+// Modals
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if(e.target === this) this.classList.remove('open');
+  });
+});
+
+// Check items
+document.querySelectorAll('.chk').forEach(item => {
+  item.addEventListener('click', function() {
+    this.classList.toggle('done');
+    const box = this.querySelector('.chk-box');
+    box.textContent = this.classList.contains('done') ? '✓' : '';
+  });
+});
+
+
+
+// ═══════════════════════════════
+// MÓDULO COMPRAS
+// ═══════════════════════════════
+let listaAtiva = 0;
+let emojiSelecionado = '🛒';
+let comprasHistorico = []; // pilha de views para navegar corretamente
+
+const listas = [
+  { id: 0, emoji: '🛒', nome: 'Mercado da Semana', data: '2026-07-08', resp: 'Julio & Carol',
+    itens: ['Arroz 5kg','Detergente x2','Feijão preto 1kg','Frango 1kg','Iogurte x4','Leite integral x3','Pão de forma','Tomate 1kg'],
+    feitos: new Set(['Arroz 5kg','Frango 1kg','Leite integral x3']) },
+  { id: 1, emoji: '🐕', nome: 'Pet Shop – Flora', data: '2026-07-12', resp: 'Julio',
+    itens: ['Antipulgas mensal','Petisco dental','Ração Premium 15kg','Shampoo hipoalergênico'],
+    feitos: new Set() }
+];
+
+// Voltar: usa histórico; se vazio vai para hub
+function comprasVoltar() {
+  if (comprasHistorico.length > 1) {
+    comprasHistorico.pop(); // remove atual
+    const anterior = comprasHistorico[comprasHistorico.length - 1];
+    _setComprasView(anterior);
+  } else {
+    goHub();
+  }
+}
+
+function showComprasView(view) {
+  comprasHistorico.push(view);
+  _setComprasView(view);
+}
+
+function _setComprasView(view) {
+  ['listas','detalhe','arquivo'].forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.style.display = 'none';
+  });
+  const el = document.getElementById('view-' + view);
+  if (el) el.style.display = 'block';
+
+  const topTitle = document.getElementById('compras-title');
+  const topSub   = document.getElementById('compras-sub');
+  const topAct   = document.getElementById('compras-actions');
+  const backBtn  = document.getElementById('compras-back-btn');
+
+  // Ícone de back: mostra atalho hub quando está no topo, seta quando tem histórico
+  const canGoBack = comprasHistorico.length > 1;
+  backBtn.title = canGoBack ? 'Voltar' : 'Ir ao Hub';
+
+  if (view === 'listas') {
+    topTitle.textContent = 'LISTA DE COMPRAS';
+    topSub.textContent = listas.length + ' listas ativas';
+    topAct.innerHTML = '<button class="btn btn-primary" onclick="openModal(\'modal-nova-lista\')">+ Nova Lista</button>';
+  } else if (view === 'detalhe') {
+    const lista = listas[listaAtiva];
+    topTitle.textContent = lista.emoji + ' ' + lista.nome.toUpperCase();
+    topSub.textContent = lista.itens.length + ' itens';
+    topAct.innerHTML = '<button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="openModal(\'modal-nova-lista\')">✏ Editar</button><button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="ativarModoMercado()">🛒 Modo Mercado</button>';
+  } else if (view === 'arquivo') {
+    topTitle.textContent = 'ARQUIVO';
+    topSub.textContent = '3 listas arquivadas';
+    topAct.innerHTML = '';
+  }
+}
+
+function abrirLista(idx) {
+  listaAtiva = idx;
+  renderDetalhe();
+  showComprasView('detalhe');
+}
+
+// Toggle no card direto — sem abrir detalhe
+function toggleItemCard(e, listIdx, item, checkEl) {
+  e.stopPropagation();
+  if (e.target.classList.contains('del-item-btn')) return;
+  const lista = listas[listIdx];
+  if (lista.feitos.has(item)) lista.feitos.delete(item); else lista.feitos.add(item);
+  const done = lista.feitos.has(item);
+  // checkEl pode ser o chk-box diretamente ou o resultado de querySelector
+  const box = checkEl.classList && checkEl.classList.contains('chk-box') ? checkEl : checkEl;
+  if (box) { box.textContent = done ? '✓' : ''; }
+  const chk = box ? box.closest('.chk') : null;
+  if (chk) chk.classList.toggle('done', done);
+  renderCardLista(listIdx);
+}
+
+// Dropdown itens arquivados
+function toggleDropdownArquivo(btn, idx) {
+  const dropdown = document.getElementById('dropdown-arquivo-' + idx);
+  const isOpen = dropdown.classList.contains('open');
+  // fechar todos
+  document.querySelectorAll('.arquivo-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('[onclick*="toggleDropdownArquivo"]').forEach(b => { b.textContent = '▾ Ver itens'; });
+  if (!isOpen) {
+    dropdown.classList.add('open');
+    btn.textContent = '▴ Fechar';
+  }
+}
+
+// Modal reabrir
+let idxReabrir = null;
+const listasArquivadas = [
+  { emoji:'🛒', nome:'Mercado da Semana', resp:'Carol', itens:['Arroz 5kg','Detergente x2','Feijão preto 1kg','Frango 1kg','Iogurte x4','Leite integral x3','Pão de forma','Tomate 1kg'] },
+  { emoji:'💊', nome:'Farmácia', resp:'Julio', itens:['Antialérgico','Dipirona 500mg','Fraldas tamanho M','Pomada assadura','Termômetro'] },
+  { emoji:'🐕', nome:'Pet Shop – Flora', resp:'Julio', itens:['Antipulgas mensal','Petisco dental','Ração Premium 15kg','Shampoo hipoalergênico'] }
+];
+
+function abrirModalReabrir(idx) {
+  idxReabrir = idx;
+  const l = listasArquivadas[idx];
+  document.getElementById('reabrir-nome').textContent = l.emoji + ' ' + l.nome;
+  openModal('modal-reabrir');
+}
+
+function confirmarReabrir() {
+  if (idxReabrir === null) return;
+  const arq = listasArquivadas[idxReabrir];
+  const newIdx = listas.length;
+  listas.push({
+    id: newIdx,
+    emoji: arq.emoji,
+    nome: arq.nome,
+    data: '',
+    resp: arq.resp,
+    itens: [...arq.itens].sort((a,b) => a.localeCompare(b,'pt-BR')),
+    feitos: new Set()
+  });
+  closeModal('modal-reabrir');
+  // ir para lista de compras e mostrar nova lista
+  showComprasView('listas');
+  const grid = document.getElementById('lista-cards-grid');
+  const novoCard = document.createElement('div');
+  novoCard.className = 'lcard';
+  novoCard.id = 'lcard-' + newIdx;
+  novoCard.innerHTML = `
+    <div class="lcard-header-zone" onclick="abrirLista(${newIdx})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+        <div class="lcard-name">${arq.emoji} ${arq.nome}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-left:8px">—</div>
+      </div>
+      <div class="lcard-meta">${arq.resp.toUpperCase()} · Reaberta</div>
+      <div class="pbar"><div class="pfill" style="width:0%;background:var(--green)"></div></div>
+      <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px">0 DE ${arq.itens.length} COMPRADOS</div>
+    </div>
+    <div class="chk-list" id="chk-list-${newIdx}" onclick="event.stopPropagation()">
+      ${arq.itens.sort((a,b)=>a.localeCompare(b,'pt-BR')).map(item=>`<div class="chk" data-item="${item}" onclick="toggleItemCard(event,${newIdx},'${item.replace(/'/g,"\\'")}',this.querySelector('.chk-box'))"><div class="chk-box" onclick="event.stopPropagation();toggleItemCard(event,${newIdx},'${item.replace(/'/g,"\\'")}',this)"></div><span>${item}</span><button class="del-item-btn" onclick="delItem(event,this)">×</button></div>`).join('')}
+    </div>
+    <button class="add-item-inline" onclick="addItemInline(event,${newIdx})">+ item</button>`;
+  grid.insertBefore(novoCard, grid.lastElementChild);
+  idxReabrir = null;
+}
+
+function renderDetalhe() {
+  const lista = listas[listaAtiva];
+  document.getElementById('detalhe-titulo').textContent = lista.emoji + ' ' + lista.nome;
+  document.getElementById('detalhe-meta').textContent = lista.itens.length + ' ITENS · ' + lista.resp.toUpperCase();
+
+  const total = lista.itens.length;
+  const feitos = lista.feitos.size;
+  const pct = total ? Math.round(feitos / total * 100) : 0;
+
+  document.getElementById('detalhe-bar').style.width = pct + '%';
+  document.getElementById('detalhe-progresso-txt').textContent = feitos + ' de ' + total + ' comprados';
+  document.getElementById('detalhe-pct').textContent = pct + '%';
+
+  const pendentes  = lista.itens.filter(i => !lista.feitos.has(i)).sort((a,b) => a.localeCompare(b,'pt-BR'));
+  const concluidos = lista.itens.filter(i => lista.feitos.has(i)).sort((a,b) => a.localeCompare(b,'pt-BR'));
+  const ordenados  = [...pendentes, ...concluidos];
+
+  const container = document.getElementById('detalhe-chk-list');
+  container.innerHTML = '';
+  ordenados.forEach(item => {
+    const done = lista.feitos.has(item);
+    const div = document.createElement('div');
+    div.className = 'chk' + (done ? ' done' : '');
+    div.dataset.item = item;
+    div.innerHTML = `<div class="chk-box">${done ? '✓' : ''}</div><span>${item}</span><button class="del-item-btn" onclick="delItemDetalhe(event,'${item.replace(/'/g,"\\'")}')">×</button>`;
+    div.onclick = (e) => { if(e.target.classList.contains('del-item-btn')) return; toggleItemDetalhe(item); };
+    container.appendChild(div);
+  });
+
+  document.getElementById('detalhe-arquivo-btn').style.display = (total > 0 && feitos === total) ? 'block' : 'none';
+}
+
+function toggleItemDetalhe(item) {
+  const lista = listas[listaAtiva];
+  if (lista.feitos.has(item)) lista.feitos.delete(item); else lista.feitos.add(item);
+  renderDetalhe();
+  renderCardLista(listaAtiva);
+}
+
+function delItemDetalhe(e, item) {
+  e.stopPropagation();
+  const lista = listas[listaAtiva];
+  lista.itens = lista.itens.filter(i => i !== item);
+  lista.feitos.delete(item);
+  renderDetalhe();
+  renderCardLista(listaAtiva);
+}
+
+function renderCardLista(idx) {
+  const lista = listas[idx];
+  const total = lista.itens.length;
+  const feitos = lista.feitos.size;
+  const pct = total ? Math.round(feitos / total * 100) : 0;
+  const card = document.getElementById('lcard-' + idx);
+  if (!card) return;
+  const bar = card.querySelector('.pfill');
+  if (bar) bar.style.width = pct + '%';
+  card.querySelectorAll('[style*="JetBrains"]').forEach(el => {
+    if (el.textContent.match(/\d+ DE \d+/)) el.textContent = feitos + ' DE ' + total + ' COMPRADOS';
+  });
+}
+
+function delItem(e, btn) {
+  e.stopPropagation();
+  const chk = btn.closest('.chk');
+  const list = chk.closest('.chk-list');
+  const listIdx = parseInt(list.id.replace('chk-list-',''));
+  const item = chk.dataset.item;
+  listas[listIdx].itens = listas[listIdx].itens.filter(i => i !== item);
+  listas[listIdx].feitos.delete(item);
+  chk.remove();
+  renderCardLista(listIdx);
+}
+
+function addItemInline(e, idx) {
+  e.stopPropagation();
+  listaAtiva = idx;
+  document.getElementById('add-item-nome').value = '';
+  openModal('modal-add-item');
+}
+
+function addItemModal() {
+  const nome = document.getElementById('add-item-nome').value.trim();
+  if (!nome) return;
+  const lista = listas[listaAtiva];
+  if (!lista.itens.includes(nome)) lista.itens.push(nome);
+  lista.itens.sort((a,b) => a.localeCompare(b,'pt-BR'));
+  closeModal('modal-add-item');
+  renderDetalhe();
+  renderCardLista(listaAtiva);
+}
+
+function arquivarLista() {
+  showComprasView('listas');
+}
+
+function selEmoji(el, emoji) {
+  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  emojiSelecionado = emoji;
+}
+
+function criarLista() {
+  const nome = document.getElementById('nova-lista-nome').value.trim();
+  if (!nome) { document.getElementById('nova-lista-nome').focus(); return; }
+  const data = document.getElementById('nova-lista-data').value;
+  const resp = document.getElementById('nova-lista-resp').value;
+  const newIdx = listas.length;
+  listas.push({ id: newIdx, emoji: emojiSelecionado, nome, data, resp, itens: [], feitos: new Set() });
+  closeModal('modal-nova-lista');
+  document.getElementById('nova-lista-nome').value = '';
+  const grid = document.getElementById('lista-cards-grid');
+  const novoCard = document.createElement('div');
+  novoCard.className = 'lcard';
+  novoCard.id = 'lcard-' + newIdx;
+  novoCard.innerHTML = `
+    <div class="lcard-header-zone" onclick="abrirLista(${newIdx})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+        <div class="lcard-name">${emojiSelecionado} ${nome}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-left:8px">${data ? data.split('-').reverse().join('/').slice(0,5) : '—'}</div>
+      </div>
+      <div class="lcard-meta">${resp.toUpperCase()}</div>
+      <div class="pbar"><div class="pfill" style="width:0%;background:var(--green)"></div></div>
+      <div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px">0 DE 0 COMPRADOS</div>
+    </div>
+    <div class="chk-list" id="chk-list-${newIdx}" onclick="event.stopPropagation()"></div>
+    <button class="add-item-inline" onclick="addItemInline(event,${newIdx})">+ item</button>`;
+  grid.insertBefore(novoCard, grid.lastElementChild);
+}
+
+// Modo Mercado
+function ativarModoMercado() {
+  const lista = listas[listaAtiva];
+  document.getElementById('mercado-titulo').textContent = lista.emoji + ' ' + lista.nome.toUpperCase();
+  renderMercado();
+  document.getElementById('view-mercado').style.display = 'flex';
+}
+
+function renderMercado() {
+  const lista = listas[listaAtiva];
+  const pendentes  = lista.itens.filter(i => !lista.feitos.has(i)).sort((a,b) => a.localeCompare(b,'pt-BR'));
+  const concluidos = lista.itens.filter(i => lista.feitos.has(i)).sort((a,b) => a.localeCompare(b,'pt-BR'));
+  document.getElementById('mercado-progresso').textContent = pendentes.length + ' itens restantes';
+  const container = document.getElementById('mercado-list');
+  container.innerHTML = '';
+  [...pendentes, ...concluidos].forEach(item => {
+    const done = lista.feitos.has(item);
+    const div = document.createElement('div');
+    div.className = 'mercado-item' + (done ? ' done' : '');
+    div.innerHTML = `<div class="mercado-check">${done ? '✓' : ''}</div><div class="mercado-item-nome">${item}</div><button class="mercado-del" onclick="delItemMercado(event,'${item.replace(/'/g,"\\'")}')">×</button>`;
+    div.onclick = (e) => {
+      if (e.target.classList.contains('mercado-del')) return;
+      if (lista.feitos.has(item)) lista.feitos.delete(item); else lista.feitos.add(item);
+      renderMercado();
+      renderDetalhe();
+      renderCardLista(listaAtiva);
+    };
+    container.appendChild(div);
+  });
+}
+
+function delItemMercado(e, item) {
+  e.stopPropagation();
+  const lista = listas[listaAtiva];
+  lista.itens = lista.itens.filter(i => i !== item);
+  lista.feitos.delete(item);
+  renderMercado();
+}
+
+function addItemMercado() {
+  const nome = document.getElementById('add-item-mercado-nome').value.trim();
+  if (!nome) return;
+  const lista = listas[listaAtiva];
+  if (!lista.itens.includes(nome)) lista.itens.push(nome);
+  lista.itens.sort((a,b) => a.localeCompare(b,'pt-BR'));
+  closeModal('modal-add-item-mercado');
+  renderMercado();
+}
+
+function sairMercado() {
+  document.getElementById('view-mercado').style.display = 'none';
+}
+
+
+
+
+</script>
+</body>
+</html>

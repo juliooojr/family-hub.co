@@ -1,0 +1,286 @@
+# 🧠 FAMILY HUB — BRAIN PROMPT v3
+> Cole este arquivo no início de QUALQUER sessão de desenvolvimento.
+> É a fonte da verdade do projeto. Nunca tome decisões que contradigam este documento.
+
+---
+
+## VISÃO GERAL
+**Family Hub** é um sistema web privado para a família Julio & Carol.
+Centraliza finanças, agenda, documentos, pets e compras em um hub digital seguro.
+Acesso via browser (desktop + mobile responsivo, 360px até 1440px+).
+Login obrigatório via Google OAuth.
+
+## FAMÍLIA
+| Membro | Perfil |
+|--------|--------|
+| Julio | Pai, 34 anos — admin principal |
+| Carol | Mãe, 35 anos — co-admin |
+| Tomás | Filho, nascido 27/03/2026 |
+| Flora | Shih-Tzu, nascida 06/11/2024 |
+
+---
+
+## STACK OBRIGATÓRIA
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | Next.js 14 (App Router) + TypeScript |
+| Estilização | Tailwind CSS + shadcn/ui customizado |
+| Backend/Auth | Supabase (PostgreSQL + Auth + Storage + RLS) |
+| Autenticação | OAuth Google (login por Gmail) |
+| Calendário | Google Calendar API (leitura + criação) — módulo futuro |
+| Hospedagem | Vercel (frontend) + Supabase Cloud |
+
+**TypeScript strict em todo o projeto. Sem `any` implícito.**
+
+---
+
+## REGRAS DE SEGURANÇA — NÃO NEGOCIÁVEIS
+1. Nenhuma rota ou dado acessível sem autenticação ativa
+2. RLS ativo no Supabase em todas as tabelas — cada registro tem `family_id`
+3. HTTPS forçado em todas as rotas (Vercel faz por padrão)
+4. Zero variáveis sensíveis no código — tudo via `.env.local` e Vercel env vars
+5. Documentos em bucket privado Supabase Storage, acesso só via signed URL com expiração
+6. Toda ação crítica registrada em tabela `audit_log`
+7. Novos usuários acessam via convite por email — acesso total, sem restrição de módulo
+8. Nenhum dado sensível em query params de URL
+9. Cursor `default` em todos os elementos não-interativos; `pointer` apenas em clicáveis
+10. `user-select: none` em todos os elementos não-editáveis para evitar cursor de texto
+
+---
+
+## MÓDULOS E STATUS
+| Módulo | Status | Prioridade |
+|--------|--------|-----------|
+| 🔐 Auth (Google OAuth) | 🔴 A fazer | 1 |
+| 💰 Financeiro | 🔴 A fazer | 2 |
+| 🛒 Lista de Compras | 🔴 A fazer | 3 |
+| 📅 Calendário | 🔒 Bloqueado (futuro) | 4 |
+| 🐾 Flora (Pet) | 🔒 Bloqueado (futuro) | 5 |
+| 📁 Documentos | 🔒 Bloqueado (futuro) | 6 |
+| 🚨 Emergência | 🔒 Bloqueado (futuro) | 7 |
+
+**Módulos bloqueados = UI existe no mockup mas backend ainda não será implementado.**
+**Na UI, módulos bloqueados aparecem com cadeado 🔒, sem hover, cursor not-allowed.**
+
+---
+
+## MÓDULO FINANCEIRO — SPEC COMPLETA
+
+### 5 sub-abas (tabs na topbar)
+| Aba | Descrição |
+|-----|-----------|
+| **Visão Geral** | Dashboard: 4 cards de resumo, fluxo de caixa, categorias, reserva de emergência |
+| **Transações** | CRUD completo — receitas, despesas, reserva. Filtro por mês/ano + categoria + tipo |
+| **Contas** | Compromissos recorrentes mensais com check pago/pendente. Filtro por mês/ano |
+| **Orçamento** | Teto mensal por categoria com semáforo verde/amarelo/vermelho. Filtro por mês/ano |
+| **Investimentos** | Registro manual de aportes e rentabilidade por ativo |
+
+### Botão primário muda por aba
+- Visão Geral / Transações → `+ Transação`
+- Contas → `+ Conta`
+- Orçamento → `+ Categoria`
+- Investimentos → `+ Aporte`
+
+### Filtro mês/ano
+- Presente em Transações, Contas e Orçamento
+- Navegação por `‹ Jul / 2026 ›` (setas)
+- Mínimo: Jan/2026 | Máximo: Dez/2050
+
+### Transações — regras de negócio
+- Campos: `amount`, `type` (income/expense/reserva), `category`, `description`, `date`, `owner_id`, `family_id`, `recurrence`, `notes`
+- `owner_id`: Julio, Carol ou Família
+- Recorrência: único, semanal, mensal, anual
+- Categorias: Moradia, Alimentação, Saúde, Bebê, Pet, Lazer, Renda, **Reserva**, Outros
+- Categoria **Reserva** alimenta automaticamente o saldo da reserva de emergência
+
+### Contas — regras de negócio
+- Compromissos com recorrência aparecem automaticamente nos meses seguintes
+- Status: pendente (laranja), pago (verde), vencido (vermelho)
+- Ao marcar como paga → gera transação automaticamente na aba Transações
+- Agrupamento: Pendentes/Vencidas no topo → Pagas embaixo
+
+### Reserva de emergência — configuração
+- Meta = custo mensal × meses de cobertura (3/6/9/12)
+- Aporte mensal planejado configurável
+- Saldo alimentado por transações com categoria "Reserva"
+- Exibe: saldo atual, meta, aporte médio/mês, barra de progresso, tempo estimado
+
+### Orçamento — semáforo
+- Verde: gasto < 70% do teto
+- Amarelo: 70–90%
+- Vermelho: > 90%
+
+---
+
+## MÓDULO LISTA DE COMPRAS — SPEC COMPLETA
+
+### Estrutura de dados por lista
+```
+{ emoji, nome, data?, resp, itens: string[], feitos: Set<string> }
+```
+
+### Regras de negócio
+- **Itens sempre em ordem alfabética** — pendentes primeiro, comprados por último
+- **Cards ordenados por data** — mais próxima primeiro, sem data vai para o final
+- Criar lista: emoji (picker), nome, data opcional, responsável
+- Cada card mostra: header clicável (abre detalhe), itens com check inline, botão `+ item`
+- **Clique no header** → abre tela de detalhe
+- **Clique no item ou chk-box** → marca/desmarca sem abrir detalhe + atualiza progress bar imediatamente
+- **Excluir item**: botão `×` que aparece no hover (desktop) ou sempre visível (touch)
+
+### Views do módulo
+| View | Descrição |
+|------|-----------|
+| **Listas** | Grid de cards. Link discreto "📦 Arquivo" no canto direito |
+| **Detalhe** | Progresso, itens em alfa, botão `+ Adicionar item`, arquivar quando 100% |
+| **Arquivo** | Lista arquivadas (mais recentes primeiro). Dropdown "Ver itens" + modal "↺ Reabrir" |
+| **Modo Mercado** | Fullscreen, itens grandes, fácil check com uma mão, `+ Item` e `×` por item |
+
+### Navegação — pilha de histórico
+- Botão `←` na topbar sempre volta para view anterior
+- Se não há histórico (está na raiz Listas) → vai para o Hub
+- Modo Mercado tem próprio botão `✕ Sair` → volta para Detalhe
+
+### Arquivo — comportamento
+- "Ver itens" → dropdown inline com listagem; clique novamente fecha
+- "↺ Reabrir" → modal de confirmação → lista volta como ativa com itens desmarcados
+
+---
+
+## DESIGN — TOKENS OFICIAIS
+> Ver arquivo DESIGN.md para tokens completos.
+> Mockup visual aprovado: `family-hub-v3.html`
+
+**Princípios:**
+- Dark theme industrial: fundo carvão `#111210`, acento laranja âmbar `#e8760a`
+- Tipografia: **Bebas Neue** (títulos/números) + **Inter** (corpo) + **JetBrains Mono** (dados/labels)
+- Mobile-first: responsivo de 360px até 1440px+
+- Hub orbital na tela inicial — bolhas flutuantes com anéis giratórios
+- Float nav pill fixo no fundo das telas internas (não sidebar)
+- SOS: sem hover scale, borda vermelha pulsante, acesso imediato
+- Módulos bloqueados: `grayscale + opacity 0.4 + 🔒 + pointer-events:none`
+- Cursor global: `default` em tudo, `pointer` só em elementos interativos, `text` só em inputs
+
+---
+
+## BANCO DE DADOS — ESTRUTURA BASE
+
+```sql
+families (id uuid PK, name text, created_at timestamptz)
+
+family_members (
+  id uuid PK, family_id uuid FK, user_id uuid FK auth.users,
+  name text, role text CHECK (role IN ('admin','member')),
+  avatar_url text, created_at timestamptz
+)
+
+transactions (
+  id uuid PK, family_id uuid FK, owner_id uuid FK family_members,
+  type text CHECK (type IN ('income','expense','reserva')),
+  amount numeric(12,2) NOT NULL, category text NOT NULL,
+  description text NOT NULL, date date NOT NULL,
+  recurrence text CHECK (recurrence IN ('once','weekly','monthly','yearly')),
+  notes text, created_at timestamptz, created_by uuid FK auth.users
+)
+
+budgets (
+  id uuid PK, family_id uuid FK, category text NOT NULL,
+  monthly_limit numeric(12,2) NOT NULL, month_year text NOT NULL,
+  UNIQUE(family_id, category, month_year)
+)
+
+investments (
+  id uuid PK, family_id uuid FK, owner_id uuid FK family_members,
+  name text NOT NULL, type text NOT NULL,
+  amount_invested numeric(12,2) NOT NULL, current_value numeric(12,2),
+  invested_at date NOT NULL, notes text, created_at timestamptz
+)
+
+bills (
+  id uuid PK, family_id uuid FK, owner_id uuid FK family_members,
+  name text NOT NULL, category text NOT NULL,
+  amount numeric(12,2), due_day int CHECK (due_day BETWEEN 1 AND 31),
+  recurrence text NOT NULL, created_at timestamptz
+)
+
+bill_payments (
+  id uuid PK, bill_id uuid FK bills, family_id uuid FK,
+  month_year text NOT NULL, paid boolean DEFAULT false,
+  paid_at timestamptz, amount_paid numeric(12,2),
+  transaction_id uuid FK transactions
+)
+
+emergency_reserve (
+  id uuid PK, family_id uuid FK,
+  monthly_cost numeric(12,2), coverage_months int DEFAULT 6,
+  planned_monthly numeric(12,2), updated_at timestamptz
+)
+
+shopping_lists (
+  id uuid PK, family_id uuid FK, emoji text, name text NOT NULL,
+  scheduled_date date, responsible text,
+  status text CHECK (status IN ('active','archived')) DEFAULT 'active',
+  created_at timestamptz, archived_at timestamptz
+)
+
+shopping_items (
+  id uuid PK, list_id uuid FK shopping_lists, family_id uuid FK,
+  name text NOT NULL, checked boolean DEFAULT false,
+  checked_at timestamptz, created_at timestamptz
+)
+
+audit_log (
+  id uuid PK, family_id uuid FK, user_id uuid FK auth.users,
+  action text NOT NULL, table_name text NOT NULL,
+  record_id uuid, payload jsonb, created_at timestamptz DEFAULT now()
+)
+```
+
+**RLS obrigatório em todas as tabelas.**
+
+---
+
+## FLUXO DE DESENVOLVIMENTO
+
+```
+Fase 1 — Fundação
+  ├── Setup Supabase + Google OAuth + tabelas + RLS
+  ├── Setup Next.js 14 + TypeScript + Tailwind + shadcn/ui
+  ├── Login Google + proteção de rotas (middleware)
+  └── Layout base: hub orbital + float nav
+
+Fase 2 — Financeiro
+  ├── CRUD transações + filtros mês/ano/categoria/owner
+  ├── Módulo Contas (bills + bill_payments)
+  ├── Dashboard visão geral + fluxo de caixa
+  ├── Orçamento com semáforo
+  ├── Reserva de emergência configurável
+  └── Investimentos
+
+Fase 3 — Lista de Compras
+  ├── CRUD listas + itens (ordem alfabética)
+  ├── Modo Mercado
+  └── Arquivo + reabrir
+
+Fase 4 — Demais módulos
+  └── Calendário → Flora → Documentos → Emergência
+
+Fase 5 — Produção
+  ├── Deploy Vercel + domínio
+  ├── Alertas por email (Supabase Edge Functions)
+  └── PWA (manifest + service worker)
+```
+
+---
+
+## INSTRUÇÃO PARA IA GERADORA DE CÓDIGO
+> Copie e cole no início de cada sessão no Cursor:
+
+"Leia BRAIN.md, DESIGN.md e TASKS.md antes de qualquer ação.
+Stack: Next.js 14 App Router + TypeScript strict + Tailwind + Supabase + shadcn/ui.
+Referência visual: family-hub-v3.html — respeite paleta, tipografia e comportamentos de UX documentados no BRAIN.md.
+Regras inegociáveis: RLS em todas as queries, zero keys no código, TypeScript sem any, cursor global corrigido (default em não-interativos, pointer em clicáveis, text só em inputs).
+Tarefa desta sessão: [DESCREVA AQUI]"
+
+---
+*Family Hub BRAIN.md — v3.0 — 10/06/2026*

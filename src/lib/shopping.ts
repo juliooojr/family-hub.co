@@ -1,0 +1,216 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export type ShoppingStatus = 'active' | 'archived'
+
+export type ShoppingItem = {
+  id: string
+  listId: string
+  familyId: string
+  name: string
+  checked: boolean
+  checkedAt: string | null
+  createdAt: string
+}
+
+export type ShoppingList = {
+  id: string
+  familyId: string
+  emoji: string
+  name: string
+  scheduledDate: string | null
+  responsible: string
+  status: ShoppingStatus
+  createdAt: string
+  archivedAt: string | null
+  items: ShoppingItem[]
+}
+
+type ListRow = {
+  id: string
+  family_id: string
+  emoji: string
+  name: string
+  scheduled_date: string | null
+  responsible: string
+  status: ShoppingStatus
+  created_at: string
+  archived_at: string | null
+  shopping_items: ItemRow[] | null
+}
+
+type ItemRow = {
+  id: string
+  list_id: string
+  family_id: string
+  name: string
+  checked: boolean
+  checked_at: string | null
+  created_at: string
+}
+
+export type ListInput = {
+  emoji: string
+  name: string
+  scheduledDate: string | null
+  responsible: string
+}
+
+function mapItem(row: ItemRow): ShoppingItem {
+  return {
+    id: row.id,
+    listId: row.list_id,
+    familyId: row.family_id,
+    name: row.name,
+    checked: row.checked,
+    checkedAt: row.checked_at,
+    createdAt: row.created_at,
+  }
+}
+
+function mapList(row: ListRow): ShoppingList {
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    emoji: row.emoji,
+    name: row.name,
+    scheduledDate: row.scheduled_date,
+    responsible: row.responsible,
+    status: row.status,
+    createdAt: row.created_at,
+    archivedAt: row.archived_at,
+    items: (row.shopping_items ?? []).map(mapItem),
+  }
+}
+
+async function getFamilyId(supabase: SupabaseClient): Promise<string> {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+  if (userError || !user) throw new Error('Sessão expirada. Entre novamente.')
+
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('family_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (error || !data) {
+    if (error?.code === 'PGRST205' || error?.code === '42P01') {
+      throw new Error('O módulo de compras ainda não foi configurado no banco de dados.')
+    }
+    throw new Error('Seu usuário ainda não foi vinculado à família.')
+  }
+  return data.family_id as string
+}
+
+export async function getShoppingLists(supabase: SupabaseClient): Promise<ShoppingList[]> {
+  const familyId = await getFamilyId(supabase)
+  const { data, error } = await supabase
+    .from('shopping_lists')
+    .select('*, shopping_items(*)')
+    .eq('family_id', familyId)
+
+  if (error) throw error
+  return ((data ?? []) as ListRow[]).map(mapList)
+}
+
+export async function createShoppingList(
+  supabase: SupabaseClient,
+  input: ListInput,
+): Promise<ShoppingList> {
+  const familyId = await getFamilyId(supabase)
+  const { data, error } = await supabase
+    .from('shopping_lists')
+    .insert({
+      family_id: familyId,
+      emoji: input.emoji,
+      name: input.name.trim(),
+      scheduled_date: input.scheduledDate || null,
+      responsible: input.responsible,
+    })
+    .select('*, shopping_items(*)')
+    .single()
+
+  if (error) throw error
+  return mapList(data as ListRow)
+}
+
+export async function updateShoppingList(
+  supabase: SupabaseClient,
+  listId: string,
+  input: ListInput,
+): Promise<void> {
+  const { error } = await supabase
+    .from('shopping_lists')
+    .update({
+      emoji: input.emoji,
+      name: input.name.trim(),
+      scheduled_date: input.scheduledDate || null,
+      responsible: input.responsible,
+    })
+    .eq('id', listId)
+  if (error) throw error
+}
+
+export async function createShoppingItem(
+  supabase: SupabaseClient,
+  list: ShoppingList,
+  name: string,
+): Promise<ShoppingItem> {
+  const { data, error } = await supabase
+    .from('shopping_items')
+    .insert({ list_id: list.id, family_id: list.familyId, name: name.trim() })
+    .select('*')
+    .single()
+  if (error) throw error
+  return mapItem(data as ItemRow)
+}
+
+export async function setShoppingItemChecked(
+  supabase: SupabaseClient,
+  itemId: string,
+  checked: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from('shopping_items')
+    .update({ checked, checked_at: checked ? new Date().toISOString() : null })
+    .eq('id', itemId)
+  if (error) throw error
+}
+
+export async function deleteShoppingItem(
+  supabase: SupabaseClient,
+  itemId: string,
+): Promise<void> {
+  const { error } = await supabase.from('shopping_items').delete().eq('id', itemId)
+  if (error) throw error
+}
+
+export async function archiveShoppingList(
+  supabase: SupabaseClient,
+  listId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('shopping_lists')
+    .update({ status: 'archived', archived_at: new Date().toISOString() })
+    .eq('id', listId)
+  if (error) throw error
+}
+
+export async function reopenShoppingList(
+  supabase: SupabaseClient,
+  list: ShoppingList,
+): Promise<void> {
+  const { error: itemsError } = await supabase
+    .from('shopping_items')
+    .update({ checked: false, checked_at: null })
+    .eq('list_id', list.id)
+  if (itemsError) throw itemsError
+
+  const { error: listError } = await supabase
+    .from('shopping_lists')
+    .update({ status: 'active', archived_at: null })
+    .eq('id', list.id)
+  if (listError) throw listError
+}
