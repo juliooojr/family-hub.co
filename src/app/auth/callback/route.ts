@@ -10,6 +10,10 @@ export async function GET(request: NextRequest) {
   }
   const origin = requestUrl.origin
   const code = searchParams.get('code')
+  const requestedPath = searchParams.get('next')
+  const nextPath = requestedPath?.startsWith('/') && !requestedPath.startsWith('//')
+    ? requestedPath
+    : '/'
 
   if (code) {
     const cookieStore = await cookies()
@@ -34,7 +38,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}/`)
+      return NextResponse.redirect(new URL(nextPath, origin))
     }
   }
 

@@ -6,9 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 export default function LoginForm({
   initialError,
   googleEnabled,
+  nextPath,
 }: {
   initialError: string
   googleEnabled: boolean
+  nextPath: string
 }) {
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -25,6 +27,7 @@ export default function LoginForm({
     }
 
     const callbackUrl = new URL('/auth/callback', window.location.origin)
+    callbackUrl.searchParams.set('next', nextPath)
     if (callbackUrl.hostname === '0.0.0.0') {
       callbackUrl.hostname = 'localhost'
     }
