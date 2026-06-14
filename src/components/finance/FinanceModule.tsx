@@ -4,6 +4,18 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 type Tab = 'visao' | 'transacoes' | 'contas' | 'orcamento' | 'investimentos'
+type Recurrence = 'none' | 'weekly' | 'monthly' | 'bimonthly' | 'yearly'
+type Bill = {
+  id: string
+  name: string
+  amount: number
+  dueDay: number
+  category: string
+  owner: string
+  recurrence: Recurrence
+  startMonth: number
+  paidMonths: number[]
+}
 
 const tabs: Array<{ id: Tab; label: string; action: string }> = [
   { id: 'visao', label: 'Visão Geral', action: '+ Transação' },
@@ -30,15 +42,15 @@ const transactions = {
   ],
 }
 
-const bills = [
-  ['Maçonaria', 'OUTROS · Vence dia 05 · Julio', 'R$269', 'Vencida há 2 dias', 'overdue'],
-  ['Nubank — Fatura', 'CARTÃO · Vence dia 15 · Julio', 'R$1.840', 'Falta 8 dias', 'pending'],
-  ['Plano de Saúde', 'SAÚDE · Vence dia 20 · Família', 'R$680', 'Falta 13 dias', 'pending'],
-  ['Aluguel', 'MORADIA · Pago em 01/07 · Julio', 'R$1.800', 'Pago ✓', 'paid'],
-  ['Empréstimo', 'OUTROS · Pago em 04/07 · Julio', 'R$550', 'Pago ✓', 'paid'],
-  ['IPTV', 'MORADIA · Pago em 03/07 · Família', 'R$75', 'Pago ✓', 'paid'],
-  ['Personal Trainer', 'SAÚDE · Pago em 05/07 · Carol', 'R$420', 'Pago ✓', 'paid'],
-  ['IPTU Parcela 7/10', 'MORADIA · Pago em 02/07 · Família', 'R$220', 'Pago ✓', 'paid'],
+const initialBills: Bill[] = [
+  { id: 'masonry', name: 'Maçonaria', amount: 269, dueDay: 5, category: 'Outros', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [] },
+  { id: 'nubank', name: 'Nubank — Fatura', amount: 1840, dueDay: 15, category: 'Cartão', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [] },
+  { id: 'health', name: 'Plano de Saúde', amount: 680, dueDay: 20, category: 'Saúde', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [] },
+  { id: 'rent', name: 'Aluguel', amount: 1800, dueDay: 1, category: 'Moradia', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [6] },
+  { id: 'loan', name: 'Empréstimo', amount: 550, dueDay: 4, category: 'Outros', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [6] },
+  { id: 'iptv', name: 'IPTV', amount: 75, dueDay: 3, category: 'Moradia', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [6] },
+  { id: 'trainer', name: 'Personal Trainer', amount: 420, dueDay: 5, category: 'Saúde', owner: 'Carol', recurrence: 'monthly', startMonth: 0, paidMonths: [6] },
+  { id: 'iptu', name: 'IPTU Parcela 7/10', amount: 220, dueDay: 2, category: 'Moradia', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [6] },
 ]
 
 const budgets = [
@@ -64,11 +76,34 @@ export default function FinanceModule() {
   const [owner, setOwner] = useState('Família')
   const [monthIndex, setMonthIndex] = useState(6)
   const [notice, setNotice] = useState('')
+  const [bills, setBills] = useState<Bill[]>(initialBills)
+  const [billModal, setBillModal] = useState<Bill | 'new' | null>(null)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
 
   function demoAction(action: string) {
     setNotice(`${action} será habilitado após a definição e aprovação do schema financeiro.`)
+  }
+
+  function saveBill(bill: Bill) {
+    setBills((current) => current.some((item) => item.id === bill.id)
+      ? current.map((item) => item.id === bill.id ? bill : item)
+      : [...current, bill])
+    setBillModal(null)
+  }
+
+  function deleteBill(id: string) {
+    setBills((current) => current.filter((item) => item.id !== id))
+    setBillModal(null)
+  }
+
+  function toggleBill(id: string) {
+    setBills((current) => current.map((item) => item.id !== id ? item : {
+      ...item,
+      paidMonths: item.paidMonths.includes(monthIndex)
+        ? item.paidMonths.filter((month) => month !== monthIndex)
+        : [...item.paidMonths, monthIndex],
+    }))
   }
 
   return (
@@ -84,7 +119,7 @@ export default function FinanceModule() {
         <div className="finance-actions">
           <div className="finance-owners">{['Família', 'Julio', 'Carol'].map((name) => <button className={owner === name ? 'active' : ''} key={name} onClick={() => setOwner(name)}>{name}</button>)}</div>
           <button className="button button-ghost" onClick={() => demoAction('Exportar')}>Exportar</button>
-          <button className="button button-primary" onClick={() => demoAction(selectedTab.action)}>{selectedTab.action}</button>
+          <button className="button button-primary" onClick={() => tab === 'contas' ? setBillModal('new') : demoAction(selectedTab.action)}>{selectedTab.action}</button>
         </div>
       </header>
 
@@ -93,7 +128,7 @@ export default function FinanceModule() {
         {notice ? <div className="finance-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Fechar">×</button></div> : null}
         {tab === 'visao' ? <Overview onAction={demoAction} /> : null}
         {tab === 'transacoes' ? <Transactions month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onAction={demoAction} /> : null}
-        {tab === 'contas' ? <Bills month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onAction={demoAction} /> : null}
+        {tab === 'contas' ? <Bills bills={bills} owner={owner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
         {tab === 'orcamento' ? <Budgets month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onAction={demoAction} /> : null}
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
@@ -104,6 +139,7 @@ export default function FinanceModule() {
         <Link className="finance-nav-link" href="/compras" prefetch>🛒 Compras</Link><span className="fn-sep" />
         <button disabled>🐾 Flora</button><button disabled>📁 Docs</button><button className="sos-nav" disabled>🚨 SOS</button>
       </nav>
+      {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
     </main>
   )
 }
@@ -133,8 +169,16 @@ function Transactions({ month, monthIndex, onMonth, onAction }: { month: string;
   return <><div className="finance-filter-row"><input className="field" placeholder="🔍  Buscar..." /><select className="field"><option>Todas categorias</option><option>Moradia</option><option>Alimentação</option><option>Saúde</option><option>Pet</option><option>Bebê</option><option>Lazer</option><option>Reserva</option><option>Outros</option></select><select className="field"><option>Todos os tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={() => onAction('Nova transação')}>+ Nova</button></div>{Object.entries(transactions).map(([group,items]) => <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item[1]} onClick={() => onAction('Detalhe da transação')}><span className="finance-transaction-icon">{item[0]}</span><span><strong>{item[1]}</strong><small>{item[2]}</small></span><span className={item[5]}><strong>{item[3]}</strong><small>{item[4]}</small></span></button>)}</div></section>)}</>
 }
 
-function Bills({ month, monthIndex, onMonth, onAction }: { month: string; monthIndex: number; onMonth: (value: number) => void; onAction: (action: string) => void }) {
-  return <><SectionToolbar title="CONTAS" subtitle={`Compromissos recorrentes · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={() => onAction('Nova conta')}>+ Conta</button></SectionToolbar><div className="finance-three-grid"><Stat label="Total do mês" value="R$8.320" note="8 contas" /><Stat label="Já pagas" value="R$5.200" tone="income" note="5 contas · 62%" /><Stat label="Pendentes" value="R$3.120" tone="accent" note="3 contas" /></div><BillGroup title="⏳ Pendentes" items={bills.filter((item) => item[4] !== 'paid')} onAction={onAction} /><BillGroup title="✅ Pagas" items={bills.filter((item) => item[4] === 'paid')} onAction={onAction} /></>
+function Bills({ bills, owner, month, monthIndex, onMonth, onCreate, onEdit, onToggle }: { bills: Bill[]; owner: string; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
+  const visible = bills.filter((bill) => appearsInMonth(bill, monthIndex) && (owner === 'Família' || bill.owner === owner))
+  const paid = visible.filter((bill) => bill.paidMonths.includes(monthIndex))
+  const pending = visible.filter((bill) => !bill.paidMonths.includes(monthIndex))
+  const total = visible.reduce((sum, bill) => sum + bill.amount, 0)
+  const paidTotal = paid.reduce((sum, bill) => sum + bill.amount, 0)
+  const pendingTotal = pending.reduce((sum, bill) => sum + bill.amount, 0)
+  const percentage = total > 0 ? Math.round((paidTotal / total) * 100) : 0
+
+  return <><SectionToolbar title="CONTAS" subtitle={`Compromissos recorrentes · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Conta</button></SectionToolbar><div className="finance-three-grid"><Stat label="Total do mês" value={formatMoney(total)} note={`${visible.length} ${visible.length === 1 ? 'conta' : 'contas'}`} /><Stat label="Já pagas" value={formatMoney(paidTotal)} tone="income" note={`${paid.length} contas · ${percentage}%`} /><Stat label="Pendentes" value={formatMoney(pendingTotal)} tone="accent" note={`${pending.length} contas`} /></div><BillGroup title="⏳ Pendentes" items={pending} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /><BillGroup title="✅ Pagas" items={paid} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /></>
 }
 
 function Budgets({ month, monthIndex, onMonth, onAction }: { month: string; monthIndex: number; onMonth: (value: number) => void; onAction: (action: string) => void }) {
@@ -153,6 +197,36 @@ function SectionToolbar({ title, subtitle, children }: { title: string; subtitle
   return <header className="finance-page-toolbar"><div><h2>{title}</h2><p>{subtitle}</p></div><div>{children}</div></header>
 }
 
-function BillGroup({ title, items, onAction }: { title: string; items: string[][]; onAction: (action: string) => void }) {
-  return <section className="finance-bill-group"><h3>{title}</h3><div>{items.map((item) => <button className={`finance-bill ${item[4]}`} key={item[0]} onClick={() => onAction('Detalhe da conta')}><i>{item[4] === 'paid' ? '✓' : ''}</i><span><strong>{item[0]}</strong><small>{item[1]}</small></span><span><b>{item[2]}</b><small>{item[3]}</small></span></button>)}</div></section>
+function BillGroup({ title, items, monthIndex, onEdit, onToggle }: { title: string; items: Bill[]; monthIndex: number; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
+  return <section className="finance-bill-group"><h3>{title}</h3><div>{items.length === 0 ? <div className="finance-bill-empty">Nenhuma conta neste grupo.</div> : items.map((item) => {
+    const paid = item.paidMonths.includes(monthIndex)
+    const overdue = !paid && monthIndex === 6 && item.dueDay < 7
+    return <div className={`finance-bill ${paid ? 'paid' : overdue ? 'overdue' : 'pending'}`} key={item.id}><button className="finance-bill-check" onClick={() => onToggle(item.id)} aria-label={paid ? 'Marcar como pendente' : 'Marcar como paga'}>{paid ? '✓' : ''}</button><button className="finance-bill-detail" onClick={() => onEdit(item)}><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {paid ? `Pago em ${String(item.dueDay).padStart(2, '0')}/07` : `Vence dia ${String(item.dueDay).padStart(2, '0')}`} · {item.owner}</small></span><span><b>{formatMoney(item.amount)}</b><small>{paid ? 'Pago ✓' : overdue ? `Vencida há ${7 - item.dueDay} dias` : `Falta ${item.dueDay - 7} dias`}</small></span></button></div>
+  })}</div></section>
+}
+
+function BillModal({ bill, monthIndex, onClose, onDelete, onSave, onToggle }: { bill: Bill | null; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (bill: Bill) => void; onToggle: (id: string) => void }) {
+  const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: 10, category: 'Moradia', owner: 'Família', recurrence: 'monthly', startMonth: monthIndex, paidMonths: [] })
+  const paid = draft.paidMonths.includes(monthIndex)
+  const recurrences: Array<[Recurrence, string]> = [['none', 'Sem recorrência'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['bimonthly', 'Bimestral'], ['yearly', 'Anual']]
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!draft.name.trim() || draft.amount <= 0 || draft.dueDay < 1 || draft.dueDay > 31) return
+    onSave({ ...draft, name: draft.name.trim() })
+  }
+
+  return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-bill-modal" role="dialog" aria-modal="true" aria-label={bill ? 'Detalhe da conta' : 'Nova conta'}><header><h2>{bill ? 'DETALHE DA CONTA' : 'NOVA CONTA'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header>{bill ? <div className={`finance-bill-modal-summary ${paid ? 'paid' : ''}`}><div><small>{paid ? 'PAGA' : 'PENDENTE'} · {draft.category.toUpperCase()}</small><strong>{formatMoney(draft.amount)}</strong><span>{draft.name}</span></div><button type="button" onClick={() => { onToggle(draft.id); setDraft((current) => ({ ...current, paidMonths: paid ? current.paidMonths.filter((month) => month !== monthIndex) : [...current.paidMonths, monthIndex] })) }}>{paid ? '↶ Marcar pendente' : '✓ Marcar paga'}</button></div> : null}<form onSubmit={submit}><label className="field-label" htmlFor="bill-name">NOME DA CONTA</label><input id="bill-name" className="field" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={100} autoFocus={!bill} /><div className="field-row"><div><label className="field-label" htmlFor="bill-amount">VALOR</label><input id="bill-amount" className="field" type="number" min="0.01" step="0.01" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required /></div><div><label className="field-label" htmlFor="bill-due">DIA DE VENCIMENTO</label><input id="bill-due" className="field" type="number" min="1" max="31" value={draft.dueDay} onChange={(event) => setDraft({ ...draft, dueDay: Number(event.target.value) })} required /></div></div><div className="field-row"><div><label className="field-label" htmlFor="bill-category">CATEGORIA</label><select id="bill-category" className="field" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>{['Cartão', 'Moradia', 'Saúde', 'Alimentação', 'Bebê', 'Pet', 'Lazer', 'Outros'].map((category) => <option key={category}>{category}</option>)}</select></div><div><label className="field-label" htmlFor="bill-owner">RESPONSÁVEL</label><select id="bill-owner" className="field" value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })}>{['Julio', 'Carol', 'Família'].map((owner) => <option key={owner}>{owner}</option>)}</select></div></div><label className="field-label">RECORRÊNCIA</label><div className="finance-recurrence-options">{recurrences.map(([value, label]) => <button type="button" className={draft.recurrence === value ? 'selected' : ''} key={value} onClick={() => setDraft({ ...draft, recurrence: value })}>{label}</button>)}</div><div className="modal-actions finance-bill-modal-actions">{bill ? <button type="button" className="button button-danger" onClick={() => onDelete(bill.id)}>Excluir</button> : null}<span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">Salvar</button></div></form></section></div>
+}
+
+function appearsInMonth(bill: Bill, month: number) {
+  if (month < bill.startMonth) return false
+  if (bill.recurrence === 'none') return month === bill.startMonth
+  if (bill.recurrence === 'bimonthly') return (month - bill.startMonth) % 2 === 0
+  if (bill.recurrence === 'yearly') return month === bill.startMonth
+  return true
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 }).format(value)
 }
