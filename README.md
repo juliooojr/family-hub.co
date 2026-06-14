@@ -115,6 +115,16 @@ codex/modulo-financeiro
 
 Fazer as alteracoes somente nessa branch. O site oficial permanece inalterado durante o desenvolvimento.
 
+Durante a construcao incremental do modulo, o ciclo padrao e local:
+
+- implementar e revisar no computador de desenvolvimento;
+- testar em `localhost`, incluindo desktop e mobile;
+- acumular alteracoes coerentes na branch sem publicar um novo Preview a cada ajuste;
+- nao fazer push apenas para validar pequenas mudancas ainda em andamento;
+- manter commits locais organizados para preservar o historico do trabalho.
+
+Essa regra evita gerar deployments temporarios e reconfigurar URLs OAuth a cada pequena alteracao. Ela nao reduz os cuidados com o Supabase compartilhado: migrations e operacoes que possam afetar dados reais continuam dependendo de revisao e aprovacao previa.
+
 ### 3. Verificar
 
 Antes de publicar a branch:
@@ -129,7 +139,11 @@ Antes de publicar a branch:
 
 ### 4. Publicar uma Preview
 
-Enviar a branch ao GitHub. A Vercel cria um deploy temporario marcado como Preview. Essa URL permite revisar a novidade antes de alterar o site oficial.
+Publicar a branch somente quando houver uma versao candidata completa, estavel nos testes locais e pronta para revisao integrada. Nao criar um novo Preview para cada alteracao intermediaria.
+
+Nesse marco, enviar a branch ao GitHub. A Vercel cria um deploy temporario marcado como Preview. Essa URL permite revisar a novidade antes de alterar o site oficial.
+
+Quando o fluxo depender de Google OAuth, cadastrar a URL de callback do Preview no Supabase apenas nessa etapa. Confirmar que o login permanece no dominio Preview antes de iniciar os testes finais.
 
 Como o banco ainda e compartilhado, testes na Preview devem evitar dados ficticios ou operacoes destrutivas.
 
@@ -162,8 +176,9 @@ A Vercel detecta a atualizacao da `master` e cria um deploy Production. Confirma
 ```text
 master estavel
 -> nova branch
--> desenvolvimento
--> testes locais
+-> desenvolvimento e commits locais
+-> testes locais continuos
+-> versao candidata estavel
 -> Preview da Vercel
 -> Pull Request
 -> revisao
