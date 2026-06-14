@@ -1,36 +1,206 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Family Hub
 
-## Getting Started
+Sistema privado da familia Julio e Carol para centralizar compras, financas, agenda, documentos, cuidados com a Flora e outras rotinas familiares.
 
-First, run the development server:
+Producao: https://family-hub-co.vercel.app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Situacao atual
+
+- Primeira versao publicada e em uso real.
+- Google OAuth e a unica forma de login.
+- Apenas Julio e Carol estao autorizados.
+- Ambos acessam a mesma familia e os mesmos dados.
+- RLS esta habilitado nas tabelas publicas do Supabase.
+- Hub desktop e mobile estao funcionando.
+- Lista de Compras esta funcional.
+- `master` e a branch oficial do GitHub e da producao na Vercel.
+- Proximo modulo: Financeiro.
+
+## Documentos de referencia
+
+Leia nesta ordem antes de iniciar qualquer tarefa:
+
+1. `AGENTS.md`: regras obrigatorias do ambiente e do Next.js.
+2. `README.md`: contexto atual, operacao e fluxo oficial do projeto.
+3. `family-hub-v3.html`: referencia visual e comportamental aprovada.
+4. `DESIGN.md`: tokens, componentes e identidade visual.
+5. `BRAIN.md`: visao do produto, seguranca e especificacoes dos modulos.
+6. `PRIMEIRA-VERSAO.md`: registro historico da primeira entrega.
+7. `TASKS.md`: backlog historico, sempre conferindo o que ja foi concluido.
+
+O codigo funcional atual e este README prevalecem quando documentos antigos estiverem desatualizados.
+
+## Stack
+
+- Next.js 16.2.9 com App Router.
+- React 19.2.4.
+- TypeScript strict.
+- Tailwind CSS 4 e CSS global.
+- Supabase Auth, PostgreSQL e RLS.
+- Vercel para Preview e Production.
+- Fontes locais Bebas Neue, Inter e JetBrains Mono.
+
+## Execucao local
+
+```powershell
+npm.cmd install
+npm.cmd run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Para acesso na rede local:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm.cmd run dev:network
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Validacao obrigatoria antes de concluir qualquer mudanca:
 
-## Learn More
+```powershell
+npm.cmd run lint
+npm.cmd exec tsc -- --noEmit
+npm.cmd run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Seguranca
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Nunca colocar chaves, tokens ou senhas no codigo, Git ou documentacao.
+- `SUPABASE_SERVICE_ROLE_KEY` nao deve ser enviada a Vercel nem ao navegador.
+- O cliente usa somente as variaveis publicas do Supabase.
+- Toda nova tabela publica precisa de RLS e isolamento por `family_id`.
+- Acoes criticas devem ser registradas em `audit_log` quando aplicavel.
+- Nenhuma rota ou dado privado pode ficar acessivel sem autenticacao.
+- Contas nao autorizadas devem continuar bloqueadas.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Banco de dados durante o desenvolvimento
 
-## Deploy on Vercel
+Por enquanto, desenvolvimento, Preview e producao podem apontar para o mesmo projeto Supabase. As branches do GitHub isolam o codigo, mas nao isolam os dados.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Consequencias praticas:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Alteracoes visuais e de codigo podem ser testadas na branch normalmente.
+- Criar, editar ou excluir dados pode afetar o banco real.
+- Nao inserir dados ficticios ou destrutivos no banco de producao.
+- Mudancas de schema devem ser criadas como migrations versionadas.
+- Toda migration precisa ser revisada antes de ser aplicada.
+- Novas tabelas, colunas, indices, triggers e policies devem preservar os dados existentes.
+- Fazer mudancas aditivas e compativeis sempre que possivel.
+- Um Supabase separado para desenvolvimento continua recomendado para o futuro.
+
+## O papel da master
+
+`master` representa a versao oficial, aprovada e pronta para uso da familia. A Vercel acompanha essa branch e publica seus commits no ambiente Production.
+
+Novas funcionalidades nao devem ser construidas diretamente nela. Cada trabalho deve acontecer em uma branch separada, para que o sistema em uso continue estavel enquanto a novidade e desenvolvida e testada.
+
+Conceitos principais:
+
+- `master`: versao oficial e estavel.
+- Branch de trabalho: copia separada usada para construir uma mudanca.
+- Preview: site temporario criado pela Vercel para testar uma branch.
+- Pull Request: pedido de revisao e integracao da branch na `master`.
+- Merge: incorporacao aprovada na versao oficial.
+- Production: site real acessado pela familia.
+
+## Fluxo oficial de novas funcionalidades
+
+### 1. Criar uma branch
+
+Comecar sempre a partir da `master` atualizada e criar uma branch com nome descritivo, por exemplo:
+
+```text
+codex/modulo-financeiro
+```
+
+### 2. Desenvolver
+
+Fazer as alteracoes somente nessa branch. O site oficial permanece inalterado durante o desenvolvimento.
+
+### 3. Verificar
+
+Antes de publicar a branch:
+
+- revisar o comportamento da funcionalidade;
+- preservar autenticacao, autorizacao e RLS;
+- verificar desktop e mobile;
+- testar pelo menos 360 px, 390 px, 768 px e desktop quando houver interface;
+- evitar scroll horizontal e manter alvos de toque adequados;
+- executar lint, TypeScript e build;
+- revisar migrations e impacto sobre dados reais.
+
+### 4. Publicar uma Preview
+
+Enviar a branch ao GitHub. A Vercel cria um deploy temporario marcado como Preview. Essa URL permite revisar a novidade antes de alterar o site oficial.
+
+Como o banco ainda e compartilhado, testes na Preview devem evitar dados ficticios ou operacoes destrutivas.
+
+### 5. Abrir um Pull Request
+
+Criar um PR da branch de trabalho para `master`. O PR deve explicar o que mudou, quais riscos existem e como a mudanca foi validada.
+
+### 6. Revisar e aprovar
+
+Confirmar antes do merge:
+
+- funcionalidade correta;
+- Preview funcionando;
+- verificacoes automaticas aprovadas;
+- desktop e mobile preservados;
+- seguranca e dados protegidos;
+- migrations revisadas e aplicadas na ordem correta, quando existirem;
+- documentacao atualizada.
+
+### 7. Integrar na master
+
+Fazer o merge somente depois da aprovacao. A `master` deve permanecer utilizavel e sem trabalho incompleto.
+
+### 8. Publicar em producao
+
+A Vercel detecta a atualizacao da `master` e cria um deploy Production. Confirmar que o deploy esta `Ready`, que o dominio oficial aponta para ele e que o fluxo principal continua funcionando.
+
+## Resumo do fluxo
+
+```text
+master estavel
+-> nova branch
+-> desenvolvimento
+-> testes locais
+-> Preview da Vercel
+-> Pull Request
+-> revisao
+-> merge na master
+-> Production
+```
+
+## Identidade e responsividade
+
+- Tema escuro industrial com fundo carvao e acento laranja.
+- Bebas Neue para titulos, Inter para interface e JetBrains Mono para dados.
+- Hub orbital no desktop e grade propria no mobile.
+- Novos modulos devem funcionar nas duas apresentacoes do Hub.
+- Elementos bloqueados permanecem em cinza, sem clique.
+- Verde representa conclusao; vermelho representa perigo ou SOS.
+- Nunca corrigir mobile quebrando desktop, nem o inverso.
+
+## Estado da primeira versao
+
+Concluido:
+
+- autenticacao Google e bloqueio de contas nao autorizadas;
+- vinculo de Julio e Carol a mesma familia;
+- schema inicial, RLS e auditoria;
+- Hub desktop e mobile;
+- modulo Lista de Compras;
+- deploy na Vercel;
+- URLs OAuth de producao;
+- PR da primeira versao integrado a `master`;
+- `master` definida como branch padrao do GitHub e branch Production da Vercel;
+- deploy de producao da `master` confirmado.
+
+## Proximas prioridades
+
+1. Construir o modulo Financeiro por etapas, com migrations seguras.
+2. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+3. Revisar membros e permissoes das plataformas.
+4. Definir rotina de backup do Supabase.
+5. Acompanhar logs da Vercel e do Supabase.
+6. Considerar um Supabase separado para desenvolvimento no futuro.

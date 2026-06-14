@@ -2,7 +2,7 @@
 
 > Documento consolidado de contexto da primeira versao funcional.
 > Atualizado em 14/06/2026.
-> Antes de continuar o projeto, leia este arquivo junto com `AGENTS.md`.
+> Registro historico preservado. Para continuar o projeto, leia primeiro `AGENTS.md` e `README.md`.
 
 ## 1. Objetivo do produto
 
@@ -334,11 +334,12 @@ Concluido:
 - Bloqueio de conta nao autorizada validado.
 - Sistema em uso real, com a base de testes de Compras limpa e uma lista real iniciada.
 
-Pendente para consolidacao da primeira versao:
+Consolidacao da primeira versao concluida:
 
-- Integrar `codex/primeira-versao` em `master` por Pull Request.
-- Configurar `master` como branch de producao na Vercel.
-- Confirmar novo deploy de producao apos o merge.
+- `codex/primeira-versao` integrada em `master` pelo Pull Request 1.
+- `master` configurada como branch padrao no GitHub.
+- `master` configurada como branch de producao na Vercel.
+- Novo deploy de producao confirmado apos o merge.
 
 Fila de protecao operacional, sem urgencia nesta etapa:
 
@@ -357,7 +358,7 @@ Fila de monitoramento, sem urgencia nesta etapa:
 
 Antes de implementar uma nova tarefa:
 
-1. Ler `AGENTS.md` e este documento.
+1. Ler `AGENTS.md` e `README.md`.
 2. Conferir `family-hub-v3.html` para o comportamento esperado.
 3. Verificar o estado atual do Git sem apagar alteracoes existentes.
 4. Confirmar se a tarefa exige alteracao de schema ou RLS.
