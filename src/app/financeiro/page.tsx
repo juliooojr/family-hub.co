@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import FinanceModule from '@/components/finance/FinanceModule'
+import { getFinanceData } from '@/lib/finance'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function FinancePage() {
@@ -8,5 +9,6 @@ export default async function FinancePage() {
 
   if (!user) redirect('/login?next=/financeiro')
 
-  return <FinanceModule />
+  const data = await getFinanceData(supabase, user.id)
+  return <FinanceModule {...data} />
 }

@@ -1,30 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { FinanceBill, FinanceBudget, FinanceTransaction } from '@/lib/finance'
 
 type Tab = 'visao' | 'transacoes' | 'contas' | 'orcamento' | 'investimentos'
 type Recurrence = 'none' | 'weekly' | 'monthly' | 'bimonthly' | 'yearly'
 type ExpenseKind = 'fixed' | 'variable'
 type TransactionType = 'expense' | 'income' | 'reserve_deposit' | 'reserve_withdrawal'
-type Transaction = {
-  id: string
-  type: TransactionType
-  name: string
-  amount: number
-  category: string
-  owner: string
-  recurrence: Recurrence
-  date: string
-  notes?: string
-  expenseKind?: ExpenseKind
-}
-type Budget = {
-  id: string
-  name: string
-  emoji: string
-  limit: number
-}
+type Transaction = FinanceTransaction
+type Budget = FinanceBudget
 type CategoryOption = { name: string; emoji: string }
 
 const defaultCategories: CategoryOption[] = [
@@ -34,19 +20,7 @@ const defaultCategories: CategoryOption[] = [
   { name: 'Lazer', emoji: '🎉' }, { name: 'Renda', emoji: '💼' },
   { name: 'Reserva', emoji: '🛡️' }, { name: 'Outros', emoji: '📦' },
 ]
-type Bill = {
-  id: string
-  name: string
-  amount: number
-  dueDay: number
-  category: string
-  owner: string
-  recurrence: Recurrence
-  startMonth: number
-  paidMonths: number[]
-  notes?: string
-  expenseKind: ExpenseKind
-}
+type Bill = FinanceBill
 
 const tabs: Array<{ id: Tab; label: string; action: string }> = [
   { id: 'visao', label: 'Visão Geral', action: '+ Transação' },
@@ -54,36 +28,6 @@ const tabs: Array<{ id: Tab; label: string; action: string }> = [
   { id: 'contas', label: 'Contas', action: '+ Conta' },
   { id: 'orcamento', label: 'Orçamento', action: '+ Categoria' },
   { id: 'investimentos', label: 'Investimentos', action: '+ Aporte' },
-]
-
-const initialTransactions: Transaction[] = [
-  { id: 'salary-julio', type: 'income', name: 'Salário Julio', amount: 8200, category: 'Renda', owner: 'Julio', recurrence: 'monthly', date: '2026-07-01' },
-  { id: 'salary-carol', type: 'income', name: 'Salário Carol', amount: 4200, category: 'Renda', owner: 'Carol', recurrence: 'monthly', date: '2026-07-05' },
-  { id: 'market', type: 'expense', name: 'Mercado', amount: 420, category: 'Alimentação', owner: 'Carol', recurrence: 'none', date: '2026-07-06', expenseKind: 'variable' },
-  { id: 'vet', type: 'expense', name: 'Veterinário – Flora', amount: 280, category: 'Pet', owner: 'Carol', recurrence: 'none', date: '2026-07-06', expenseKind: 'variable' },
-  { id: 'baby', type: 'expense', name: 'Fralda + Creme Tomás', amount: 155, category: 'Bebê', owner: 'Julio', recurrence: 'none', date: '2026-07-07', expenseKind: 'variable' },
-  { id: 'reserve-tx', type: 'reserve_deposit', name: 'Aporte Reserva Emergência', amount: 1875, category: 'Reserva', owner: 'Família', recurrence: 'monthly', date: '2026-07-01' },
-]
-
-const initialBills: Bill[] = [
-  { id: 'masonry', name: 'Maçonaria', amount: 269, dueDay: 5, category: 'Outros', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [], expenseKind: 'fixed' },
-  { id: 'nubank', name: 'Nubank — Fatura', amount: 1840, dueDay: 15, category: 'Cartão', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [], expenseKind: 'variable' },
-  { id: 'health', name: 'Plano de Saúde', amount: 680, dueDay: 20, category: 'Saúde', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [], expenseKind: 'fixed' },
-  { id: 'rent', name: 'Aluguel', amount: 1800, dueDay: 1, category: 'Moradia', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [6], expenseKind: 'fixed' },
-  { id: 'loan', name: 'Empréstimo', amount: 550, dueDay: 4, category: 'Outros', owner: 'Julio', recurrence: 'monthly', startMonth: 0, paidMonths: [6], expenseKind: 'fixed' },
-  { id: 'iptv', name: 'IPTV', amount: 75, dueDay: 3, category: 'Moradia', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [6], expenseKind: 'fixed' },
-  { id: 'trainer', name: 'Personal Trainer', amount: 420, dueDay: 5, category: 'Saúde', owner: 'Carol', recurrence: 'monthly', startMonth: 0, paidMonths: [6], expenseKind: 'fixed' },
-  { id: 'iptu', name: 'IPTU Parcela 7/10', amount: 220, dueDay: 2, category: 'Moradia', owner: 'Família', recurrence: 'monthly', startMonth: 0, paidMonths: [6], expenseKind: 'fixed' },
-]
-
-const initialBudgets: Budget[] = [
-  { id: 'budget-home', name: 'Moradia', emoji: '🏠', limit: 2400 },
-  { id: 'budget-food', name: 'Alimentação', emoji: '🛒', limit: 1500 },
-  { id: 'budget-baby', name: 'Bebê', emoji: '👶', limit: 1500 },
-  { id: 'budget-health', name: 'Saúde', emoji: '💊', limit: 1000 },
-  { id: 'budget-pet', name: 'Pet', emoji: '🐾', limit: 1000 },
-  { id: 'budget-leisure', name: 'Lazer', emoji: '🎉', limit: 500 },
-  { id: 'budget-other', name: 'Outros', emoji: '📦', limit: 1000 },
 ]
 
 const investments = [
@@ -94,10 +38,11 @@ const investments = [
   ['Ações ITUB4', 'Renda Variável · Carol', 'R$2.000', 'R$1.820', '−9,0%', false],
 ]
 
-export default function FinanceModule() {
+export default function FinanceModule({ familyId, transactions: initialTransactions, bills: initialBills, budgets: initialBudgets, reserveGoal: initialReserveGoal }: { familyId: string; transactions: Transaction[]; bills: Bill[]; budgets: Budget[]; reserveGoal: number }) {
+  const supabase = useMemo(() => createClient(), [])
   const [tab, setTab] = useState<Tab>('visao')
   const [owner, setOwner] = useState('Família')
-  const [monthIndex, setMonthIndex] = useState(6)
+  const [monthIndex, setMonthIndex] = useState(() => new Date().getMonth())
   const [notice, setNotice] = useState('')
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
   const [transactionModal, setTransactionModal] = useState<Transaction | 'new' | null>(null)
@@ -106,7 +51,7 @@ export default function FinanceModule() {
   const [budgets, setBudgets] = useState<Budget[]>(initialBudgets)
   const [budgetModal, setBudgetModal] = useState<Budget | 'new' | null>(null)
   const [reserveModal, setReserveModal] = useState<'deposit' | 'withdrawal' | 'goal' | null>(null)
-  const [reserveGoal, setReserveGoal] = useState(30000)
+  const [reserveGoal, setReserveGoal] = useState(initialReserveGoal)
   const [exportOpen, setExportOpen] = useState(false)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
@@ -121,31 +66,54 @@ export default function FinanceModule() {
     setNotice(`${action} será habilitado após a definição e aprovação do schema financeiro.`)
   }
 
-  function saveBill(bill: Bill) {
+  async function saveBill(bill: Bill) {
+    const { error } = await supabase.from('finance_bills').upsert({
+      id: bill.id, family_id: familyId, name: bill.name, amount: bill.amount, due_day: bill.dueDay,
+      category: bill.category, responsible: bill.owner, recurrence: bill.recurrence,
+      start_date: `2026-${String(bill.startMonth + 1).padStart(2, '0')}-01`, expense_kind: bill.expenseKind,
+      notes: bill.notes || null,
+    })
+    if (error) return setNotice(`Não foi possível salvar a conta: ${error.message}`)
     setBills((current) => current.some((item) => item.id === bill.id)
       ? current.map((item) => item.id === bill.id ? bill : item)
       : [...current, bill])
     setBillModal(null)
   }
 
-  function saveTransaction(transaction: Transaction) {
+  async function saveTransaction(transaction: Transaction) {
+    const { error } = await supabase.from('finance_transactions').upsert({
+      id: transaction.id, family_id: familyId, type: transaction.type, name: transaction.name,
+      amount: transaction.amount, category: transaction.category, responsible: transaction.owner,
+      recurrence: transaction.recurrence, transaction_date: transaction.date,
+      expense_kind: transaction.expenseKind ?? null, notes: transaction.notes || null,
+    })
+    if (error) return setNotice(`Não foi possível salvar a transação: ${error.message}`)
     setTransactions((current) => current.some((item) => item.id === transaction.id)
       ? current.map((item) => item.id === transaction.id ? transaction : item)
       : [...current, transaction])
     setTransactionModal(null)
   }
 
-  function deleteTransaction(id: string) {
+  async function deleteTransaction(id: string) {
+    const { error } = await supabase.from('finance_transactions').delete().eq('id', id).eq('family_id', familyId)
+    if (error) return setNotice(`Não foi possível excluir a transação: ${error.message}`)
     setTransactions((current) => current.filter((item) => item.id !== id))
     setTransactionModal(null)
   }
 
-  function saveBudget(budget: Budget) {
+  async function saveBudget(budget: Budget) {
     const previous = budgets.find((item) => item.id === budget.id)
     if (previous && previous.name !== budget.name) {
+      const [{ error: billError }, { error: transactionError }] = await Promise.all([
+        supabase.from('finance_bills').update({ category: budget.name }).eq('family_id', familyId).eq('category', previous.name),
+        supabase.from('finance_transactions').update({ category: budget.name }).eq('family_id', familyId).eq('category', previous.name),
+      ])
+      if (billError || transactionError) return setNotice(`Não foi possível renomear a categoria: ${(billError ?? transactionError)?.message}`)
       setBills((current) => current.map((bill) => bill.category === previous.name ? { ...bill, category: budget.name } : bill))
       setTransactions((current) => current.map((transaction) => transaction.category === previous.name ? { ...transaction, category: budget.name } : transaction))
     }
+    const { error } = await supabase.from('finance_budgets').upsert({ id: budget.id, family_id: familyId, category: budget.name, emoji: budget.emoji, monthly_limit: budget.limit })
+    if (error) return setNotice(`Não foi possível salvar o orçamento: ${error.message}`)
     setBudgets((current) => {
       const duplicate = current.find((item) => item.id !== budget.id && item.name.toLocaleLowerCase('pt-BR') === budget.name.toLocaleLowerCase('pt-BR'))
       if (duplicate) return current.filter((item) => item.id !== budget.id).map((item) => item.id === duplicate.id ? { ...budget, id: duplicate.id } : item)
@@ -154,13 +122,15 @@ export default function FinanceModule() {
     setBudgetModal(null)
   }
 
-  function deleteBudget(id: string) {
+  async function deleteBudget(id: string) {
+    const { error } = await supabase.from('finance_budgets').delete().eq('id', id).eq('family_id', familyId)
+    if (error) return setNotice(`Não foi possível excluir o orçamento: ${error.message}`)
     setBudgets((current) => current.filter((item) => item.id !== id))
     setBudgetModal(null)
   }
 
-  function saveReserveMovement(type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) {
-    setTransactions((current) => [...current, {
+  async function saveReserveMovement(type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) {
+    const transaction: Transaction = {
       id: crypto.randomUUID(),
       type: type === 'deposit' ? 'reserve_deposit' : 'reserve_withdrawal',
       name: type === 'deposit' ? 'Depósito na reserva' : 'Retirada da reserva',
@@ -170,7 +140,20 @@ export default function FinanceModule() {
       recurrence: 'none',
       date,
       notes,
-    }])
+    }
+    const { error } = await supabase.from('finance_transactions').insert({
+      id: transaction.id, family_id: familyId, type: transaction.type, name: transaction.name,
+      amount, category: 'Reserva', responsible: 'Família', recurrence: 'none', transaction_date: date, notes: notes || null,
+    })
+    if (error) return setNotice(`Não foi possível registrar a reserva: ${error.message}`)
+    setTransactions((current) => [...current, transaction])
+    setReserveModal(null)
+  }
+
+  async function saveReserveGoal(goal: number) {
+    const { error } = await supabase.from('finance_reserve_settings').upsert({ family_id: familyId, goal_amount: goal })
+    if (error) return setNotice(`Não foi possível salvar a meta: ${error.message}`)
+    setReserveGoal(goal)
     setReserveModal(null)
   }
 
@@ -182,12 +165,22 @@ export default function FinanceModule() {
     setExportOpen(false)
   }
 
-  function deleteBill(id: string) {
+  async function deleteBill(id: string) {
+    const { error } = await supabase.from('finance_bills').delete().eq('id', id).eq('family_id', familyId)
+    if (error) return setNotice(`Não foi possível excluir a conta: ${error.message}`)
     setBills((current) => current.filter((item) => item.id !== id))
     setBillModal(null)
   }
 
-  function toggleBill(id: string) {
+  async function toggleBill(id: string) {
+    const bill = bills.find((item) => item.id === id)
+    if (!bill) return
+    const monthDate = `2026-${String(monthIndex + 1).padStart(2, '0')}-01`
+    const paid = bill.paidMonths.includes(monthIndex)
+    const result = paid
+      ? await supabase.from('finance_bill_payments').delete().eq('bill_id', id).eq('month_date', monthDate).eq('family_id', familyId)
+      : await supabase.from('finance_bill_payments').insert({ family_id: familyId, bill_id: id, month_date: monthDate })
+    if (result.error) return setNotice(`Não foi possível atualizar o pagamento: ${result.error.message}`)
     setBills((current) => current.map((item) => item.id !== id ? item : {
       ...item,
       paidMonths: item.paidMonths.includes(monthIndex)
@@ -208,7 +201,7 @@ export default function FinanceModule() {
         </div>
         <div className="finance-actions">
           <div className="finance-export"><button className="button button-ghost" onClick={() => setExportOpen((open) => !open)} aria-expanded={exportOpen}>Exportar ▾</button>{exportOpen ? <div><button onClick={() => exportFinance('png')}>Imagem PNG</button><button onClick={() => exportFinance('csv')}>Planilha CSV</button><button onClick={() => exportFinance('json')}>Dados JSON</button></div> : null}</div>
-          <button className="button button-primary" onClick={() => tab === 'contas' ? setBillModal('new') : tab === 'transacoes' ? setTransactionModal('new') : tab === 'orcamento' ? setBudgetModal('new') : demoAction(selectedTab.action)}>{selectedTab.action}</button>
+          <button className="button button-primary" onClick={() => tab === 'contas' ? setBillModal('new') : tab === 'visao' || tab === 'transacoes' ? setTransactionModal('new') : tab === 'orcamento' ? setBudgetModal('new') : demoAction(selectedTab.action)}>{selectedTab.action}</button>
         </div>
       </header>
 
@@ -230,7 +223,7 @@ export default function FinanceModule() {
       {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
       {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
       {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}
-      {reserveModal ? <ReserveModal mode={reserveModal} monthIndex={monthIndex} goal={reserveGoal} onClose={() => setReserveModal(null)} onGoal={(goal) => { setReserveGoal(goal); setReserveModal(null) }} onSave={saveReserveMovement} /> : null}
+      {reserveModal ? <ReserveModal mode={reserveModal} monthIndex={monthIndex} goal={reserveGoal} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
     </main>
   )
 }

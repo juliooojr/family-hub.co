@@ -6,15 +6,29 @@ Producao: https://family-hub-co.vercel.app
 
 ## Situacao atual
 
-- Primeira versao publicada e em uso real.
+- Modulo Compras publicado e em uso.
+- Modulo Financeiro pronto para migration, Preview final e publicacao.
 - Google OAuth e a unica forma de login.
 - Apenas Julio e Carol estao autorizados.
 - Ambos acessam a mesma familia e os mesmos dados.
 - RLS esta habilitado nas tabelas publicas do Supabase.
 - Hub desktop e mobile estao funcionando.
-- Lista de Compras esta funcional.
+- Lista de Compras esta funcional e persistida no Supabase.
+- Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
+- Investimentos permanece bloqueado para uma etapa futura.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
-- Proximo modulo: Financeiro.
+- Proxima definicao de produto: escolher o modulo seguinte.
+
+## Modulo Financeiro
+
+- Os dados sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
+- Transacoes registram receitas, despesas, depositos e retiradas da reserva.
+- Contas podem ser recorrentes e possuem pagamentos mensais independentes.
+- Marcar uma conta como paga nao cria outra transacao; a propria conta e a fonte do valor.
+- Contas da categoria Reserva aumentam a reserva somente quando pagas.
+- Orcamentos somam despesas de Contas e Transacoes por categoria.
+- A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
+- As tabelas financeiras iniciam vazias; a migration nao insere dados ficticios.
 
 ## Documentos de referencia
 
@@ -213,9 +227,10 @@ Concluido:
 
 ## Proximas prioridades
 
-1. Construir o modulo Financeiro por etapas, com migrations seguras.
-2. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-3. Revisar membros e permissoes das plataformas.
-4. Definir rotina de backup do Supabase.
-5. Acompanhar logs da Vercel e do Supabase.
-6. Considerar um Supabase separado para desenvolvimento no futuro.
+1. Acompanhar o uso real do modulo Financeiro e corrigir eventuais ajustes.
+2. Definir o proximo modulo do Hub.
+3. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+4. Revisar membros e permissoes das plataformas.
+5. Definir rotina de backup do Supabase.
+6. Acompanhar logs da Vercel e do Supabase.
+7. Considerar um Supabase separado para desenvolvimento no futuro.

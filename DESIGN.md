@@ -275,4 +275,13 @@ border: 1px dashed var(--border2); background: none; color: var(--text3);
 ```
 
 ---
+## FINANCEIRO — PADRÕES VISUAIS ESPECÍFICOS
+
+- Modais seguem a composicao do `family-hub-v3.html`, com valor destacado, chips de categoria e rodape de acoes.
+- Verde representa receita ou conclusao; laranja/vermelho representa despesa; azul representa reserva.
+- O grafico da Visao Geral compara Receita, Despesa e Reserva dos ultimos seis meses.
+- Investimentos bloqueado usa baixa opacidade, escala de cinza e nao aceita clique.
+- Filtros de responsavel aparecem somente em Transacoes e Contas.
+
+---
 *DESIGN.md — Family Hub v3.0 — 10/06/2026*
