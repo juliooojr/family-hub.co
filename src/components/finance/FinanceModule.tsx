@@ -220,7 +220,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
       {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
       {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
       {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}
-      {reserveModal ? <ReserveModal mode={reserveModal} monthIndex={monthIndex} goal={reserveGoal} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
+      {reserveModal ? <ReserveModal mode={reserveModal} monthIndex={monthIndex} goal={reserveGoal} balance={calculateReserveBalance(transactions, bills, monthIndex)} averageMonthlyExpenses={calculateAverageMonthlyExpenses(transactions, bills, monthIndex)} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
     </main>
   )
 }
@@ -353,20 +353,43 @@ function BudgetModal({ budget, onClose, onDelete, onSave }: { budget: Budget | n
   </form></section></div>
 }
 
-function ReserveModal({ mode, monthIndex, goal, onClose, onGoal, onSave }: { mode: 'deposit' | 'withdrawal' | 'goal'; monthIndex: number; goal: number; onClose: () => void; onGoal: (goal: number) => void; onSave: (type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) => void }) {
+function ReserveModal({ mode, monthIndex, goal, balance, averageMonthlyExpenses, onClose, onGoal, onSave }: { mode: 'deposit' | 'withdrawal' | 'goal'; monthIndex: number; goal: number; balance: number; averageMonthlyExpenses: number; onClose: () => void; onGoal: (goal: number) => void; onSave: (type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) => void }) {
   const [amount, setAmount] = useState(mode === 'goal' ? goal : 0)
+  const initialCoverage = [3, 6, 9, 12].find((months) => Math.abs(goal / months - averageMonthlyExpenses) < 1) ?? 6
+  const [monthlyCost, setMonthlyCost] = useState(mode === 'goal' ? Math.round(goal / initialCoverage) : 0)
+  const [coverageMonths, setCoverageMonths] = useState(initialCoverage)
+  const [plannedMonthly, setPlannedMonthly] = useState(mode === 'goal' ? Math.max(0, Math.round((goal - balance) / 4)) : 0)
   const [date, setDate] = useState(`2026-${String(monthIndex + 1).padStart(2, '0')}-07`)
   const [notes, setNotes] = useState('')
-  const title = mode === 'goal' ? 'CONFIGURAR META' : mode === 'deposit' ? 'DEPOSITAR NA RESERVA' : 'RETIRAR DA RESERVA'
+  const title = mode === 'goal' ? 'CONFIGURAR RESERVA' : mode === 'deposit' ? 'DEPOSITAR NA RESERVA' : 'RETIRAR DA RESERVA'
+  const calculatedGoal = Math.max(0, monthlyCost * coverageMonths)
+  const remaining = Math.max(0, calculatedGoal - balance)
+  const monthsToGoal = plannedMonthly > 0 ? Math.ceil(remaining / plannedMonthly) : null
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
+    if (mode === 'goal') {
+      if (calculatedGoal <= 0) return
+      onGoal(calculatedGoal)
+      return
+    }
     if (amount <= 0) return
-    if (mode === 'goal') onGoal(amount)
-    else onSave(mode, amount, date, notes.trim())
+    onSave(mode, amount, date, notes.trim())
   }
 
-  return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-budget-modal" role="dialog" aria-modal="true" aria-label={title}><header><h2>{title}</h2><button onClick={onClose} aria-label="Fechar">×</button></header><form onSubmit={submit}><div className="finance-form-group"><label htmlFor="reserve-amount">{mode === 'goal' ? 'VALOR DA META' : 'VALOR'}</label><div className="finance-amount-input compact"><span>R$</span><input id="reserve-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={amount || ''} onChange={(event) => setAmount(Number(event.target.value))} autoFocus required /></div></div>{mode !== 'goal' ? <><div className="finance-form-group"><label htmlFor="reserve-date">DATA</label><input id="reserve-date" className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></div><div className="finance-form-group"><label htmlFor="reserve-notes">OBSERVAÇÕES (OPCIONAL)</label><input id="reserve-notes" className="field" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: aporte mensal, valor extraordinário..." maxLength={240} /></div></> : null}<div className="modal-actions finance-bill-modal-actions"><span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">Salvar</button></div></form></section></div>
+  return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className={mode === 'goal' ? 'modal-card finance-reserve-config-modal' : 'modal-card finance-budget-modal'} role="dialog" aria-modal="true" aria-label={title}><header><h2>{title}</h2><button onClick={onClose} aria-label="Fechar">×</button></header><form onSubmit={submit}>
+    {mode === 'goal' ? <>
+      <div className="finance-reserve-help"><span>Como funciona</span><p>Use a categoria <strong>Reserva</strong> ao registrar uma transação ou conta paga para somar ou retirar do saldo automaticamente.</p></div>
+      <div className="finance-form-group"><label htmlFor="reserve-monthly-cost">CUSTO MENSAL DA FAMÍLIA (R$)</label><div className="finance-amount-input compact"><span>R$</span><input id="reserve-monthly-cost" type="number" inputMode="decimal" min="0.01" step="0.01" value={monthlyCost || ''} onChange={(event) => setMonthlyCost(Number(event.target.value))} autoFocus required /></div><small className="finance-helper-text">Média dos últimos 3 meses: {formatMoney(averageMonthlyExpenses)}</small></div>
+      <div className="finance-form-group"><span className="finance-form-label">MESES DE COBERTURA</span><div className="finance-coverage-options">{[3, 6, 9, 12].map((months) => <button type="button" className={coverageMonths === months ? 'selected' : ''} key={months} onClick={() => setCoverageMonths(months)}>{months} meses</button>)}</div></div>
+      <div className="finance-calculated-goal"><span>Meta calculada</span><strong>{formatMoney(calculatedGoal)}</strong></div>
+      <div className="finance-form-group"><label htmlFor="reserve-planned-monthly">APORTE MENSAL PLANEJADO (R$)</label><div className="finance-amount-input compact"><span>R$</span><input id="reserve-planned-monthly" type="number" inputMode="decimal" min="0" step="0.01" placeholder="0,00" value={plannedMonthly || ''} onChange={(event) => setPlannedMonthly(Number(event.target.value))} /></div><small className="finance-helper-text">{plannedMonthly > 0 ? `Com ${formatMoney(plannedMonthly)}/mês atingirá a meta em ~${monthsToGoal ?? 0} ${monthsToGoal === 1 ? 'mês' : 'meses'}` : 'Informe um aporte mensal para estimar o prazo até a meta.'}</small></div>
+    </> : <>
+      <div className="finance-form-group"><label htmlFor="reserve-amount">VALOR</label><div className="finance-amount-input compact"><span>R$</span><input id="reserve-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={amount || ''} onChange={(event) => setAmount(Number(event.target.value))} autoFocus required /></div></div>
+      <div className="finance-form-group"><label htmlFor="reserve-date">DATA</label><input id="reserve-date" className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></div>
+      <div className="finance-form-group"><label htmlFor="reserve-notes">OBSERVAÇÕES (OPCIONAL)</label><input id="reserve-notes" className="field" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: aporte mensal, valor extraordinário..." maxLength={240} /></div>
+    </>}
+    <div className="modal-actions finance-bill-modal-actions"><span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">{mode === 'goal' ? 'Salvar configuração' : 'Salvar'}</button></div></form></section></div>
 }
 
 function TransactionModal({ transaction, categories, monthIndex, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction) => void }) {
@@ -473,6 +496,13 @@ function calculateReserveBalance(transactions: Transaction[], bills: Bill[], mon
   let total = 0
   for (let index = 0; index <= month; index += 1) total += calculateMonthSummary(transactions, bills, index).reserveNet
   return total
+}
+
+function calculateAverageMonthlyExpenses(transactions: Transaction[], bills: Bill[], month: number) {
+  const start = Math.max(0, month - 2)
+  const months = Array.from({ length: month - start + 1 }, (_, index) => start + index)
+  const total = months.reduce((sum, item) => sum + calculateMonthSummary(transactions, bills, item).expenses, 0)
+  return months.length > 0 ? Math.round(total / months.length) : 0
 }
 
 function budgetTone(percentage: number) {
