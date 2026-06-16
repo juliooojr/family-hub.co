@@ -1,4 +1,6 @@
-# Prompt base - Modulo Financeiro
+# Prompt historico - Modulo Financeiro
+
+Este prompt registra o inicio da construcao do modulo Financeiro. Ele deve ser usado apenas como historico do fluxo adotado; o estado atual do projeto esta no `README.md` e o proximo prompt de continuidade esta em `PROMPT-NOVO-LAYOUT.md`.
 
 Use o texto abaixo ao iniciar uma nova janela do Codex:
 
