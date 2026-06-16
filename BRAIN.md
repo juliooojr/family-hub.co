@@ -73,7 +73,7 @@ Login obrigatório via Google OAuth.
 | **Transações** | CRUD completo — receitas, despesas, reserva. Filtro por mês/ano + categoria + tipo |
 | **Contas** | Compromissos recorrentes mensais com check pago/pendente. Filtro por mês/ano |
 | **Orçamento** | Teto mensal por categoria com semáforo verde/amarelo/vermelho. Filtro por mês/ano |
-| **Investimentos** | Registro manual de aportes e rentabilidade por ativo |
+| **Investimentos** | Estrutura preservada, mas aba bloqueada ate uma etapa futura |
 
 ### Botão primário muda por aba
 - Visão Geral / Transações → `+ Transação`
@@ -82,12 +82,12 @@ Login obrigatório via Google OAuth.
 - Investimentos → `+ Aporte`
 
 ### Filtro mês/ano
-- Presente em Transações, Contas e Orçamento
+- Presente em Visão Geral, Transações, Contas e Orçamento
 - Navegação por `‹ Jul / 2026 ›` (setas)
 - Mínimo: Jan/2026 | Máximo: Dez/2050
 
 ### Transações — regras de negócio
-- Campos: `amount`, `type` (income/expense/reserva), `category`, `description`, `date`, `owner_id`, `family_id`, `recurrence`, `notes`
+- Campos: `amount`, `type` (income/expense/reserve_deposit/reserve_withdrawal), `category`, `description`, `date`, `responsible`, `family_id`, `recurrence`, `expense_kind`, `notes`
 - `owner_id`: Julio, Carol ou Família
 - Recorrência: único, semanal, mensal, anual
 - Categorias: Moradia, Alimentação, Saúde, Bebê, Pet, Lazer, Renda, **Reserva**, Outros
@@ -96,19 +96,19 @@ Login obrigatório via Google OAuth.
 ### Contas — regras de negócio
 - Compromissos com recorrência aparecem automaticamente nos meses seguintes
 - Status: pendente (laranja), pago (verde), vencido (vermelho)
-- Ao marcar como paga → gera transação automaticamente na aba Transações
+- Ao marcar como paga, registra somente o pagamento mensal da conta; nao gera transacao duplicada
 - Agrupamento: Pendentes/Vencidas no topo → Pagas embaixo
 
 ### Reserva de emergência — configuração
-- Meta = custo mensal × meses de cobertura (3/6/9/12)
-- Aporte mensal planejado configurável
-- Saldo alimentado por transações com categoria "Reserva"
-- Exibe: saldo atual, meta, aporte médio/mês, barra de progresso, tempo estimado
+- Meta configuravel diretamente no card da reserva
+- Depositos e retiradas diretas sao movimentacoes de reserva, nao receitas ou despesas comuns
+- Conta da categoria Reserva aumenta o saldo somente quando marcada como paga
+- Exibe saldo atual, meta, movimento do mes e barra de progresso
 
 ### Orçamento — semáforo
-- Verde: gasto < 70% do teto
-- Amarelo: 70–90%
-- Vermelho: > 90%
+- Verde: gasto < 75% do teto
+- Amarelo: 75–89%
+- Vermelho: >= 90%
 
 ---
 
@@ -174,19 +174,22 @@ family_members (
   avatar_url text, created_at timestamptz
 )
 
-transactions (
-  id uuid PK, family_id uuid FK, owner_id uuid FK family_members,
-  type text CHECK (type IN ('income','expense','reserva')),
-  amount numeric(12,2) NOT NULL, category text NOT NULL,
-  description text NOT NULL, date date NOT NULL,
-  recurrence text CHECK (recurrence IN ('once','weekly','monthly','yearly')),
-  notes text, created_at timestamptz, created_by uuid FK auth.users
+finance_transactions (
+  id uuid PK, family_id uuid FK,
+  type text CHECK (type IN ('expense','income','reserve_deposit','reserve_withdrawal')),
+  name text NOT NULL, amount numeric(12,2) NOT NULL,
+  category text NOT NULL, responsible text NOT NULL,
+  recurrence text CHECK (recurrence IN ('none','weekly','monthly','bimonthly','yearly')),
+  transaction_date date NOT NULL,
+  expense_kind text CHECK (expense_kind IN ('fixed','variable')),
+  notes text, created_at timestamptz, updated_at timestamptz
 )
 
-budgets (
+finance_budgets (
   id uuid PK, family_id uuid FK, category text NOT NULL,
-  monthly_limit numeric(12,2) NOT NULL, month_year text NOT NULL,
-  UNIQUE(family_id, category, month_year)
+  emoji text NOT NULL, monthly_limit numeric(12,2) NOT NULL,
+  created_at timestamptz, updated_at timestamptz,
+  UNIQUE(family_id, category)
 )
 
 investments (
@@ -196,24 +199,25 @@ investments (
   invested_at date NOT NULL, notes text, created_at timestamptz
 )
 
-bills (
-  id uuid PK, family_id uuid FK, owner_id uuid FK family_members,
+finance_bills (
+  id uuid PK, family_id uuid FK,
   name text NOT NULL, category text NOT NULL,
   amount numeric(12,2), due_day int CHECK (due_day BETWEEN 1 AND 31),
-  recurrence text NOT NULL, created_at timestamptz
+  responsible text NOT NULL, recurrence text NOT NULL,
+  start_date date NOT NULL,
+  expense_kind text CHECK (expense_kind IN ('fixed','variable')),
+  notes text, created_at timestamptz, updated_at timestamptz
 )
 
-bill_payments (
-  id uuid PK, bill_id uuid FK bills, family_id uuid FK,
-  month_year text NOT NULL, paid boolean DEFAULT false,
-  paid_at timestamptz, amount_paid numeric(12,2),
-  transaction_id uuid FK transactions
+finance_bill_payments (
+  id uuid PK, bill_id uuid FK finance_bills, family_id uuid FK,
+  month_date date NOT NULL, paid_at timestamptz,
+  UNIQUE(bill_id, month_date)
 )
 
-emergency_reserve (
-  id uuid PK, family_id uuid FK,
-  monthly_cost numeric(12,2), coverage_months int DEFAULT 6,
-  planned_monthly numeric(12,2), updated_at timestamptz
+finance_reserve_settings (
+  family_id uuid PK, goal_amount numeric(12,2) NOT NULL,
+  updated_at timestamptz
 )
 
 shopping_lists (

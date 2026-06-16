@@ -36,7 +36,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/auth/callback')
 
   if (!user && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (user && !AUTHORIZED_EMAILS.has(user.email?.toLowerCase() ?? '')) {

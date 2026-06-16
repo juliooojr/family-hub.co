@@ -57,6 +57,9 @@ Primeira tarefa da nova sessao:
 Regras permanentes:
 - Nao apagar nem reverter alteracoes existentes.
 - Preservar seguranca, RLS, responsividade e identidade visual.
+- Durante a construcao incremental, trabalhar e testar localmente sem fazer push ou gerar Preview a cada pequena alteracao.
+- Acumular alteracoes coerentes na branch e publicar uma Preview somente quando existir uma versao candidata completa e estavel nos testes locais.
+- Configurar a URL OAuth do Preview no Supabase somente no momento da revisao integrada dessa versao candidata.
 - Textos da interface em portugues do Brasil.
 - Datas em pt-BR e fuso America/Sao_Paulo quando aplicavel.
 - Evitar any e manter TypeScript strict.
@@ -66,5 +69,5 @@ Regras permanentes:
   npm.cmd run lint
   npm.cmd exec tsc -- --noEmit
   npm.cmd run build
-- Depois dos testes locais, seguir o fluxo: branch -> Preview -> Pull Request -> revisao -> merge na master -> Production.
+- Quando a versao candidata estiver estavel, seguir o fluxo: branch -> push -> Preview -> configuracao OAuth do Preview -> Pull Request -> revisao -> merge na master -> Production.
 ```

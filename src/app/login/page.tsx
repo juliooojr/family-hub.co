@@ -8,9 +8,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>
+  searchParams: Promise<{ erro?: string; next?: string }>
 }) {
-  const { erro } = await searchParams
+  const { erro, next } = await searchParams
   let googleEnabled = false
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
@@ -27,6 +27,7 @@ export default async function LoginPage({
     <LoginForm
       googleEnabled={googleEnabled}
       initialError={ERROR_MESSAGES[erro ?? ''] ?? ''}
+      nextPath={next?.startsWith('/') && !next.startsWith('//') ? next : '/'}
     />
   )
 }
