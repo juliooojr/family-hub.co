@@ -23,7 +23,7 @@ Atualizado em 15/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Auditoria de alteracoes financeiras criticas.
 - [x] Interface ligada ao Supabase sem dados ficticios.
 - [x] Aplicar a migration no projeto Supabase compartilhado.
-- [ ] Validar no Preview com Julio e Carol.
+- [x] Validar no Preview com Julio.
 - [ ] Revisar e integrar o Pull Request na `master`.
 - [ ] Confirmar o deploy de Production na Vercel.
 
