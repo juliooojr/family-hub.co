@@ -55,12 +55,9 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const [exportOpen, setExportOpen] = useState(false)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
-  const categoryOptions = [...new Map([
-    ...bills.map((bill) => ({ name: bill.category, emoji: transactionIcon(bill.category) })),
-    ...transactions.map((transaction) => ({ name: transaction.category, emoji: transactionIcon(transaction.category) })),
-    ...defaultCategories,
-    ...budgets.map((budget) => ({ name: budget.name, emoji: budget.emoji })),
-  ].map((category) => [category.name, category])).values()]
+  const categoryOptions = budgets.length > 0
+    ? budgets.map((budget) => ({ name: budget.name, emoji: budget.emoji }))
+    : defaultCategories
 
   function demoAction(action: string) {
     setNotice(`${action} será habilitado após a definição e aprovação do schema financeiro.`)
@@ -373,7 +370,8 @@ function ReserveModal({ mode, monthIndex, goal, onClose, onGoal, onSave }: { mod
 }
 
 function TransactionModal({ transaction, categories, monthIndex, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction) => void }) {
-  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: 'Moradia', owner: 'Família', recurrence: 'none', date: `2026-${String(monthIndex + 1).padStart(2, '0')}-07`, notes: '', expenseKind: 'variable' })
+  const initialCategory = categories[0]?.name ?? 'Outros'
+  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: initialCategory, owner: 'Família', recurrence: 'none', date: `2026-${String(monthIndex + 1).padStart(2, '0')}-07`, notes: '', expenseKind: 'variable' })
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
 
   function submit(event: React.FormEvent) {
@@ -397,7 +395,8 @@ function TransactionModal({ transaction, categories, monthIndex, onClose, onDele
 }
 
 function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, onToggle }: { bill: Bill | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (bill: Bill) => void; onToggle: (id: string) => void }) {
-  const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: 7, category: 'Moradia', owner: 'Família', recurrence: 'none', startMonth: monthIndex, paidMonths: [], notes: '', expenseKind: 'fixed' })
+  const initialCategory = categories[0]?.name ?? 'Outros'
+  const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: 7, category: initialCategory, owner: 'Família', recurrence: 'none', startMonth: monthIndex, paidMonths: [], notes: '', expenseKind: 'fixed' })
   const paid = draft.paidMonths.includes(monthIndex)
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
   const dateValue = `2026-${String(draft.startMonth + 1).padStart(2, '0')}-${String(draft.dueDay).padStart(2, '0')}`
