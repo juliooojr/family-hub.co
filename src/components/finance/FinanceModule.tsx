@@ -56,10 +56,10 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const categoryOptions = [...new Map([
-    ...defaultCategories,
-    ...budgets.map((budget) => ({ name: budget.name, emoji: budget.emoji })),
     ...bills.map((bill) => ({ name: bill.category, emoji: transactionIcon(bill.category) })),
     ...transactions.map((transaction) => ({ name: transaction.category, emoji: transactionIcon(transaction.category) })),
+    ...defaultCategories,
+    ...budgets.map((budget) => ({ name: budget.name, emoji: budget.emoji })),
   ].map((category) => [category.name, category])).values()]
 
   function demoAction(action: string) {
@@ -207,10 +207,10 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
 
       <section className="finance-content">
         {notice ? <div className="finance-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Fechar">×</button></div> : null}
-        {tab === 'visao' ? <Overview transactions={transactions} bills={bills} month={months[monthIndex]} monthIndex={monthIndex} onMonth={setMonthIndex} reserveGoal={reserveGoal} onReserve={setReserveModal} /> : null}
+        {tab === 'visao' ? <Overview transactions={transactions} bills={bills} categories={categoryOptions} month={months[monthIndex]} monthIndex={monthIndex} onMonth={setMonthIndex} reserveGoal={reserveGoal} onReserve={setReserveModal} /> : null}
         {tab === 'transacoes' ? <Transactions transactions={transactions} categories={categoryOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setTransactionModal('new')} onEdit={setTransactionModal} /> : null}
         {tab === 'contas' ? <Bills bills={bills} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
-        {tab === 'orcamento' ? <Budgets budgets={budgets} bills={bills} transactions={transactions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
+        {tab === 'orcamento' ? <Budgets budgets={budgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
 
@@ -232,7 +232,7 @@ function MonthPicker({ month, monthIndex, onMonth }: { month: string; monthIndex
   return <div className="finance-month-picker"><button onClick={() => onMonth(Math.max(0, monthIndex - 1))}>‹</button><span>{month} / 2026</span><button onClick={() => onMonth(Math.min(11, monthIndex + 1))}>›</button></div>
 }
 
-function Overview({ transactions, bills, month, monthIndex, onMonth, reserveGoal, onReserve }: { transactions: Transaction[]; bills: Bill[]; month: string; monthIndex: number; onMonth: (month: number) => void; reserveGoal: number; onReserve: (mode: 'deposit' | 'withdrawal' | 'goal') => void }) {
+function Overview({ transactions, bills, categories: categoryOptions, month, monthIndex, onMonth, reserveGoal, onReserve }: { transactions: Transaction[]; bills: Bill[]; categories: CategoryOption[]; month: string; monthIndex: number; onMonth: (month: number) => void; reserveGoal: number; onReserve: (mode: 'deposit' | 'withdrawal' | 'goal') => void }) {
   const summary = calculateMonthSummary(transactions, bills, monthIndex)
   const categories = [...summary.categories.entries()].sort((a, b) => b[1] - a[1])
   const maxCategory = Math.max(...categories.map(([, value]) => value), 1)
@@ -255,7 +255,7 @@ function Overview({ transactions, bills, month, monthIndex, onMonth, reserveGoal
     </div>
     <div className="finance-main-grid">
       <article className="finance-card"><header className="finance-section-header"><div><h2>ÚLTIMOS 6 MESES</h2><p>Receitas, despesas e reserva</p></div><div className="finance-legend"><span className="income">■ Receita</span><span className="expense">■ Despesa</span><span className="reserve">■ Reserva</span></div></header><div className="finance-six-month-chart">{chart.map((item) => <div className="finance-six-month-column" key={item.index}><div><span className="income" title={`Receitas: ${formatMoney(item.income)}`} style={{height:`${Math.max(3, (item.income / chartMax) * 100)}%`}} /><span className="expense" title={`Despesas: ${formatMoney(item.expenses)}`} style={{height:`${Math.max(3, (item.expenses / chartMax) * 100)}%`}} /><span className="reserve" title={`Reserva: ${formatMoney(item.reserveNet)}`} style={{height:`${Math.max(3, (Math.abs(item.reserveNet) / chartMax) * 100)}%`}} /></div><small>{monthShort(item.index)}</small></div>)}</div></article>
-      <article className="finance-card"><header className="finance-section-header"><h2>GASTOS POR CATEGORIA</h2></header>{categories.length === 0 ? <div className="finance-empty-state"><strong>Nenhuma despesa no mês</strong></div> : <div className="finance-category-list">{categories.map(([name, value], index) => <div className="finance-category" key={name}><i className={categoryTone(index)} /><span>{categoryEmoji(name, defaultCategories)} {name}</span><div><b className={categoryTone(index)} style={{width:`${(value / maxCategory) * 100}%`}} /></div><strong>{formatMoney(value)}</strong></div>)}</div>}</article>
+      <article className="finance-card"><header className="finance-section-header"><h2>GASTOS POR CATEGORIA</h2></header>{categories.length === 0 ? <div className="finance-empty-state"><strong>Nenhuma despesa no mês</strong></div> : <div className="finance-category-list">{categories.map(([name, value], index) => <div className="finance-category" key={name}><i className={categoryTone(index)} /><span>{categoryEmoji(name, categoryOptions)} {name}</span><div><b className={categoryTone(index)} style={{width:`${(value / maxCategory) * 100}%`}} /></div><strong>{formatMoney(value)}</strong></div>)}</div>}</article>
     </div>
     <article className="finance-card finance-reserve"><header className="finance-section-header"><div><h2>RESERVA DE EMERGÊNCIA</h2><p>Saldo acumulado até {month} de 2026</p></div><div className="finance-reserve-actions"><span>{reservePercentage}% da meta</span><button className="button button-ghost" onClick={() => onReserve('goal')}>⚙ Configurar meta</button></div></header><div className="finance-progress"><span style={{width:`${Math.min(reservePercentage, 100)}%`}} /></div><div className="finance-progress-meta"><span>{formatMoney(reserveBalance)} acumulado</span><span>Meta: {formatMoney(reserveGoal)}</span></div><div className="finance-reserve-grid"><div><span>Saldo atual</span><strong>{formatMoney(reserveBalance)}</strong></div><div><span>Meta</span><strong>{formatMoney(reserveGoal)}</strong></div><div><span>Movimento no mês</span><strong>{formatMoney(reserveMonth)}</strong></div></div><div className="finance-reserve-buttons"><button className="button button-primary" onClick={() => onReserve('deposit')}>+ Depositar na Reserva</button><button className="button button-ghost" onClick={() => onReserve('withdrawal')}>− Retirar da Reserva</button></div></article>
   </>
@@ -294,7 +294,7 @@ function Bills({ bills, owner, onOwner, month, monthIndex, onMonth, onCreate, on
   return <><SectionToolbar title="CONTAS" subtitle={`Compromissos recorrentes · ${month} 2026`}><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Conta</button></SectionToolbar><div className="finance-three-grid"><Stat label="Total do mês" value={formatMoney(total)} note={`${visible.length} ${visible.length === 1 ? 'conta' : 'contas'}`} /><Stat label="Já pagas" value={formatMoney(paidTotal)} tone="income" note={`${paid.length} contas · ${percentage}%`} /><Stat label="Pendentes" value={formatMoney(pendingTotal)} tone="accent" note={`${pending.length} contas`} /></div><BillGroup title="⏳ Pendentes" items={pending} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /><BillGroup title="✅ Pagas" items={paid} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /></>
 }
 
-function Budgets({ budgets, bills, transactions, month, monthIndex, onMonth, onCreate, onEdit }: { budgets: Budget[]; bills: Bill[]; transactions: Transaction[]; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (budget: Budget) => void }) {
+function Budgets({ budgets, bills, transactions, categories, month, monthIndex, onMonth, onCreate, onEdit }: { budgets: Budget[]; bills: Bill[]; transactions: Transaction[]; categories: CategoryOption[]; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (budget: Budget) => void }) {
   const expenses = calculateCategoryExpenses(bills, transactions, monthIndex)
   const budgetNames = new Set(budgets.map((budget) => budget.name))
   const unbudgeted = [...expenses.entries()].filter(([category, amount]) => amount > 0 && !budgetNames.has(category))
@@ -307,7 +307,7 @@ function Budgets({ budgets, bills, transactions, month, monthIndex, onMonth, onC
     const percentage = budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0
     const tone = budgetTone(percentage)
     return <button className="finance-budget-row" key={budget.id} onClick={() => onEdit(budget)}><i className={tone} /><strong><span>{budget.emoji}</span> {budget.name}</strong><div><span className={tone} style={{width:`${Math.min(percentage, 100)}%`}} /></div><span><b className={tone}>{formatMoney(spent)}</b><small>de {formatMoney(budget.limit)} · {percentage}%</small></span></button>
-  })}</div>}{unbudgeted.length > 0 ? <section className="finance-unbudgeted"><h3>GASTOS SEM ORÇAMENTO</h3><p>Estas categorias têm despesas no mês, mas ainda não possuem teto definido.</p><div>{unbudgeted.map(([category, amount]) => <span key={category}>{transactionIcon(category)} {category} <strong>{formatMoney(amount)}</strong></span>)}</div></section> : null}<div className="finance-three-grid"><Stat label="Total orçado" value={formatMoney(totalBudgeted)} /><Stat label="Total gasto" value={formatMoney(totalSpent)} tone="expense" /><Stat label={available >= 0 ? 'Disponível' : 'Acima do orçamento'} value={formatMoney(Math.abs(available))} tone={available >= 0 ? 'income' : 'expense'} /></div></>
+  })}</div>}{unbudgeted.length > 0 ? <section className="finance-unbudgeted"><h3>GASTOS SEM ORÇAMENTO</h3><p>Estas categorias têm despesas no mês, mas ainda não possuem teto definido.</p><div>{unbudgeted.map(([category, amount]) => <span key={category}>{categoryEmoji(category, categories)} {category} <strong>{formatMoney(amount)}</strong></span>)}</div></section> : null}<div className="finance-three-grid"><Stat label="Total orçado" value={formatMoney(totalBudgeted)} /><Stat label="Total gasto" value={formatMoney(totalSpent)} tone="expense" /><Stat label={available >= 0 ? 'Disponível' : 'Acima do orçamento'} value={formatMoney(Math.abs(available))} tone={available >= 0 ? 'income' : 'expense'} /></div></>
 }
 
 function Investments({ onAction }: { onAction: (action: string) => void }) {
@@ -499,7 +499,7 @@ function transactionTypeLabel(type: TransactionType) {
 }
 
 function categoryEmoji(category: string, categories: CategoryOption[]) {
-  return categories.find((item) => item.name === category)?.emoji ?? transactionIcon(category)
+  return categories.find((item) => item.name.toLocaleLowerCase('pt-BR') === category.toLocaleLowerCase('pt-BR'))?.emoji ?? transactionIcon(category)
 }
 
 function formatTransactionDate(transaction: Transaction, month: number) {
