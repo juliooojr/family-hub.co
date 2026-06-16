@@ -7,7 +7,7 @@ Producao: https://family-hub-co.vercel.app
 ## Situacao atual
 
 - Modulo Compras publicado e em uso.
-- Modulo Financeiro pronto para migration, Preview final e publicacao.
+- Modulo Financeiro com migration aplicada, pronto para Preview final e publicacao.
 - Google OAuth e a unica forma de login.
 - Apenas Julio e Carol estao autorizados.
 - Ambos acessam a mesma familia e os mesmos dados.
@@ -28,7 +28,7 @@ Producao: https://family-hub-co.vercel.app
 - Contas da categoria Reserva aumentam a reserva somente quando pagas.
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
-- As tabelas financeiras iniciam vazias; a migration nao insere dados ficticios.
+- As tabelas financeiras iniciaram vazias; a migration nao inseriu dados ficticios.
 
 ## Documentos de referencia
 

@@ -22,7 +22,7 @@ Atualizado em 15/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] `family_id`, indices, RLS e policies em todas as tabelas publicas novas.
 - [x] Auditoria de alteracoes financeiras criticas.
 - [x] Interface ligada ao Supabase sem dados ficticios.
-- [ ] Aplicar a migration no projeto Supabase compartilhado.
+- [x] Aplicar a migration no projeto Supabase compartilhado.
 - [ ] Validar no Preview com Julio e Carol.
 - [ ] Revisar e integrar o Pull Request na `master`.
 - [ ] Confirmar o deploy de Production na Vercel.
