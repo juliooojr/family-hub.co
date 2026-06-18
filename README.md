@@ -12,12 +12,14 @@ Producao: https://family-hub-co.vercel.app
 - Apenas Julio e Carol estao autorizados.
 - Ambos acessam a mesma familia e os mesmos dados.
 - RLS esta habilitado nas tabelas publicas do Supabase.
-- Hub desktop e mobile estao funcionando.
+- Nova home publica e novo Hub interno responsivo estao funcionando.
+- Navegacao interna unificada com menu lateral no desktop e barra inferior no mobile.
+- Tema claro e escuro disponivel na home publica e nas areas autenticadas.
 - Lista de Compras esta funcional e persistida no Supabase.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
 - Investimentos permanece bloqueado para uma etapa futura.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
-- Proxima definicao de produto: revisar e propor um novo layout geral para o sistema.
+- O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
 ## Modulo Financeiro
 
@@ -229,10 +231,9 @@ Concluido:
 
 ## Proximas prioridades
 
-1. Acompanhar o uso real do modulo Financeiro e corrigir eventuais ajustes.
-2. Revisar a identidade visual atual e desenhar um novo layout geral para o sistema.
-3. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-4. Revisar membros e permissoes das plataformas.
-5. Definir rotina de backup do Supabase.
-6. Acompanhar logs da Vercel e do Supabase.
-7. Considerar um Supabase separado para desenvolvimento no futuro.
+1. Acompanhar o uso real do novo layout e do modulo Financeiro.
+2. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+3. Revisar membros e permissoes das plataformas.
+4. Definir rotina de backup do Supabase.
+5. Acompanhar logs da Vercel e do Supabase.
+6. Considerar um Supabase separado para desenvolvimento no futuro.

@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 16/06/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 17/06/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -18,6 +18,11 @@ Atualizado em 16/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Categorias financeiras exibidas conforme cadastro real do Orcamento.
 - [x] Modal de configuracao da reserva alinhada ao layout completo do `family-hub-v3.html`.
 - [x] Modulo Financeiro integrado na `master` e publicado em producao.
+- [x] Nova home publica com entrada pelo Google.
+- [x] Novo Hub interno com resumo de Compras, Contas e Reserva.
+- [x] Navegacao unificada no desktop e mobile.
+- [x] Temas claro e escuro no novo layout.
+- [x] Remocao dos componentes e assets antigos sem uso.
 
 ## Publicacao do Financeiro
 
@@ -40,7 +45,7 @@ Atualizado em 16/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 
 ## Proximas entregas
 
-- [ ] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
+- [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.
 - [ ] Flora.
