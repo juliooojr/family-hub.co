@@ -1,0 +1,141 @@
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import InternalShell from '@/components/layout/InternalShell'
+import { getFinanceData, type FinanceBill, type FinanceTransaction } from '@/lib/finance'
+import { getShoppingLists, type ShoppingList } from '@/lib/shopping'
+import { createClient } from '@/lib/supabase/server'
+
+function billAppearsInMonth(bill: FinanceBill, month: number) {
+  if (month < bill.startMonth) return false
+  if (bill.recurrence === 'none') return month === bill.startMonth
+  if (bill.recurrence === 'bimonthly') return (month - bill.startMonth) % 2 === 0
+  if (bill.recurrence === 'yearly') return month === bill.startMonth
+  return true
+}
+
+function calculateReserveBalance(transactions: FinanceTransaction[], bills: FinanceBill[], month: number) {
+  const directMovements = transactions.reduce((sum, transaction) => {
+    const transactionMonth = Number(transaction.date.slice(5, 7)) - 1
+    if (transactionMonth > month) return sum
+    if (transaction.type === 'reserve_deposit') return sum + transaction.amount
+    if (transaction.type === 'reserve_withdrawal') return sum - transaction.amount
+    return sum
+  }, 0)
+
+  const paidReserveBills = bills
+    .filter((bill) => bill.category === 'Reserva')
+    .reduce((sum, bill) => sum + bill.paidMonths.filter((paidMonth) => paidMonth <= month).length * bill.amount, 0)
+
+  return directMovements + paidReserveBills
+}
+
+function countCurrentShoppingLists(lists: ShoppingList[], yearMonth: string) {
+  return lists.filter((list) => {
+    if (list.status !== 'active') return false
+    const referenceDate = list.scheduledDate ?? list.createdAt.slice(0, 10)
+    return referenceDate.startsWith(yearMonth)
+  }).length
+}
+
+export default async function HubPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/?next=/hub')
+
+  const now = new Date()
+  const yearMonth = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    timeZone: 'America/Sao_Paulo',
+  }).format(now)
+  const month = Number(yearMonth.slice(5, 7)) - 1
+  const userName = user.user_metadata.full_name ?? user.email?.split('@')[0] ?? 'Família'
+  const firstName = userName.split(' ')[0]
+
+  let shoppingLists: ShoppingList[] = []
+  let financeData: Awaited<ReturnType<typeof getFinanceData>> | null = null
+
+  try {
+    [shoppingLists, financeData] = await Promise.all([
+      getShoppingLists(supabase),
+      getFinanceData(supabase, user.id),
+    ])
+  } catch {
+    // The dashboard remains available if one module is temporarily unavailable.
+  }
+
+  const pendingLists = countCurrentShoppingLists(shoppingLists, yearMonth)
+  const openBills = financeData?.bills.filter((bill) =>
+    billAppearsInMonth(bill, month) && !bill.paidMonths.includes(month)
+  ).length ?? 0
+  const reserveBalance = financeData
+    ? calculateReserveBalance(financeData.transactions, financeData.bills, month)
+    : 0
+  const reserveGoal = financeData?.reserveGoal ?? 0
+  const reservePercentage = reserveGoal > 0 ? Math.max(0, Math.round((reserveBalance / reserveGoal) * 100)) : 0
+
+  return (
+    <InternalShell active="home">
+      <main className="dashboard-main">
+        <header className="dashboard-heading">
+          <div>
+            <h1>Bom dia, {firstName}.</h1>
+            <p>Tudo organizado para hoje.</p>
+          </div>
+        </header>
+
+        <section className="dashboard-quick" aria-label="Módulos">
+          <div className="dashboard-quick-card locked"><span>📋</span><strong>Tarefas</strong><small>Em breve</small><b>🔒</b></div>
+          <Link className="dashboard-quick-card" href="/compras"><span>🛒</span><strong>Compras</strong><small>Listas da família</small></Link>
+          <Link className="dashboard-quick-card" href="/financeiro"><span>💰</span><strong>Finanças</strong><small>Resumo mensal</small></Link>
+          <div className="dashboard-quick-card locked"><span>📅</span><strong>Agenda</strong><small>Em breve</small><b>🔒</b></div>
+          <div className="dashboard-quick-card locked"><span>📁</span><strong>Documentos</strong><small>Em breve</small><b>🔒</b></div>
+          <div className="dashboard-quick-card locked"><span>🚨</span><strong>Emergência</strong><small>Em breve</small><b>🔒</b></div>
+        </section>
+
+        <section className="dashboard-stats" aria-label="Resumo do mês">
+          <article>
+            <span>Compras</span>
+            <strong className="dashboard-value-accent">{pendingLists}</strong>
+            <small>{pendingLists === 1 ? 'lista pendente no mês' : 'listas pendentes no mês'}</small>
+          </article>
+          <article>
+            <span>Contas</span>
+            <strong className="dashboard-value-accent">{openBills}</strong>
+            <small>{openBills === 1 ? 'conta aberta no mês' : 'contas abertas no mês'}</small>
+          </article>
+          <article>
+            <span>Reserva</span>
+            <strong className="dashboard-value-reserve">{formatMoney(reserveBalance)}</strong>
+            <small>{reservePercentage}% da meta</small>
+          </article>
+          <article className="locked">
+            <span>Agenda</span>
+            <strong>--</strong>
+            <small>Disponível futuramente</small>
+            <b>🔒</b>
+          </article>
+        </section>
+
+        <section className="dashboard-future-grid">
+          <article className="dashboard-future-card">
+            <h2>Resumo da casa</h2>
+            <div><span>⌂</span><strong>Em construção</strong><small>Novos resumos familiares aparecerão aqui.</small></div>
+          </article>
+          <article className="dashboard-future-card">
+            <h2>Atividades recentes</h2>
+            <div><span>◷</span><strong>Em construção</strong><small>O histórico de atividades será adicionado futuramente.</small></div>
+          </article>
+        </section>
+      </main>
+    </InternalShell>
+  )
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(value)
+}

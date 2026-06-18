@@ -36,18 +36,18 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/auth/callback')
 
   if (!user && !isPublicRoute) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
-    return NextResponse.redirect(loginUrl)
+    const homeUrl = new URL('/', request.url)
+    homeUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    return NextResponse.redirect(homeUrl)
   }
 
   if (user && !AUTHORIZED_EMAILS.has(user.email?.toLowerCase() ?? '')) {
     await supabase.auth.signOut()
-    return NextResponse.redirect(new URL('/login?erro=nao-autorizado', request.url))
+    return NextResponse.redirect(new URL('/?erro=nao-autorizado', request.url))
   }
 
-  if (user && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url))
+  if (user && (pathname === '/' || pathname === '/login')) {
+    return NextResponse.redirect(new URL('/hub', request.url))
   }
 
   return response
