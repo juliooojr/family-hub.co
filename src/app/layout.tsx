@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'Family Hub',
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
   },
   formatDetection: {
     address: false,
