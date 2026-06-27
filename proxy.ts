@@ -36,8 +36,6 @@ export async function proxy(request: NextRequest) {
     pathname === '/manifest.webmanifest' ||
     pathname === '/sw.js' ||
     pathname === '/offline.html' ||
-    pathname === '/icon' ||
-    pathname === '/apple-icon' ||
     pathname.startsWith('/auth/callback')
 
   if (!user && !isPublicRoute) {

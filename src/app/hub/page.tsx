@@ -37,6 +37,18 @@ function countCurrentShoppingLists(lists: ShoppingList[], yearMonth: string) {
   }).length
 }
 
+function getGreeting(date: Date) {
+  const hour = Number(new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    hour12: false,
+    timeZone: 'America/Sao_Paulo',
+  }).format(date))
+
+  if (hour < 12) return 'Bom dia'
+  if (hour < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
 export default async function HubPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,6 +63,7 @@ export default async function HubPage() {
   const month = Number(yearMonth.slice(5, 7)) - 1
   const userName = user.user_metadata.full_name ?? user.email?.split('@')[0] ?? 'Família'
   const firstName = userName.split(' ')[0]
+  const greeting = getGreeting(now)
 
   let shoppingLists: ShoppingList[] = []
   let financeData: Awaited<ReturnType<typeof getFinanceData>> | null = null
@@ -79,7 +92,7 @@ export default async function HubPage() {
       <main className="dashboard-main">
         <header className="dashboard-heading">
           <div>
-            <h1>Bom dia, {firstName}.</h1>
+            <h1>{greeting}, {firstName}.</h1>
             <p>Tudo organizado para hoje.</p>
           </div>
         </header>

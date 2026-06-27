@@ -16,19 +16,25 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['productivity', 'finance', 'lifestyle'],
     icons: [
       {
-        src: '/icon',
+        src: '/icons/family-hub-icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icons/family-hub-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon',
+        src: '/icons/family-hub-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/apple-icon',
+        src: '/icons/apple-touch-icon-180.png',
         sizes: '180x180',
         type: 'image/png',
       },

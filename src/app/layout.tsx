@@ -21,6 +21,15 @@ export const metadata: Metadata = {
   applicationName: 'Family Hub',
   description: 'Hub familiar privado para compras, financas e rotina da familia.',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icons/family-hub-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/family-hub-icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon-180.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   appleWebApp: {
     capable: true,
     title: 'Family Hub',
