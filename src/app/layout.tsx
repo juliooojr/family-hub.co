@@ -33,6 +33,15 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'Family Hub',
+    startupImage: [
+      { url: '/splash/iphone-430x932.png', media: '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)' },
+      { url: '/splash/iphone-428x926.png', media: '(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)' },
+      { url: '/splash/iphone-393x852.png', media: '(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)' },
+      { url: '/splash/iphone-375x812.png', media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)' },
+      { url: '/splash/iphone-414x896.png', media: '(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)' },
+      { url: '/splash/iphone-375x667.png', media: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)' },
+      { url: '/splash/iphone-320x568.png', media: '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)' },
+    ],
     statusBarStyle: 'black-translucent',
   },
   formatDetection: {
