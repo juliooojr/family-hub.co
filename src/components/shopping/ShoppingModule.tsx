@@ -511,7 +511,7 @@ function ListModal({ initial, busy, onClose, onSubmit }: {
     <ModalShell title={initial ? 'EDITAR LISTA' : 'NOVA LISTA'} onClose={onClose}>
       <form onSubmit={submit}>
         <label className="field-label">ÍCONE</label><div className="emoji-grid">{EMOJIS.map((option) => <button type="button" className={emoji === option ? 'selected' : ''} key={option} onClick={() => setEmoji(option)}>{option}</button>)}</div>
-        <label className="field-label" htmlFor="list-name">NOME DA LISTA</label><input id="list-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Mercado da Semana" autoFocus required maxLength={100} />
+        <label className="field-label" htmlFor="list-name">NOME DA LISTA</label><input id="list-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Mercado da Semana" required maxLength={100} />
         <div className="field-row"><div><label className="field-label" htmlFor="list-date">DATA PREVISTA</label><input id="list-date" className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} /></div><div><label className="field-label" htmlFor="list-owner">RESPONSÁVEL</label><select id="list-owner" className="field" value={responsible} onChange={(event) => setResponsible(event.target.value)}>{RESPONSIBLES.map((option) => <option key={option}>{option}</option>)}</select></div></div>
         <div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : initial ? 'Salvar' : 'Criar Lista'}</button></div>
       </form>
@@ -521,7 +521,7 @@ function ListModal({ initial, busy, onClose, onSubmit }: {
 
 function ItemModal({ busy, onClose, onSubmit }: { busy: boolean; onClose: () => void; onSubmit: (name: string) => void }) {
   const [name, setName] = useState('')
-  return <ModalShell title="ADICIONAR ITEM" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); onSubmit(name) }}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" autoFocus required maxLength={160} /><p className="field-hint">Será inserido em ordem alfabética automaticamente.</p><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Adicionando...' : 'Adicionar'}</button></div></form></ModalShell>
+  return <ModalShell title="ADICIONAR ITEM" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); onSubmit(name) }}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" required maxLength={160} /><p className="field-hint">Será inserido em ordem alfabética automaticamente.</p><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Adicionando...' : 'Adicionar'}</button></div></form></ModalShell>
 }
 
 function ConfirmModal({ title, busy, onClose, onConfirm, children }: { title: string; busy: boolean; onClose: () => void; onConfirm: () => void; children: React.ReactNode }) {
