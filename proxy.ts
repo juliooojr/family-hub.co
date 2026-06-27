@@ -33,6 +33,11 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/login' ||
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
+    pathname === '/icon' ||
+    pathname === '/apple-icon' ||
     pathname.startsWith('/auth/callback')
 
   if (!user && !isPublicRoute) {
@@ -54,5 +59,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
