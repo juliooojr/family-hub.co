@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const requestedPath = searchParams.get('next')
   const nextPath = requestedPath?.startsWith('/') && !requestedPath.startsWith('//')
     ? requestedPath
-    : '/'
+    : '/hub'
 
   if (code) {
     const cookieStore = await cookies()
@@ -42,5 +42,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?erro=auth`)
+  return NextResponse.redirect(`${origin}/?erro=auth`)
 }

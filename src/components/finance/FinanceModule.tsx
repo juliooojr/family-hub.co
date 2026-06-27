@@ -190,7 +190,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     <main className="finance-shell">
       <header className="finance-topbar">
         <div className="finance-topbar-main">
-          <Link className="finance-back" href="/" aria-label="Voltar ao Hub">‹</Link>
+          <Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link>
           <div className="finance-heading"><h1>FINANCEIRO</h1><p>{months[monthIndex]} 2026</p></div>
           <nav className="finance-tabs" aria-label="Áreas do Financeiro">
             {tabs.map((item) => <button className={tab === item.id ? 'active' : ''} disabled={item.id === 'investimentos'} title={item.id === 'investimentos' ? 'Disponível futuramente' : undefined} key={item.id} onClick={() => { setTab(item.id); setNotice('') }}>{item.label}{item.id === 'investimentos' ? ' 🔒' : ''}</button>)}
@@ -211,12 +211,6 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
 
-      <nav className="float-nav" aria-label="Módulos">
-        <Link className="fn-home" href="/" prefetch aria-label="Hub">⌂</Link><span className="fn-sep" />
-        <button disabled>📊 Início</button><button className="active">💰 Finanças</button><button disabled>📅 Agenda</button>
-        <Link className="finance-nav-link" href="/compras" prefetch>🛒 Compras</Link><span className="fn-sep" />
-        <button disabled>🐾 Flora</button><button disabled>📁 Docs</button><button className="sos-nav" disabled>🚨 SOS</button>
-      </nav>
       {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
       {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
       {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}

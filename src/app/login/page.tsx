@@ -1,9 +1,4 @@
-import LoginForm from '@/components/auth/LoginForm'
-
-const ERROR_MESSAGES: Record<string, string> = {
-  auth: 'Não foi possível concluir o login. Tente novamente.',
-  'nao-autorizado': 'Este e-mail ainda não tem acesso ao Family Hub.',
-}
+import { redirect } from 'next/navigation'
 
 export default async function LoginPage({
   searchParams,
@@ -11,23 +6,10 @@ export default async function LoginPage({
   searchParams: Promise<{ erro?: string; next?: string }>
 }) {
   const { erro, next } = await searchParams
-  let googleEnabled = false
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
-      cache: 'no-store',
-    })
-    const settings = await response.json() as { external?: { google?: boolean } }
-    googleEnabled = settings.external?.google === true
-  } catch {
-    googleEnabled = false
-  }
+  const params = new URLSearchParams()
 
-  return (
-    <LoginForm
-      googleEnabled={googleEnabled}
-      initialError={ERROR_MESSAGES[erro ?? ''] ?? ''}
-      nextPath={next?.startsWith('/') && !next.startsWith('//') ? next : '/'}
-    />
-  )
+  if (erro) params.set('erro', erro)
+  if (next?.startsWith('/') && !next.startsWith('//')) params.set('next', next)
+
+  redirect(params.size > 0 ? `/?${params.toString()}` : '/')
 }

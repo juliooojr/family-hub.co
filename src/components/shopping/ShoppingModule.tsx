@@ -274,7 +274,7 @@ export default function ShoppingModule({
           {history.length > 1 ? (
             <button className="icon-button" onClick={goBack} aria-label="Voltar">‹</button>
           ) : (
-            <Link className="icon-button" href="/" prefetch aria-label="Ir ao Hub">‹</Link>
+            <Link className="icon-button" href="/hub" prefetch aria-label="Voltar ao início">‹</Link>
           )}
           <div>
             <h1 className="topbar-title">{title}</h1>
@@ -329,8 +329,6 @@ export default function ShoppingModule({
           />
         ) : null}
       </section>
-
-      <FloatNav />
 
       {modal === 'list' ? (
         <ListModal
@@ -536,13 +534,4 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
 
 function EmptyState({ title, copy }: { title: string; copy: string }) {
   return <div className="empty-state"><span>🛒</span><h2>{title}</h2><p>{copy}</p></div>
-}
-
-function FloatNav() {
-  return <nav className="float-nav" aria-label="Módulos">
-    <Link className="fn-home" href="/" prefetch aria-label="Hub">⌂</Link><span className="fn-sep" />
-    <button disabled>📊 Início</button><button disabled>💰 Finanças</button><button disabled>📅 Agenda</button>
-    <button className="active">🛒 Compras</button><span className="fn-sep" />
-    <button disabled>🐾 Flora</button><button disabled>📁 Docs</button><button className="sos-nav" disabled>🚨 SOS</button>
-  </nav>
 }

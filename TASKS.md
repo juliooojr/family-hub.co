@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 15/06/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 17/06/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -15,6 +15,14 @@ Atualizado em 15/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Reserva de emergencia por movimentacao direta ou conta da categoria Reserva.
 - [x] Exportacao financeira em PNG, CSV e JSON.
 - [x] Aba Investimentos preservada e bloqueada para entrega futura.
+- [x] Categorias financeiras exibidas conforme cadastro real do Orcamento.
+- [x] Modal de configuracao da reserva alinhada ao layout completo do `family-hub-v3.html`.
+- [x] Modulo Financeiro integrado na `master` e publicado em producao.
+- [x] Nova home publica com entrada pelo Google.
+- [x] Novo Hub interno com resumo de Compras, Contas e Reserva.
+- [x] Navegacao unificada no desktop e mobile.
+- [x] Temas claro e escuro no novo layout.
+- [x] Remocao dos componentes e assets antigos sem uso.
 
 ## Publicacao do Financeiro
 
@@ -24,19 +32,20 @@ Atualizado em 15/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Interface ligada ao Supabase sem dados ficticios.
 - [x] Aplicar a migration no projeto Supabase compartilhado.
 - [x] Validar no Preview com Julio.
-- [ ] Revisar e integrar o Pull Request na `master`.
-- [ ] Confirmar o deploy de Production na Vercel.
+- [x] Revisar e integrar o Pull Request na `master`.
+- [x] Confirmar o deploy de Production na Vercel.
 
 ## Validacao obrigatoria
 
 - [x] `npm.cmd run lint`
 - [x] `npm.cmd exec tsc -- --noEmit`
 - [x] `npm.cmd run build`
-- [ ] Testar desktop e mobile nos breakpoints relevantes.
-- [ ] Confirmar isolamento por familia e ausencia de secrets no navegador.
+- [x] Testar desktop e mobile nos breakpoints relevantes durante a validacao do Financeiro.
+- [x] Confirmar isolamento por familia e ausencia de secrets no navegador.
 
 ## Proximas entregas
 
+- [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.
 - [ ] Flora.

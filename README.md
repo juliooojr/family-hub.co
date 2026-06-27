@@ -7,17 +7,19 @@ Producao: https://family-hub-co.vercel.app
 ## Situacao atual
 
 - Modulo Compras publicado e em uso.
-- Modulo Financeiro com migration aplicada, pronto para Preview final e publicacao.
+- Modulo Financeiro publicado em producao e em teste de uso real.
 - Google OAuth e a unica forma de login.
 - Apenas Julio e Carol estao autorizados.
 - Ambos acessam a mesma familia e os mesmos dados.
 - RLS esta habilitado nas tabelas publicas do Supabase.
-- Hub desktop e mobile estao funcionando.
+- Nova home publica e novo Hub interno responsivo estao funcionando.
+- Navegacao interna unificada com menu lateral no desktop e barra inferior no mobile.
+- Tema claro e escuro disponivel na home publica e nas areas autenticadas.
 - Lista de Compras esta funcional e persistida no Supabase.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
 - Investimentos permanece bloqueado para uma etapa futura.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
-- Proxima definicao de produto: escolher o modulo seguinte.
+- O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
 ## Modulo Financeiro
 
@@ -28,6 +30,8 @@ Producao: https://family-hub-co.vercel.app
 - Contas da categoria Reserva aumentam a reserva somente quando pagas.
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
+- Categorias exibidas em Transacoes e Contas seguem as categorias criadas no Orcamento; categorias padrao aparecem apenas quando ainda nao ha categorias cadastradas.
+- A reserva de emergencia possui configuracao completa no padrao visual do `family-hub-v3.html`, com custo mensal, meses de cobertura, meta calculada e aporte mensal planejado.
 - As tabelas financeiras iniciaram vazias; a migration nao inseriu dados ficticios.
 
 ## Documentos de referencia
@@ -227,10 +231,9 @@ Concluido:
 
 ## Proximas prioridades
 
-1. Acompanhar o uso real do modulo Financeiro e corrigir eventuais ajustes.
-2. Definir o proximo modulo do Hub.
-3. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-4. Revisar membros e permissoes das plataformas.
-5. Definir rotina de backup do Supabase.
-6. Acompanhar logs da Vercel e do Supabase.
-7. Considerar um Supabase separado para desenvolvimento no futuro.
+1. Acompanhar o uso real do novo layout e do modulo Financeiro.
+2. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+3. Revisar membros e permissoes das plataformas.
+4. Definir rotina de backup do Supabase.
+5. Acompanhar logs da Vercel e do Supabase.
+6. Considerar um Supabase separado para desenvolvimento no futuro.
