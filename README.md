@@ -208,8 +208,10 @@ master estavel
 
 - Tema escuro industrial com fundo carvao e acento laranja.
 - Bebas Neue para titulos, Inter para interface e JetBrains Mono para dados.
-- Hub orbital no desktop e grade propria no mobile.
-- Novos modulos devem funcionar nas duas apresentacoes do Hub.
+- Home publica separada da area autenticada.
+- Hub interno com cards de resumo e atalhos dos modulos.
+- Navegacao autenticada com menu lateral no desktop e barra inferior no mobile.
+- Novos modulos devem funcionar dentro do shell interno responsivo.
 - Elementos bloqueados permanecem em cinza, sem clique.
 - Verde representa conclusao; vermelho representa perigo ou SOS.
 - Nunca corrigir mobile quebrando desktop, nem o inverso.
