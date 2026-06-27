@@ -1,7 +1,8 @@
 'use client'
 
-import Link from 'next/link'
-import { useSyncExternalStore, type ReactNode } from 'react'
+import Link, { useLinkStatus } from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 
 type ActiveModule = 'home' | 'finance' | 'shopping'
 type NavigationItem = {
@@ -30,7 +31,15 @@ export default function InternalShell({
 }) {
   const theme = usePreference('fh-theme', 'light')
   const sidebar = usePreference('fh-sidebar', 'expanded')
+  const pathname = usePathname()
+  const router = useRouter()
   const collapsed = sidebar === 'collapsed'
+
+  useEffect(() => {
+    navigation.forEach((item) => {
+      if (item.href && item.href !== pathname) router.prefetch(item.href)
+    })
+  }, [pathname, router])
 
   function toggleTheme() {
     setPreference('fh-theme', theme === 'light' ? 'dark' : 'light')
@@ -66,8 +75,8 @@ export default function InternalShell({
                 <i>{item.icon}</i><strong>{item.label}</strong><small>🔒</small>
               </span>
             ) : (
-              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} data-tooltip={item.label} title={item.label} key={item.id}>
-                <i>{item.icon}</i><strong>{item.label}</strong>
+              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} title={item.label} key={item.id}>
+                <i>{item.icon}</i><strong>{item.label}</strong><NavPendingHint />
               </Link>
             ))}
           </nav>
@@ -86,14 +95,19 @@ export default function InternalShell({
       </div>
 
       <nav className="internal-mobile-nav" aria-label="Navegação principal">
-        <Link className={active === 'home' ? 'active' : ''} href="/hub" aria-label="Início">🏠</Link>
-        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" aria-label="Finanças">💰</Link>
-        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" aria-label="Compras">🛒</Link>
+        <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início">🏠<NavPendingHint /></Link>
+        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças">💰<NavPendingHint /></Link>
+        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras">🛒<NavPendingHint /></Link>
         <span className="locked" aria-label="Agenda bloqueada">📅</span>
         <a href="/auth/logout" aria-label="Sair">↩</a>
       </nav>
     </div>
   )
+}
+
+function NavPendingHint() {
+  const { pending } = useLinkStatus()
+  return <span className={`nav-pending-hint ${pending ? 'is-pending' : ''}`} aria-hidden />
 }
 
 function usePreference(key: string, fallback: string) {
