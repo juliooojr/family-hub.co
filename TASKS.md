@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 26/06/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 02/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -23,6 +23,11 @@ Atualizado em 26/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Navegacao unificada no desktop e mobile.
 - [x] Temas claro e escuro no novo layout.
 - [x] Remocao dos componentes e assets antigos sem uso.
+- [x] PWA mobile instalavel publicado em producao.
+- [x] Manifest, service worker, offline fallback, icone proprio e splash screen iOS.
+- [x] Ajustes de safe area, status bar e navegacao inferior para uso pelo atalho do iPhone.
+- [x] Modais de Compras revisadas para responsividade mobile e teclado aberto.
+- [x] Navegacao interna com prefetch nas rotas principais.
 
 ## Publicacao do Financeiro
 
@@ -46,6 +51,8 @@ Atualizado em 26/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 ## Proximas entregas
 
 - [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
+- [x] App mobile PWA sem publicacao em loja.
+- [ ] Melhorias de UX observadas apos uso real do app instalado.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.
 - [ ] Flora.
@@ -60,3 +67,4 @@ Atualizado em 26/06/2026. Este arquivo acompanha o estado real do projeto. O pla
 - Toda mudanca de schema deve ser uma migration versionada e revisavel.
 - Desenvolvimento permanece local ate existir uma versao estavel para Preview.
 - Fluxo de entrega: branch, Preview, Pull Request, revisao, merge na `master`, Production.
+- Mudancas em PWA, manifest, icones, splash screen e status bar devem ser testadas no iPhone removendo e adicionando novamente o atalho.

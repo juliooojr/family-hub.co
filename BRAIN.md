@@ -288,3 +288,22 @@ Tarefa desta sessão: [DESCREVA AQUI]"
 
 ---
 *Family Hub BRAIN.md — v3.0 — 10/06/2026*
+
+---
+
+## ATUALIZACAO DE ESTADO REAL - 02/07/2026
+
+Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
+
+- Projeto em producao: https://family-hub-co.vercel.app
+- Stack real: Next.js 16.2.9, React 19.2.4, TypeScript strict, Supabase e Vercel.
+- `master` e a branch oficial da producao.
+- Login e exclusivo via Google OAuth.
+- Usuarios autorizados: Julio e Carol.
+- Home publica, Hub interno, Compras, Financeiro e PWA mobile estao publicados.
+- App instalavel pela tela inicial do iPhone, sem publicacao em loja.
+- PWA possui manifest, service worker, offline fallback, icone principal e splash screen iOS.
+- Navegacao autenticada usa menu lateral no desktop e barra inferior no mobile.
+- Compras e Financeiro usam dados reais no Supabase compartilhado; nao criar dados ficticios.
+- Investimentos, Calendario, Flora, Documentos e Emergencia permanecem bloqueados para escopos futuros.
+- Proxima janela deve focar nas melhorias de UX observadas no uso real do app instalado.

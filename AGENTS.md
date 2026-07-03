@@ -11,3 +11,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Siga o fluxo de branch, Preview, Pull Request, merge e Production definido no README.
 - Nao altere diretamente a `master` para desenvolver funcionalidades.
 - Lembre que, por enquanto, os ambientes podem compartilhar o banco Supabase de producao.
+- O app mobile e um PWA publicado; mudancas em manifest, icones, splash screen, status bar ou safe area devem ser testadas no iPhone removendo e adicionando novamente o atalho.

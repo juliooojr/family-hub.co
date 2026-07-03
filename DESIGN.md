@@ -285,3 +285,19 @@ border: 1px dashed var(--border2); background: none; color: var(--text3);
 
 ---
 *DESIGN.md — Family Hub v3.0 — 10/06/2026*
+
+---
+
+## ATUALIZACAO DE DESIGN PUBLICADO - 02/07/2026
+
+Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
+
+- O layout publicado possui home publica, Hub interno, menu lateral no desktop e barra inferior no mobile.
+- O app tambem funciona como PWA instalavel pelo iPhone, sem publicacao em loja.
+- PWA usa icone proprio em `public/icons` e splash screens iOS em `public/splash`.
+- No iOS instalado, respeitar safe areas da status bar e da home indicator.
+- Evitar faixas pretas artificiais no topo ou na base; a cor visivel deve acompanhar o fundo do app.
+- Modais mobile devem caber na tela, evitar scroll horizontal e continuar utilizaveis com teclado aberto.
+- Campos em mobile devem manter fonte minima de 16px para evitar zoom automatico do iOS.
+- Navegacao inferior mobile deve permanecer acessivel, sem cobrir acoes importantes.
+- Qualquer mudanca em manifest, icone, splash, status bar ou safe area deve ser testada removendo e adicionando novamente o atalho do iPhone.

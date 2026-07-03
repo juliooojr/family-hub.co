@@ -15,6 +15,8 @@ Producao: https://family-hub-co.vercel.app
 - Nova home publica e novo Hub interno responsivo estao funcionando.
 - Navegacao interna unificada com menu lateral no desktop e barra inferior no mobile.
 - Tema claro e escuro disponivel na home publica e nas areas autenticadas.
+- App instalavel como PWA publicado em producao, com manifest, service worker, icone proprio e splash screen no iOS.
+- Experiencia mobile revisada para uso pelo atalho da tela inicial, incluindo status bar, safe area, navegacao inferior e modais de Compras.
 - Lista de Compras esta funcional e persistida no Supabase.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
 - Investimentos permanece bloqueado para uma etapa futura.
@@ -57,6 +59,7 @@ O codigo funcional atual e este README prevalecem quando documentos antigos esti
 - Supabase Auth, PostgreSQL e RLS.
 - Vercel para Preview e Production.
 - Fontes locais Bebas Neue, Inter e JetBrains Mono.
+- PWA com `manifest.webmanifest`, service worker, offline fallback, icones em `public/icons` e splash screens em `public/splash`.
 
 ## Execucao local
 
@@ -211,6 +214,8 @@ master estavel
 - Home publica separada da area autenticada.
 - Hub interno com cards de resumo e atalhos dos modulos.
 - Navegacao autenticada com menu lateral no desktop e barra inferior no mobile.
+- No app instalado, respeitar safe areas do iOS, evitar faixas pretas artificiais e manter modais utilizaveis com teclado aberto.
+- Alteracoes em PWA, icones, splash screen, status bar ou manifest exigem teste removendo e adicionando novamente o atalho no iPhone.
 - Novos modulos devem funcionar dentro do shell interno responsivo.
 - Elementos bloqueados permanecem em cinza, sem clique.
 - Verde representa conclusao; vermelho representa perigo ou SOS.
@@ -230,12 +235,16 @@ Concluido:
 - PR da primeira versao integrado a `master`;
 - `master` definida como branch padrao do GitHub e branch Production da Vercel;
 - deploy de producao da `master` confirmado.
+- PWA mobile integrado a `master` e publicado em producao.
+- Icone principal, splash screen e instalacao pela tela inicial do iPhone confirmados.
+- Ajustes de Compras, Modo Mercado, modais mobile e navegacao inferior revisados apos uso real.
 
 ## Proximas prioridades
 
-1. Acompanhar o uso real do novo layout e do modulo Financeiro.
-2. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-3. Revisar membros e permissoes das plataformas.
-4. Definir rotina de backup do Supabase.
-5. Acompanhar logs da Vercel e do Supabase.
-6. Considerar um Supabase separado para desenvolvimento no futuro.
+1. Acompanhar o uso real do app instalado, novo layout, Compras e Financeiro.
+2. Corrigir melhorias de UX observadas apos publicacao do PWA mobile.
+3. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+4. Revisar membros e permissoes das plataformas.
+5. Definir rotina de backup do Supabase.
+6. Acompanhar logs da Vercel e do Supabase.
+7. Considerar um Supabase separado para desenvolvimento no futuro.
