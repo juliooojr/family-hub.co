@@ -274,14 +274,23 @@ border: 1px dashed var(--border2); background: none; color: var(--text3);
 .mercado-item-nome { font-size: 18px; font-weight: 500; }
 ```
 
+### Preco opcional de item
+
+- O preco de item em Compras e opcional e deve aparecer como informacao secundaria.
+- Usar JetBrains Mono, tamanho pequeno e cor `var(--text3)`.
+- O preco nunca deve competir visualmente com o nome do item nem aumentar demais a altura da linha.
+- A acao de editar item deve ser discreta no desktop e acessivel em touch.
+- Modo Mercado deve manter contraste adequado no desktop e no mobile; evitar topo escuro com texto sem contraste.
+
 ---
 ## FINANCEIRO — PADRÕES VISUAIS ESPECÍFICOS
 
 - Modais seguem a composicao do `family-hub-v3.html`, com valor destacado, chips de categoria e rodape de acoes.
 - Verde representa receita ou conclusao; laranja/vermelho representa despesa; azul representa reserva.
-- O grafico da Visao Geral compara Receita, Despesa e Reserva dos ultimos seis meses.
+- O grafico da Visao Geral compara Receita, Despesa e Reserva dos ultimos seis meses, exibe valores no hover/foco e permite clicar no mes para focar o periodo.
 - Investimentos bloqueado usa baixa opacidade, escala de cinza e nao aceita clique.
 - Filtros de responsavel aparecem somente em Transacoes e Contas.
+- Filtros compactos em Transacoes devem priorizar leitura em mobile e desktop sem ocupar largura excessiva.
 
 ---
 *DESIGN.md — Family Hub v3.0 — 10/06/2026*
@@ -301,3 +310,4 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Campos em mobile devem manter fonte minima de 16px para evitar zoom automatico do iOS.
 - Navegacao inferior mobile deve permanecer acessivel, sem cobrir acoes importantes.
 - Qualquer mudanca em manifest, icone, splash, status bar ou safe area deve ser testada removendo e adicionando novamente o atalho do iPhone.
+- Melhorias de UX publicadas em Compras e Financeiro devem ser validadas tambem no PWA instalado apos deploy em producao.

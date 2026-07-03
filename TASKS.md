@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 02/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 03/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -28,6 +28,9 @@ Atualizado em 02/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Ajustes de safe area, status bar e navegacao inferior para uso pelo atalho do iPhone.
 - [x] Modais de Compras revisadas para responsividade mobile e teclado aberto.
 - [x] Navegacao interna com prefetch nas rotas principais.
+- [x] Melhorias de UX de uso real no Financeiro: data atual em nova transacao, ordenacao cronologica por data registrada, grafico mensal clicavel com valores, filtros compactos e recorrencias/categorias preservando meses anteriores.
+- [x] Ajuste do callback/logout do Google OAuth para persistir cookies de sessao no redirect e evitar falha na primeira tentativa de login.
+- [x] Melhorias de UX de uso real em Compras: Modo Mercado revisado no desktop, preco opcional discreto em itens e edicao de itens.
 
 ## Publicacao do Financeiro
 
@@ -45,6 +48,7 @@ Atualizado em 02/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] `npm.cmd run lint`
 - [x] `npm.cmd exec tsc -- --noEmit`
 - [x] `npm.cmd run build`
+- [x] Validacao desktop das melhorias de Financeiro, Compras e login.
 - [x] Testar desktop e mobile nos breakpoints relevantes durante a validacao do Financeiro.
 - [x] Confirmar isolamento por familia e ausencia de secrets no navegador.
 
@@ -52,7 +56,9 @@ Atualizado em 02/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 
 - [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
 - [x] App mobile PWA sem publicacao em loja.
-- [ ] Melhorias de UX observadas apos uso real do app instalado.
+- [x] Melhorias de UX observadas apos uso real do app instalado.
+- [ ] Validar no mobile PWA instalado as melhorias de Compras, Financeiro e login apos publicacao.
+- [ ] Nova secao Tarefas, nome final e escopo a definir em breve.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.
 - [ ] Flora.

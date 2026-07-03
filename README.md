@@ -18,8 +18,12 @@ Producao: https://family-hub-co.vercel.app
 - App instalavel como PWA publicado em producao, com manifest, service worker, icone proprio e splash screen no iOS.
 - Experiencia mobile revisada para uso pelo atalho da tela inicial, incluindo status bar, safe area, navegacao inferior e modais de Compras.
 - Lista de Compras esta funcional e persistida no Supabase.
+- Compras recebeu melhorias de uso real: Modo Mercado revisado no desktop, item com preco opcional discreto e edicao de itens.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
+- Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos e recorrencias/categorias preservando meses anteriores.
+- Fluxo de login Google foi ajustado para aplicar os cookies de sessao no redirect do callback e evitar falha na primeira tentativa.
 - Investimentos permanece bloqueado para uma etapa futura.
+- Tarefas aparece como proxima secao candidata do sistema, com nome e escopo ainda a definir.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
@@ -28,13 +32,23 @@ Producao: https://family-hub-co.vercel.app
 - Os dados sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
 - Transacoes registram receitas, despesas, depositos e retiradas da reserva.
 - Contas podem ser recorrentes e possuem pagamentos mensais independentes.
+- Edicoes de contas recorrentes e categorias/orcamentos valem do mes em edicao para frente, preservando meses anteriores.
 - Marcar uma conta como paga nao cria outra transacao; a propria conta e a fonte do valor.
 - Contas da categoria Reserva aumentam a reserva somente quando pagas.
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
+- O grafico da Visao Geral permite ver valores por barra e clicar em um mes para focar o periodo.
 - Categorias exibidas em Transacoes e Contas seguem as categorias criadas no Orcamento; categorias padrao aparecem apenas quando ainda nao ha categorias cadastradas.
 - A reserva de emergencia possui configuracao completa no padrao visual do `family-hub-v3.html`, com custo mensal, meses de cobertura, meta calculada e aporte mensal planejado.
 - As tabelas financeiras iniciaram vazias; a migration nao inseriu dados ficticios.
+
+## Modulo Compras
+
+- Listas e itens sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
+- Itens podem ter preco opcional para referencia historica ou planejamento de compra.
+- O preco do item e exibido de forma discreta nas listas, detalhe, arquivo e Modo Mercado.
+- Modo Mercado deve funcionar em desktop e mobile com contraste adequado, toque facil e acoes de item acessiveis.
+- As migrations de Compras sao aditivas e nao inserem dados ficticios.
 
 ## Documentos de referencia
 
@@ -241,10 +255,11 @@ Concluido:
 
 ## Proximas prioridades
 
-1. Acompanhar o uso real do app instalado, novo layout, Compras e Financeiro.
-2. Corrigir melhorias de UX observadas apos publicacao do PWA mobile.
-3. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-4. Revisar membros e permissoes das plataformas.
-5. Definir rotina de backup do Supabase.
-6. Acompanhar logs da Vercel e do Supabase.
-7. Considerar um Supabase separado para desenvolvimento no futuro.
+1. Publicar e validar em producao as melhorias de UX de Compras, Financeiro e login.
+2. Validar no mobile PWA instalado, especialmente Modo Mercado, modais de item e Financeiro.
+3. Definir a nova secao Tarefas, incluindo nome final, escopo, dados e fluxos principais.
+4. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+5. Revisar membros e permissoes das plataformas.
+6. Definir rotina de backup do Supabase.
+7. Acompanhar logs da Vercel e do Supabase.
+8. Considerar um Supabase separado para desenvolvimento no futuro.

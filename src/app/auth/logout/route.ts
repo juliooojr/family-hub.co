@@ -1,9 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 
+type CookieToSet = { name: string; value: string; options: CookieOptions }
+
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies()
+  const cookiesToSet: CookieToSet[] = []
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -12,8 +15,9 @@ export async function GET(request: NextRequest) {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+        setAll(nextCookiesToSet) {
+          cookiesToSet.push(...nextCookiesToSet)
+          nextCookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           )
         },
@@ -26,5 +30,9 @@ export async function GET(request: NextRequest) {
   const homeUrl = new URL('/', request.url)
   if (homeUrl.hostname === '0.0.0.0') homeUrl.hostname = 'localhost'
 
-  return NextResponse.redirect(homeUrl)
+  const response = NextResponse.redirect(homeUrl)
+  cookiesToSet.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, options)
+  )
+  return response
 }

@@ -305,5 +305,9 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - PWA possui manifest, service worker, offline fallback, icone principal e splash screen iOS.
 - Navegacao autenticada usa menu lateral no desktop e barra inferior no mobile.
 - Compras e Financeiro usam dados reais no Supabase compartilhado; nao criar dados ficticios.
+- Melhorias de UX de uso real em Compras, Financeiro e login foram implementadas em 03/07/2026 e aguardam publicacao/validacao mobile.
+- Compras possui item com preco opcional discreto e Modo Mercado revisado para desktop.
+- Financeiro preserva meses anteriores ao editar contas recorrentes e categorias/orcamentos; transacoes usam data atual por padrao e ordenacao por data registrada.
+- A Visao Geral do Financeiro possui grafico mensal clicavel com valores por barra.
 - Investimentos, Calendario, Flora, Documentos e Emergencia permanecem bloqueados para escopos futuros.
-- Proxima janela deve focar nas melhorias de UX observadas no uso real do app instalado.
+- A proxima frente candidata e a nova secao Tarefas, com nome final e escopo ainda a definir.

@@ -10,6 +10,8 @@ import {
   deleteShoppingItem,
   reopenShoppingList,
   setShoppingItemChecked,
+  updateShoppingItem,
+  type ItemInput,
   updateShoppingList,
   type ListInput,
   type ShoppingItem,
@@ -51,6 +53,10 @@ function formatArchivedAt(value: string | null) {
   return new Intl.DateTimeFormat('pt-BR').format(new Date(value))
 }
 
+function formatItemPrice(value: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+}
+
 function progress(list: ShoppingList) {
   const checked = list.items.filter((item) => item.checked).length
   const total = list.items.length
@@ -71,6 +77,7 @@ export default function ShoppingModule({
   const [history, setHistory] = useState<View[]>(['lists'])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [modal, setModal] = useState<Modal>(null)
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null)
   const [marketMode, setMarketMode] = useState(false)
   const [editing, setEditing] = useState(false)
   const [loading] = useState(false)
@@ -145,24 +152,55 @@ export default function ShoppingModule({
     }
   }
 
-  async function submitItem(name: string) {
-    if (!selected || !name.trim()) return
+  function openNewItem(list: ShoppingList) {
+    setSelectedId(list.id)
+    setEditingItem(null)
+    setModal('item')
+  }
+
+  function openEditItem(event: MouseEvent, item: ShoppingItem) {
+    event.stopPropagation()
+    setSelectedId(item.listId)
+    setEditingItem(item)
+    setModal('item')
+  }
+
+  async function submitItem(input: ItemInput) {
+    if (!selected || !input.name.trim()) return
+    const cleanInput = { ...input, name: input.name.trim() }
     if (demo) {
-      const item: ShoppingItem = {
-        id: `demo-${crypto.randomUUID()}`, listId: selected.id, familyId: 'demo', name: name.trim(),
-        checked: false, checkedAt: null, createdAt: new Date().toISOString(),
+      if (editingItem) {
+        updateLocalList(editingItem.listId, (list) => ({
+          ...list,
+          items: list.items.map((item) => item.id === editingItem.id ? { ...item, ...cleanInput } : item),
+        }))
+      } else {
+        const item: ShoppingItem = {
+          id: `demo-${crypto.randomUUID()}`, listId: selected.id, familyId: 'demo', ...cleanInput,
+          checked: false, checkedAt: null, createdAt: new Date().toISOString(),
+        }
+        updateLocalList(selected.id, (list) => ({ ...list, items: [...list.items, item] }))
       }
-      updateLocalList(selected.id, (list) => ({ ...list, items: [...list.items, item] }))
       setModal(null)
+      setEditingItem(null)
       return
     }
     setBusy(true)
     try {
-      const item = await createShoppingItem(supabase, selected, name)
-      updateLocalList(selected.id, (list) => ({ ...list, items: [...list.items, item] }))
+      if (editingItem) {
+        await updateShoppingItem(supabase, editingItem.id, cleanInput)
+        updateLocalList(editingItem.listId, (list) => ({
+          ...list,
+          items: list.items.map((item) => item.id === editingItem.id ? { ...item, ...cleanInput } : item),
+        }))
+      } else {
+        const item = await createShoppingItem(supabase, selected, cleanInput)
+        updateLocalList(selected.id, (list) => ({ ...list, items: [...list.items, item] }))
+      }
       setModal(null)
+      setEditingItem(null)
     } catch (itemError) {
-      setError(itemError instanceof Error ? itemError.message : 'Não foi possível adicionar o item.')
+      setError(itemError instanceof Error ? itemError.message : 'Não foi possível salvar o item.')
     } finally {
       setBusy(false)
     }
@@ -306,7 +344,8 @@ export default function ShoppingModule({
             onOpen={openDetail}
             onToggle={toggleItem}
             onDelete={removeItem}
-            onAdd={(list) => { setSelectedId(list.id); setModal('item') }}
+            onEdit={openEditItem}
+            onAdd={openNewItem}
             onNew={() => { setEditing(false); setModal('list') }}
           />
         ) : null}
@@ -317,7 +356,8 @@ export default function ShoppingModule({
             busy={busy}
             onToggle={toggleItem}
             onDelete={removeItem}
-            onAdd={() => setModal('item')}
+            onEdit={openEditItem}
+            onAdd={() => { setEditingItem(null); setModal('item') }}
             onArchive={archiveSelected}
           />
         ) : null}
@@ -338,7 +378,7 @@ export default function ShoppingModule({
           onSubmit={submitList}
         />
       ) : null}
-      {modal === 'item' ? <ItemModal busy={busy} onClose={() => setModal(null)} onSubmit={submitItem} /> : null}
+      {modal === 'item' ? <ItemModal initial={editingItem} busy={busy} onClose={() => { setModal(null); setEditingItem(null) }} onSubmit={submitItem} /> : null}
       {modal === 'reopen' && selected ? (
         <ConfirmModal
           title="REABRIR LISTA"
@@ -356,19 +396,21 @@ export default function ShoppingModule({
           onExit={() => setMarketMode(false)}
           onToggle={toggleItem}
           onDelete={removeItem}
-          onAdd={() => setModal('item')}
+          onEdit={openEditItem}
+          onAdd={() => { setEditingItem(null); setModal('item') }}
         />
       ) : null}
     </main>
   )
 }
 
-function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onAdd, onNew }: {
+function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onEdit, onAdd, onNew }: {
   lists: ShoppingList[]
   onArchive: () => void
   onOpen: (list: ShoppingList) => void
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
+  onEdit: (event: MouseEvent, item: ShoppingItem) => void
   onAdd: (list: ShoppingList) => void
   onNew: () => void
 }) {
@@ -378,7 +420,7 @@ function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onAdd, onNew 
       <div className="shopping-grid">
         {lists.length === 0 ? <EmptyState title="NENHUMA LISTA ATIVA" copy="Crie a primeira lista para começar." /> : null}
         {lists.map((list) => (
-          <ShoppingCard key={list.id} list={list} onOpen={onOpen} onToggle={onToggle} onDelete={onDelete} onAdd={onAdd} />
+          <ShoppingCard key={list.id} list={list} onOpen={onOpen} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit} onAdd={onAdd} />
         ))}
         <button className="new-list-card" onClick={onNew}><span>+</span> Nova Lista</button>
       </div>
@@ -386,11 +428,12 @@ function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onAdd, onNew 
   )
 }
 
-function ShoppingCard({ list, onOpen, onToggle, onDelete, onAdd }: {
+function ShoppingCard({ list, onOpen, onToggle, onDelete, onEdit, onAdd }: {
   list: ShoppingList
   onOpen: (list: ShoppingList) => void
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
+  onEdit: (event: MouseEvent, item: ShoppingItem) => void
   onAdd: (list: ShoppingList) => void
 }) {
   const stats = progress(list)
@@ -405,33 +448,36 @@ function ShoppingCard({ list, onOpen, onToggle, onDelete, onAdd }: {
         <small>{stats.checked} DE {stats.total} COMPRADOS</small>
       </button>
       <div className="check-list">
-        {sortItems(list.items).map((item) => <CheckRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />)}
+        {sortItems(list.items).map((item) => <CheckRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit} />)}
       </div>
       <button className="add-item-inline" onClick={() => onAdd(list)}>+ item</button>
     </article>
   )
 }
 
-function CheckRow({ item, onToggle, onDelete }: {
+function CheckRow({ item, onToggle, onDelete, onEdit }: {
   item: ShoppingItem
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
+  onEdit: (event: MouseEvent, item: ShoppingItem) => void
 }) {
   return (
     <div className={`check-row ${item.checked ? 'done' : ''}`} role="checkbox" aria-checked={item.checked} tabIndex={0}
       onClick={() => onToggle(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggle(item) }}>
       <span className="check-box">{item.checked ? '✓' : ''}</span>
-      <span className="check-name">{item.name}</span>
+      <span className="check-text"><span className="check-name">{item.name}</span>{item.estimatedPrice !== null ? <span className="check-price">{formatItemPrice(item.estimatedPrice)}</span> : null}</span>
+      <button className="edit-item" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`}>Editar</button>
       <button className="delete-item" onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`}>×</button>
     </div>
   )
 }
 
-function DetailView({ list, busy, onToggle, onDelete, onAdd, onArchive }: {
+function DetailView({ list, busy, onToggle, onDelete, onEdit, onAdd, onArchive }: {
   list: ShoppingList
   busy: boolean
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
+  onEdit: (event: MouseEvent, item: ShoppingItem) => void
   onAdd: () => void
   onArchive: () => void
 }) {
@@ -446,7 +492,7 @@ function DetailView({ list, busy, onToggle, onDelete, onAdd, onArchive }: {
       <div className="surface-card detail-items">
         <div className="section-heading"><h3>ITENS</h3><button className="button button-ghost" onClick={onAdd}>+ Adicionar item</button></div>
         {stats.total === 0 ? <p className="muted-copy">A lista ainda não tem itens.</p> : null}
-        <div className="check-list">{sortItems(list.items).map((item) => <CheckRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />)}</div>
+        <div className="check-list">{sortItems(list.items).map((item) => <CheckRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit} />)}</div>
         {stats.total > 0 && stats.checked === stats.total ? (
           <div className="archive-ready"><div><strong>Todos os itens comprados!</strong><p>Esta lista já pode ir para o arquivo.</p></div><button className="button button-success" onClick={onArchive} disabled={busy}>Arquivar lista</button></div>
         ) : null}
@@ -466,18 +512,19 @@ function ArchiveView({ lists, onReopen }: { lists: ShoppingList[]; onReopen: (li
           <div className="archive-card-main"><div><strong>{list.emoji} {list.name}</strong><p>ARQUIVADO EM {formatArchivedAt(list.archivedAt)} · {list.items.length} ITENS · {list.responsible.toUpperCase()}</p></div>
             <div><button className="button button-ghost" onClick={() => setExpanded(expanded === list.id ? null : list.id)}>{expanded === list.id ? 'Fechar' : 'Ver itens'}</button><button className="button button-primary" onClick={() => onReopen(list)}>↶ Reabrir</button></div>
           </div>
-          {expanded === list.id ? <div className="archive-items">{[...list.items].sort((a, b) => collator.compare(a.name, b.name)).map((item) => <span key={item.id}>{item.name}</span>)}</div> : null}
+          {expanded === list.id ? <div className="archive-items">{[...list.items].sort((a, b) => collator.compare(a.name, b.name)).map((item) => <span key={item.id}>{item.name}{item.estimatedPrice !== null ? <b>{formatItemPrice(item.estimatedPrice)}</b> : null}</span>)}</div> : null}
         </article>
       ))}
     </div>
   )
 }
 
-function MarketMode({ list, onExit, onToggle, onDelete, onAdd }: {
+function MarketMode({ list, onExit, onToggle, onDelete, onEdit, onAdd }: {
   list: ShoppingList
   onExit: () => void
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
+  onEdit: (event: MouseEvent, item: ShoppingItem) => void
   onAdd: () => void
 }) {
   const remaining = list.items.filter((item) => !item.checked).length
@@ -486,7 +533,7 @@ function MarketMode({ list, onExit, onToggle, onDelete, onAdd }: {
       <header><div><h2>{list.emoji} {list.name.toUpperCase()}</h2><p>{remaining} itens restantes</p></div><div><button className="button button-ghost" onClick={onAdd}>+ Item</button><button className="button button-danger" onClick={onExit}>× Sair</button></div></header>
       <div className="market-list">{sortItems(list.items).map((item) => (
         <div className={`market-item ${item.checked ? 'done' : ''}`} key={item.id} onClick={() => onToggle(item)}>
-          <span className="market-check">{item.checked ? '✓' : ''}</span><strong>{item.name}</strong><button onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`}>×</button>
+          <span className="market-check">{item.checked ? '✓' : ''}</span><strong>{item.name}{item.estimatedPrice !== null ? <small>{formatItemPrice(item.estimatedPrice)}</small> : null}</strong><button className="market-edit" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`}>Editar</button><button onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`}>×</button>
         </div>
       ))}</div>
     </div>
@@ -519,9 +566,17 @@ function ListModal({ initial, busy, onClose, onSubmit }: {
   )
 }
 
-function ItemModal({ busy, onClose, onSubmit }: { busy: boolean; onClose: () => void; onSubmit: (name: string) => void }) {
-  const [name, setName] = useState('')
-  return <ModalShell title="ADICIONAR ITEM" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); onSubmit(name) }}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" required maxLength={160} /><p className="field-hint">Será inserido em ordem alfabética automaticamente.</p><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Adicionando...' : 'Adicionar'}</button></div></form></ModalShell>
+function ItemModal({ initial, busy, onClose, onSubmit }: { initial: ShoppingItem | null; busy: boolean; onClose: () => void; onSubmit: (input: ItemInput) => void }) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [price, setPrice] = useState(initial?.estimatedPrice === null || initial?.estimatedPrice === undefined ? '' : String(initial.estimatedPrice).replace('.', ','))
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    const normalizedPrice = price.trim().replace(',', '.')
+    const estimatedPrice = normalizedPrice ? Number(normalizedPrice) : null
+    if (estimatedPrice !== null && (Number.isNaN(estimatedPrice) || estimatedPrice < 0)) return
+    onSubmit({ name, estimatedPrice })
+  }
+  return <ModalShell title={initial ? 'EDITAR ITEM' : 'ADICIONAR ITEM'} onClose={onClose}><form onSubmit={submit}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" required maxLength={160} /><div className="item-price-field"><label className="field-label" htmlFor="item-price">PREÇO OPCIONAL</label><input id="item-price" className="field" value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" placeholder="Ex: 12,90" /></div><p className="field-hint">O preço é opcional e aparece discretamente como referência.</p><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : initial ? 'Salvar' : 'Adicionar'}</button></div></form></ModalShell>
 }
 
 function ConfirmModal({ title, busy, onClose, onConfirm, children }: { title: string; busy: boolean; onClose: () => void; onConfirm: () => void; children: React.ReactNode }) {

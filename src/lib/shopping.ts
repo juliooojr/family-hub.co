@@ -7,6 +7,7 @@ export type ShoppingItem = {
   listId: string
   familyId: string
   name: string
+  estimatedPrice: number | null
   checked: boolean
   checkedAt: string | null
   createdAt: string
@@ -43,9 +44,15 @@ type ItemRow = {
   list_id: string
   family_id: string
   name: string
+  estimated_price: number | string | null
   checked: boolean
   checked_at: string | null
   created_at: string
+}
+
+export type ItemInput = {
+  name: string
+  estimatedPrice: number | null
 }
 
 export type ListInput = {
@@ -61,6 +68,7 @@ function mapItem(row: ItemRow): ShoppingItem {
     listId: row.list_id,
     familyId: row.family_id,
     name: row.name,
+    estimatedPrice: row.estimated_price == null ? null : Number(row.estimated_price),
     checked: row.checked,
     checkedAt: row.checked_at,
     createdAt: row.created_at,
@@ -156,15 +164,35 @@ export async function updateShoppingList(
 export async function createShoppingItem(
   supabase: SupabaseClient,
   list: ShoppingList,
-  name: string,
+  input: ItemInput,
 ): Promise<ShoppingItem> {
   const { data, error } = await supabase
     .from('shopping_items')
-    .insert({ list_id: list.id, family_id: list.familyId, name: name.trim() })
+    .insert({
+      list_id: list.id,
+      family_id: list.familyId,
+      name: input.name.trim(),
+      estimated_price: input.estimatedPrice,
+    })
     .select('*')
     .single()
   if (error) throw error
   return mapItem(data as ItemRow)
+}
+
+export async function updateShoppingItem(
+  supabase: SupabaseClient,
+  itemId: string,
+  input: ItemInput,
+): Promise<void> {
+  const { error } = await supabase
+    .from('shopping_items')
+    .update({
+      name: input.name.trim(),
+      estimated_price: input.estimatedPrice,
+    })
+    .eq('id', itemId)
+  if (error) throw error
 }
 
 export async function setShoppingItemChecked(

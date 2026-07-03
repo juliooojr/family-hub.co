@@ -55,8 +55,9 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const [exportOpen, setExportOpen] = useState(false)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
-  const categoryOptions = budgets.length > 0
-    ? budgets.map((budget) => ({ name: budget.name, emoji: budget.emoji }))
+  const activeBudgets = budgets.filter((budget) => budgetAppearsInMonth(budget, monthIndex))
+  const categoryOptions = activeBudgets.length > 0
+    ? activeBudgets.map((budget) => ({ name: budget.name, emoji: budget.emoji }))
     : defaultCategories
 
   function demoAction(action: string) {
@@ -64,16 +65,28 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   }
 
   async function saveBill(bill: Bill) {
+    const previous = bills.find((item) => item.id === bill.id)
+    const shouldVersion = Boolean(previous && previous.startMonth < monthIndex)
+    const effectiveStartMonth = shouldVersion ? Math.max(monthIndex, bill.startMonth) : bill.startMonth
+    const savedBill = shouldVersion
+      ? { ...bill, id: crypto.randomUUID(), startMonth: effectiveStartMonth, endMonth: undefined, paidMonths: bill.paidMonths.filter((month) => month >= effectiveStartMonth) }
+      : bill
+    if (shouldVersion) {
+      const { error: endError } = await supabase.from('finance_bills').update({ end_date: monthStartDate(effectiveStartMonth - 1) }).eq('id', bill.id).eq('family_id', familyId)
+      if (endError) return setNotice(`Não foi possível preservar os meses anteriores da conta: ${endError.message}`)
+    }
     const { error } = await supabase.from('finance_bills').upsert({
-      id: bill.id, family_id: familyId, name: bill.name, amount: bill.amount, due_day: bill.dueDay,
-      category: bill.category, responsible: bill.owner, recurrence: bill.recurrence,
-      start_date: `2026-${String(bill.startMonth + 1).padStart(2, '0')}-01`, expense_kind: bill.expenseKind,
-      notes: bill.notes || null,
+      id: savedBill.id, family_id: familyId, name: savedBill.name, amount: savedBill.amount, due_day: savedBill.dueDay,
+      category: savedBill.category, responsible: savedBill.owner, recurrence: savedBill.recurrence,
+      start_date: monthStartDate(savedBill.startMonth), end_date: savedBill.endMonth === undefined ? null : monthStartDate(savedBill.endMonth),
+      expense_kind: savedBill.expenseKind, notes: savedBill.notes || null,
     })
     if (error) return setNotice(`Não foi possível salvar a conta: ${error.message}`)
-    setBills((current) => current.some((item) => item.id === bill.id)
-      ? current.map((item) => item.id === bill.id ? bill : item)
-      : [...current, bill])
+    setBills((current) => shouldVersion
+      ? [...current.map((item) => item.id === bill.id ? { ...item, endMonth: effectiveStartMonth - 1 } : item), savedBill]
+      : current.some((item) => item.id === savedBill.id)
+        ? current.map((item) => item.id === savedBill.id ? savedBill : item)
+        : [...current, savedBill])
     setBillModal(null)
   }
 
@@ -100,22 +113,36 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
 
   async function saveBudget(budget: Budget) {
     const previous = budgets.find((item) => item.id === budget.id)
-    if (previous && previous.name !== budget.name) {
+    const originalStartMonth = budget.startMonth ?? monthIndex
+    const shouldVersion = Boolean(previous && (previous.startMonth ?? 0) < monthIndex)
+    const effectiveStartMonth = shouldVersion ? monthIndex : originalStartMonth
+    const savedBudget = shouldVersion
+      ? { ...budget, id: crypto.randomUUID(), startMonth: effectiveStartMonth, endMonth: undefined }
+      : { ...budget, startMonth: effectiveStartMonth }
+    if (previous && previous.name !== savedBudget.name) {
+      const effectiveStartDate = monthStartDate(effectiveStartMonth)
       const [{ error: billError }, { error: transactionError }] = await Promise.all([
-        supabase.from('finance_bills').update({ category: budget.name }).eq('family_id', familyId).eq('category', previous.name),
-        supabase.from('finance_transactions').update({ category: budget.name }).eq('family_id', familyId).eq('category', previous.name),
+        supabase.from('finance_bills').update({ category: savedBudget.name }).eq('family_id', familyId).eq('category', previous.name).gte('start_date', effectiveStartDate),
+        supabase.from('finance_transactions').update({ category: savedBudget.name }).eq('family_id', familyId).eq('category', previous.name).gte('transaction_date', effectiveStartDate),
       ])
       if (billError || transactionError) return setNotice(`Não foi possível renomear a categoria: ${(billError ?? transactionError)?.message}`)
-      setBills((current) => current.map((bill) => bill.category === previous.name ? { ...bill, category: budget.name } : bill))
-      setTransactions((current) => current.map((transaction) => transaction.category === previous.name ? { ...transaction, category: budget.name } : transaction))
+      setBills((current) => current.map((bill) => bill.category === previous.name && bill.startMonth >= effectiveStartMonth ? { ...bill, category: savedBudget.name } : bill))
+      setTransactions((current) => current.map((transaction) => transaction.category === previous.name && transactionMonth(transaction) >= effectiveStartMonth ? { ...transaction, category: savedBudget.name } : transaction))
     }
-    const { error } = await supabase.from('finance_budgets').upsert({ id: budget.id, family_id: familyId, category: budget.name, emoji: budget.emoji, monthly_limit: budget.limit })
-    if (error) return setNotice(`Não foi possível salvar o orçamento: ${error.message}`)
-    setBudgets((current) => {
-      const duplicate = current.find((item) => item.id !== budget.id && item.name.toLocaleLowerCase('pt-BR') === budget.name.toLocaleLowerCase('pt-BR'))
-      if (duplicate) return current.filter((item) => item.id !== budget.id).map((item) => item.id === duplicate.id ? { ...budget, id: duplicate.id } : item)
-      return current.some((item) => item.id === budget.id) ? current.map((item) => item.id === budget.id ? budget : item) : [...current, budget]
+    if (shouldVersion) {
+      const { error: endError } = await supabase.from('finance_budgets').update({ end_date: monthStartDate(effectiveStartMonth - 1) }).eq('id', budget.id).eq('family_id', familyId)
+      if (endError) return setNotice(`Não foi possível preservar os meses anteriores da categoria: ${endError.message}`)
+    }
+    const { error } = await supabase.from('finance_budgets').upsert({
+      id: savedBudget.id, family_id: familyId, category: savedBudget.name, emoji: savedBudget.emoji, monthly_limit: savedBudget.limit,
+      start_date: monthStartDate(effectiveStartMonth), end_date: savedBudget.endMonth === undefined ? null : monthStartDate(savedBudget.endMonth),
     })
+    if (error) return setNotice(`Não foi possível salvar o orçamento: ${error.message}`)
+    setBudgets((current) => shouldVersion
+      ? [...current.map((item) => item.id === budget.id ? { ...item, endMonth: effectiveStartMonth - 1 } : item), savedBudget]
+      : current.some((item) => item.id === savedBudget.id)
+        ? current.map((item) => item.id === savedBudget.id ? savedBudget : item)
+        : [...current, savedBudget])
     setBudgetModal(null)
   }
 
@@ -207,14 +234,14 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
         {tab === 'visao' ? <Overview transactions={transactions} bills={bills} categories={categoryOptions} month={months[monthIndex]} monthIndex={monthIndex} onMonth={setMonthIndex} reserveGoal={reserveGoal} onReserve={setReserveModal} /> : null}
         {tab === 'transacoes' ? <Transactions transactions={transactions} categories={categoryOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setTransactionModal('new')} onEdit={setTransactionModal} /> : null}
         {tab === 'contas' ? <Bills bills={bills} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
-        {tab === 'orcamento' ? <Budgets budgets={budgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
+        {tab === 'orcamento' ? <Budgets budgets={activeBudgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
 
       {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
-      {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} monthIndex={monthIndex} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
-      {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}
-      {reserveModal ? <ReserveModal mode={reserveModal} monthIndex={monthIndex} goal={reserveGoal} balance={calculateReserveBalance(transactions, bills, monthIndex)} averageMonthlyExpenses={calculateAverageMonthlyExpenses(transactions, bills, monthIndex)} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
+      {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
+      {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} monthIndex={monthIndex} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}
+      {reserveModal ? <ReserveModal mode={reserveModal} goal={reserveGoal} balance={calculateReserveBalance(transactions, bills, monthIndex)} averageMonthlyExpenses={calculateAverageMonthlyExpenses(transactions, bills, monthIndex)} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
     </main>
   )
 }
@@ -245,7 +272,7 @@ function Overview({ transactions, bills, categories: categoryOptions, month, mon
       <Stat label="Saldo do mês" value={formatMoney(summary.balance)} tone={summary.balance >= 0 ? 'balance' : 'expense'}><div className="finance-tags"><span className={summary.balance >= 0 ? 'paid' : ''}>{balancePercentage}% da receita</span></div></Stat>
     </div>
     <div className="finance-main-grid">
-      <article className="finance-card"><header className="finance-section-header"><div><h2>ÚLTIMOS 6 MESES</h2><p>Receitas, despesas e reserva</p></div><div className="finance-legend"><span className="income">■ Receita</span><span className="expense">■ Despesa</span><span className="reserve">■ Reserva</span></div></header><div className="finance-six-month-chart">{chart.map((item) => <div className="finance-six-month-column" key={item.index}><div><span className="income" title={`Receitas: ${formatMoney(item.income)}`} style={{height:`${Math.max(3, (item.income / chartMax) * 100)}%`}} /><span className="expense" title={`Despesas: ${formatMoney(item.expenses)}`} style={{height:`${Math.max(3, (item.expenses / chartMax) * 100)}%`}} /><span className="reserve" title={`Reserva: ${formatMoney(item.reserveNet)}`} style={{height:`${Math.max(3, (Math.abs(item.reserveNet) / chartMax) * 100)}%`}} /></div><small>{monthShort(item.index)}</small></div>)}</div></article>
+      <article className="finance-card"><header className="finance-section-header"><div><h2>ÚLTIMOS 6 MESES</h2><p>Clique em um mês para focar nele</p></div><div className="finance-legend"><span className="income">■ Receita</span><span className="expense">■ Despesa</span><span className="reserve">■ Reserva</span></div></header><div className="finance-six-month-chart">{chart.map((item) => <button type="button" className={item.index === monthIndex ? 'finance-six-month-column active' : 'finance-six-month-column'} key={item.index} onClick={() => onMonth(item.index)} aria-label={`Ver ${monthShort(item.index)}: receita ${formatMoney(item.income)}, despesa ${formatMoney(item.expenses)}, reserva ${formatMoney(item.reserveNet)}`}><div><span className="income" style={{height:`${Math.max(3, (item.income / chartMax) * 100)}%`}} /><span className="expense" style={{height:`${Math.max(3, (item.expenses / chartMax) * 100)}%`}} /><span className="reserve" style={{height:`${Math.max(3, (Math.abs(item.reserveNet) / chartMax) * 100)}%`}} /></div><small>{monthShort(item.index)}</small><span className="finance-chart-tooltip"><b>{monthShort(item.index)}</b><em><i className="income" /> Receita {formatMoney(item.income)}</em><em><i className="expense" /> Despesa {formatMoney(item.expenses)}</em><em><i className="reserve" /> Reserva {formatMoney(item.reserveNet)}</em></span></button>)}</div></article>
       <article className="finance-card"><header className="finance-section-header"><h2>GASTOS POR CATEGORIA</h2></header>{categories.length === 0 ? <div className="finance-empty-state"><strong>Nenhuma despesa no mês</strong></div> : <div className="finance-category-list">{categories.map(([name, value], index) => <div className="finance-category" key={name}><i className={categoryTone(index)} /><span>{categoryEmoji(name, categoryOptions)} {name}</span><div><b className={categoryTone(index)} style={{width:`${(value / maxCategory) * 100}%`}} /></div><strong>{formatMoney(value)}</strong></div>)}</div>}</article>
     </div>
     <article className="finance-card finance-reserve"><header className="finance-section-header"><div><h2>RESERVA DE EMERGÊNCIA</h2><p>Saldo acumulado até {month} de 2026</p></div><div className="finance-reserve-actions"><span>{reservePercentage}% da meta</span><button className="button button-ghost" onClick={() => onReserve('goal')}>⚙ Configurar meta</button></div></header><div className="finance-progress"><span style={{width:`${Math.min(reservePercentage, 100)}%`}} /></div><div className="finance-progress-meta"><span>{formatMoney(reserveBalance)} acumulado</span><span>Meta: {formatMoney(reserveGoal)}</span></div><div className="finance-reserve-grid"><div><span>Saldo atual</span><strong>{formatMoney(reserveBalance)}</strong></div><div><span>Meta</span><strong>{formatMoney(reserveGoal)}</strong></div><div><span>Movimento no mês</span><strong>{formatMoney(reserveMonth)}</strong></div></div><div className="finance-reserve-buttons"><button className="button button-primary" onClick={() => onReserve('deposit')}>+ Depositar na Reserva</button><button className="button button-ghost" onClick={() => onReserve('withdrawal')}>− Retirar da Reserva</button></div></article>
@@ -254,23 +281,23 @@ function Overview({ transactions, bills, categories: categoryOptions, month, mon
 
 function Transactions({ transactions, categories, owner, onOwner, month, monthIndex, onMonth, onCreate, onEdit }: { transactions: Transaction[]; categories: CategoryOption[]; owner: string; onOwner: (owner: string) => void; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (transaction: Transaction) => void }) {
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('Todas categorias')
-  const [type, setType] = useState('Todos os tipos')
+  const [category, setCategory] = useState('Categorias')
+  const [type, setType] = useState('Tipos')
   const visible = transactions.filter((transaction) => {
     const matchesMonth = transactionAppearsInMonth(transaction, monthIndex)
     const matchesOwner = owner === 'Família' || transaction.owner === owner
     const matchesSearch = transaction.name.toLocaleLowerCase('pt-BR').includes(search.trim().toLocaleLowerCase('pt-BR'))
-    const matchesCategory = category === 'Todas categorias' || transaction.category === category
-    const matchesType = type === 'Todos os tipos' || (type === 'Receita' ? transaction.type === 'income' : type === 'Despesa' ? transaction.type === 'expense' : transaction.type === 'reserve_deposit' || transaction.type === 'reserve_withdrawal')
+    const matchesCategory = category === 'Categorias' || transaction.category === category
+    const matchesType = type === 'Tipos' || (type === 'Receita' ? transaction.type === 'income' : type === 'Despesa' ? transaction.type === 'expense' : transaction.type === 'reserve_deposit' || transaction.type === 'reserve_withdrawal')
     return matchesMonth && matchesOwner && matchesSearch && matchesCategory && matchesType
-  })
+  }).sort((a, b) => transactionMonthDate(b, monthIndex).localeCompare(transactionMonthDate(a, monthIndex)))
   const groups = [
     ['Receitas', visible.filter((item) => item.type === 'income' && item.category !== 'Reserva')],
     ['Despesas', visible.filter((item) => item.type === 'expense' && item.category !== 'Reserva')],
     ['Reserva', visible.filter((item) => item.type === 'reserve_deposit' || item.type === 'reserve_withdrawal')],
   ] as const
 
-  return <><div className="finance-filter-row"><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Todas categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Todos os tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Nova</button></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
+  return <><div className="finance-filter-row"><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Nova</button></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
 }
 
 function Bills({ bills, owner, onOwner, month, monthIndex, onMonth, onCreate, onEdit, onToggle }: { bills: Bill[]; owner: string; onOwner: (owner: string) => void; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
@@ -329,14 +356,14 @@ function BillGroup({ title, items, monthIndex, onEdit, onToggle }: { title: stri
   })}</div></section>
 }
 
-function BudgetModal({ budget, onClose, onDelete, onSave }: { budget: Budget | null; onClose: () => void; onDelete: (id: string) => void; onSave: (budget: Budget) => void }) {
+function BudgetModal({ budget, monthIndex, onClose, onDelete, onSave }: { budget: Budget | null; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (budget: Budget) => void }) {
   const [draft, setDraft] = useState<Budget>(budget ?? { id: crypto.randomUUID(), name: '', emoji: '🏠', limit: 0 })
   const emojis = ['🏠', '🛒', '💊', '👶', '🐾', '🎉', '📦', '💳', '🚗', '🍽️', '⚡', '📱', '🎓', '👕', '✈️', '🎁']
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!draft.name.trim() || draft.limit <= 0) return
-    onSave({ ...draft, name: draft.name.trim() })
+    onSave({ ...draft, name: draft.name.trim(), startMonth: draft.startMonth ?? monthIndex })
   }
 
   return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-budget-modal" role="dialog" aria-modal="true" aria-label={budget ? 'Editar orçamento' : 'Definir orçamento'}><header><h2>{budget ? 'EDITAR ORÇAMENTO' : 'DEFINIR ORÇAMENTO'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header><form onSubmit={submit}>
@@ -347,13 +374,13 @@ function BudgetModal({ budget, onClose, onDelete, onSave }: { budget: Budget | n
   </form></section></div>
 }
 
-function ReserveModal({ mode, monthIndex, goal, balance, averageMonthlyExpenses, onClose, onGoal, onSave }: { mode: 'deposit' | 'withdrawal' | 'goal'; monthIndex: number; goal: number; balance: number; averageMonthlyExpenses: number; onClose: () => void; onGoal: (goal: number) => void; onSave: (type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) => void }) {
+function ReserveModal({ mode, goal, balance, averageMonthlyExpenses, onClose, onGoal, onSave }: { mode: 'deposit' | 'withdrawal' | 'goal'; goal: number; balance: number; averageMonthlyExpenses: number; onClose: () => void; onGoal: (goal: number) => void; onSave: (type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) => void }) {
   const [amount, setAmount] = useState(mode === 'goal' ? goal : 0)
   const initialCoverage = [3, 6, 9, 12].find((months) => Math.abs(goal / months - averageMonthlyExpenses) < 1) ?? 6
   const [monthlyCost, setMonthlyCost] = useState(mode === 'goal' ? Math.round(goal / initialCoverage) : 0)
   const [coverageMonths, setCoverageMonths] = useState(initialCoverage)
   const [plannedMonthly, setPlannedMonthly] = useState(mode === 'goal' ? Math.max(0, Math.round((goal - balance) / 4)) : 0)
-  const [date, setDate] = useState(`2026-${String(monthIndex + 1).padStart(2, '0')}-07`)
+  const [date, setDate] = useState(localISODate())
   const [notes, setNotes] = useState('')
   const title = mode === 'goal' ? 'CONFIGURAR RESERVA' : mode === 'deposit' ? 'DEPOSITAR NA RESERVA' : 'RETIRAR DA RESERVA'
   const calculatedGoal = Math.max(0, monthlyCost * coverageMonths)
@@ -386,9 +413,9 @@ function ReserveModal({ mode, monthIndex, goal, balance, averageMonthlyExpenses,
     <div className="modal-actions finance-bill-modal-actions"><span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">{mode === 'goal' ? 'Salvar configuração' : 'Salvar'}</button></div></form></section></div>
 }
 
-function TransactionModal({ transaction, categories, monthIndex, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction) => void }) {
+function TransactionModal({ transaction, categories, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction) => void }) {
   const initialCategory = categories[0]?.name ?? 'Outros'
-  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: initialCategory, owner: 'Família', recurrence: 'none', date: `2026-${String(monthIndex + 1).padStart(2, '0')}-07`, notes: '', expenseKind: 'variable' })
+  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: initialCategory, owner: 'Família', recurrence: 'none', date: localISODate(), notes: '', expenseKind: 'variable' })
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
 
   function submit(event: React.FormEvent) {
@@ -413,7 +440,8 @@ function TransactionModal({ transaction, categories, monthIndex, onClose, onDele
 
 function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, onToggle }: { bill: Bill | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (bill: Bill) => void; onToggle: (id: string) => void }) {
   const initialCategory = categories[0]?.name ?? 'Outros'
-  const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: 7, category: initialCategory, owner: 'Família', recurrence: 'none', startMonth: monthIndex, paidMonths: [], notes: '', expenseKind: 'fixed' })
+  const today = localDateParts()
+  const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: today.day, category: initialCategory, owner: 'Família', recurrence: 'none', startMonth: today.month, paidMonths: [], notes: '', expenseKind: 'fixed' })
   const paid = draft.paidMonths.includes(monthIndex)
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
   const dateValue = `2026-${String(draft.startMonth + 1).padStart(2, '0')}-${String(draft.dueDay).padStart(2, '0')}`
@@ -437,16 +465,44 @@ function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, on
   </form></section></div>
 }
 
+function localDateParts(date = new Date()) {
+  return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() }
+}
+
+function localISODate(date = new Date()) {
+  const { year, month, day } = localDateParts(date)
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function monthStartDate(month: number) {
+  return `2026-${String(month + 1).padStart(2, '0')}-01`
+}
+
+function transactionMonth(transaction: Transaction) {
+  return Number(transaction.date.slice(5, 7)) - 1
+}
+
+function transactionMonthDate(transaction: Transaction, month: number) {
+  return `2026-${String(month + 1).padStart(2, '0')}-${transaction.date.slice(8, 10)}`
+}
+
 function appearsInMonth(bill: Bill, month: number) {
   if (month < bill.startMonth) return false
+  if (bill.endMonth !== undefined && month > bill.endMonth) return false
   if (bill.recurrence === 'none') return month === bill.startMonth
   if (bill.recurrence === 'bimonthly') return (month - bill.startMonth) % 2 === 0
   if (bill.recurrence === 'yearly') return month === bill.startMonth
   return true
 }
 
+function budgetAppearsInMonth(budget: Budget, month: number) {
+  const startMonth = budget.startMonth ?? 0
+  if (month < startMonth) return false
+  return budget.endMonth === undefined || month <= budget.endMonth
+}
+
 function transactionAppearsInMonth(transaction: Transaction, month: number) {
-  const startMonth = Number(transaction.date.slice(5, 7)) - 1
+  const startMonth = transactionMonth(transaction)
   if (month < startMonth) return false
   if (transaction.recurrence === 'none') return month === startMonth
   if (transaction.recurrence === 'bimonthly') return (month - startMonth) % 2 === 0
