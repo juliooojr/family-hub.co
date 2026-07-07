@@ -17,7 +17,7 @@ const navigation: NavigationItem[] = [
   { id: 'home', label: 'Início', icon: '🏠', href: '/hub' },
   { id: 'finance', label: 'Finanças', icon: '💰', href: '/financeiro' },
   { id: 'shopping', label: 'Compras', icon: '🛒', href: '/compras' },
-  { id: 'tasks', label: 'Tarefas', icon: '📋', locked: true },
+  { id: 'tasks', label: 'Tarefas', icon: '📋', href: '/tarefas' },
   { id: 'calendar', label: 'Agenda', icon: '📅', locked: true },
   { id: 'documents', label: 'Documentos', icon: '📁', locked: true },
   { id: 'emergency', label: 'Emergência', icon: '🚨', locked: true },
@@ -99,7 +99,7 @@ export default function InternalShell({
         <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início">🏠<NavPendingHint /></Link>
         <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças">💰<NavPendingHint /></Link>
         <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras">🛒<NavPendingHint /></Link>
-        <span className="locked" aria-label="Tarefas em pausa" title="Tarefas em pausa">📋</span>
+        <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas">📋<NavPendingHint /></Link>
         <a href="/auth/logout" aria-label="Sair">↩</a>
       </nav>
     </div>

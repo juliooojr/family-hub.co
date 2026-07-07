@@ -192,7 +192,6 @@ export default function TasksModule({
                 onReset={() => void setTaskValue(task, 0)}
                 onManualChange={(value) => setManualAmounts((current) => ({ ...current, [task.id]: value }))}
                 onManualAdd={() => addManualQuantity(task)}
-                onEdit={() => setModal(task)}
               />
             ))}
           </div>
@@ -236,7 +235,6 @@ function TaskCard({
   onReset,
   onManualChange,
   onManualAdd,
-  onEdit,
 }: {
   task: RoutineTask
   entry: RoutineEntry | null
@@ -248,17 +246,25 @@ function TaskCard({
   onReset: () => void
   onManualChange: (value: string) => void
   onManualAdd: () => void
-  onEdit: () => void
 }) {
   const value = entry?.value ?? 0
   const completed = entry?.completed ?? false
   const percent = task.goalType === 'check' ? (completed ? 100 : 0) : Math.min(100, Math.round((value / task.goalValue) * 100))
   return (
     <article className={`task-card ${task.goalType === 'quantity' ? 'quantity' : ''} ${completed ? 'done' : ''}`}>
-      <div className="task-card-main">
-        <div className="task-icon">{task.emoji}</div>
-        <div>
+      <div className="task-leading">
+        {task.goalType === 'check' ? (
+          <button className={`task-check-button ${completed ? 'checked' : ''}`} disabled={busy} onClick={onToggle} aria-label={completed ? 'Desfazer conclusão' : 'Concluir tarefa'}>
+            {completed ? '✓' : ''}
+          </button>
+        ) : (
+          <span className="task-icon">{task.emoji}</span>
+        )}
+      </div>
+      <div className="task-card-body">
+        <div className="task-card-main">
           <div className="task-title-row">
+            {task.goalType === 'check' ? <span className="task-title-emoji">{task.emoji}</span> : null}
             <h2>{task.name}</h2>
             {streak > 0 ? <span>🔥 {streak}</span> : null}
           </div>
@@ -269,14 +275,7 @@ function TaskCard({
           </div>
           <div className="progress-track task-progress"><span style={{ width: `${percent}%` }} /></div>
         </div>
-      </div>
-      <div className="task-card-actions">
-        <button className="task-edit-button" onClick={onEdit}>Editar</button>
-        {task.goalType === 'check' ? (
-          <button className={`task-check-button ${completed ? 'checked' : ''}`} disabled={busy} onClick={onToggle} aria-label={completed ? 'Desfazer conclusão' : 'Concluir tarefa'}>
-            {completed ? '✓' : ''}
-          </button>
-        ) : (
+        {task.goalType === 'quantity' ? (
           <div className="task-quantity-actions">
             <div>
               {task.quickValues.map((amount) => <button key={amount} disabled={busy} onClick={() => onAdd(amount)}>+{formatAmount(amount, task.goalUnit)}</button>)}
@@ -287,7 +286,7 @@ function TaskCard({
               <button disabled={busy} onClick={onManualAdd}>Adicionar</button>
             </label>
           </div>
-        )}
+        ) : null}
       </div>
     </article>
   )
@@ -401,7 +400,7 @@ function TaskModal({
               <label className="field-label" htmlFor="task-frequency">FREQUÊNCIA</label>
               <select id="task-frequency" className="field" value={frequency} onChange={(event) => setFrequency(event.target.value as TaskFrequency)}>
                 <option value="daily">Diária</option>
-                <option value="weekly">Semanal</option>
+                <option value="weekly">Semanal / dias específicos</option>
                 <option value="biweekly">Quinzenal</option>
                 <option value="monthly">Mensal</option>
               </select>
@@ -413,13 +412,16 @@ function TaskModal({
           </div>
 
           {frequency === 'weekly' ? (
-            <div className="task-weekdays" aria-label="Dias da semana">
-              {WEEKDAYS.map((day) => <button type="button" className={weekdays.includes(day.value) ? 'active' : ''} key={day.value} onClick={() => toggleWeekday(day.value)}>{day.label}</button>)}
-            </div>
+            <>
+              <label className="field-label">DIAS ESPECÍFICOS</label>
+              <div className="task-weekdays" aria-label="Dias da semana">
+                {WEEKDAYS.map((day) => <button type="button" className={weekdays.includes(day.value) ? 'active' : ''} key={day.value} onClick={() => toggleWeekday(day.value)}>{day.label}</button>)}
+              </div>
+            </>
           ) : null}
 
           <div className="task-notification-locked">
-            <div><strong>Notificação no celular</strong><small>Preparado para a próxima etapa.</small></div>
+            <div><strong>Notificação</strong></div>
             <input type="time" value={notificationTime} onChange={(event) => setNotificationTime(event.target.value)} disabled />
             <span>Bloqueado</span>
           </div>
