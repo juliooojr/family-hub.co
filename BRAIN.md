@@ -278,20 +278,38 @@ Fase 5 — Produção
 ---
 
 ## INSTRUÇÃO PARA IA GERADORA DE CÓDIGO
-> Copie e cole no início de cada sessão no Cursor:
+> Prompt recomendado para iniciar um novo chat retomando Tarefas:
 
-"Leia BRAIN.md, DESIGN.md e TASKS.md antes de qualquer ação.
-Stack: Next.js 14 App Router + TypeScript strict + Tailwind + Supabase + shadcn/ui.
-Referência visual: family-hub-v3.html — respeite paleta, tipografia e comportamentos de UX documentados no BRAIN.md.
-Regras inegociáveis: RLS em todas as queries, zero keys no código, TypeScript sem any, cursor global corrigido (default em não-interativos, pointer em clicáveis, text só em inputs).
-Tarefa desta sessão: [DESCREVA AQUI]"
+"Vamos continuar o Family Hub a partir da branch atualizada de Tarefas.
+
+Antes de mexer no código, leia AGENTS.md, README.md, TASKS.md, DESIGN.md e BRAIN.md.
+
+Contexto importante:
+- O PWA mobile já está publicado em produção.
+- Compras e Financeiro estão em uso real.
+- A primeira base experimental de Tarefas já existe, mas os acessos pelo menu lateral, navigation mobile e tela inicial estão bloqueados até revisão.
+- Tarefas deve ser exclusiva por usuário, diferente de Compras/Financeiro que são por família.
+- A proposta atual é manter o nome Tarefas por enquanto.
+- A seção deve seguir o padrão visual do Family Hub, funcionando bem no desktop e responsivo.
+- Frequências esperadas: diário, semanal, quinzenal, mensal e dias específicos.
+- Deve permitir concluir/desfazer, editar/excluir, metas de quantidade como água, sequência zerando quando passar um dia previsto sem cumprir, e deixar notificações preparadas porém bloqueadas.
+- Transações financeiras agora são sempre avulsas; contas podem ser fixas ou variáveis recorrentes.
+- Existe backlog para detalhar contas variáveis como Cartão de crédito sem duplicar o total nas transações.
+
+Objetivo da sessão:
+Revisar a primeira base de Tarefas, propor/implementar apenas os ajustes necessários para uma primeira versão pequena e útil, e só então desbloquear os acessos se a experiência estiver aprovada.
+
+Validação obrigatória ao final:
+npm.cmd run lint
+npm.cmd exec tsc -- --noEmit
+npm.cmd run build"
 
 ---
 *Family Hub BRAIN.md — v3.0 — 10/06/2026*
 
 ---
 
-## ATUALIZACAO DE ESTADO REAL - 02/07/2026
+## ATUALIZACAO DE ESTADO REAL - 06/07/2026
 
 Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 
@@ -308,6 +326,8 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Melhorias de UX de uso real em Compras, Financeiro e login foram implementadas em 03/07/2026 e aguardam publicacao/validacao mobile.
 - Compras possui item com preco opcional discreto e Modo Mercado revisado para desktop.
 - Financeiro preserva meses anteriores ao editar contas recorrentes e categorias/orcamentos; transacoes usam data atual por padrao e ordenacao por data registrada.
+- Financeiro separa despesas em Fixos, Variaveis recorrentes e Transacoes avulsas. Apenas Contas usam a classificacao fixo/variavel; Transacoes sao sempre avulsas.
+- Contas variaveis como Cartao de credito devem representar o total da fatura. O detalhamento interno da fatura esta no backlog e nao deve duplicar despesas em Transacoes.
 - A Visao Geral do Financeiro possui grafico mensal clicavel com valores por barra.
+- Tarefas possui primeira base experimental na branch atual, mas os acessos pelo menu lateral, navigation mobile e tela inicial estao bloqueados ate revisao e aprovacao.
 - Investimentos, Calendario, Flora, Documentos e Emergencia permanecem bloqueados para escopos futuros.
-- A proxima frente candidata e a nova secao Tarefas, com nome final e escopo ainda a definir.

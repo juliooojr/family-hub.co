@@ -68,14 +68,13 @@ export default async function HubPage() {
   let shoppingLists: ShoppingList[] = []
   let financeData: Awaited<ReturnType<typeof getFinanceData>> | null = null
 
-  try {
-    [shoppingLists, financeData] = await Promise.all([
-      getShoppingLists(supabase),
-      getFinanceData(supabase, user.id),
-    ])
-  } catch {
-    // The dashboard remains available if one module is temporarily unavailable.
-  }
+  const [shoppingResult, financeResult] = await Promise.allSettled([
+    getShoppingLists(supabase),
+    getFinanceData(supabase, user.id),
+  ])
+
+  if (shoppingResult.status === 'fulfilled') shoppingLists = shoppingResult.value
+  if (financeResult.status === 'fulfilled') financeData = financeResult.value
 
   const pendingLists = countCurrentShoppingLists(shoppingLists, yearMonth)
   const openBills = financeData?.bills.filter((bill) =>
@@ -98,9 +97,9 @@ export default async function HubPage() {
         </header>
 
         <section className="dashboard-quick" aria-label="Módulos">
-          <div className="dashboard-quick-card locked"><span>📋</span><strong>Tarefas</strong><small>Em breve</small><b>🔒</b></div>
-          <Link className="dashboard-quick-card" href="/compras"><span>🛒</span><strong>Compras</strong><small>Listas da família</small></Link>
           <Link className="dashboard-quick-card" href="/financeiro"><span>💰</span><strong>Finanças</strong><small>Resumo mensal</small></Link>
+          <Link className="dashboard-quick-card" href="/compras"><span>🛒</span><strong>Compras</strong><small>Listas da família</small></Link>
+          <div className="dashboard-quick-card locked"><span>📋</span><strong>Tarefas</strong><small>Em pausa</small><b>🔒</b></div>
           <div className="dashboard-quick-card locked"><span>📅</span><strong>Agenda</strong><small>Em breve</small><b>🔒</b></div>
           <div className="dashboard-quick-card locked"><span>📁</span><strong>Documentos</strong><small>Em breve</small><b>🔒</b></div>
           <div className="dashboard-quick-card locked"><span>🚨</span><strong>Emergência</strong><small>Em breve</small><b>🔒</b></div>
@@ -108,25 +107,25 @@ export default async function HubPage() {
 
         <section className="dashboard-stats" aria-label="Resumo do mês">
           <article>
-            <span>Compras</span>
-            <strong className="dashboard-value-accent">{pendingLists}</strong>
-            <small>{pendingLists === 1 ? 'lista pendente no mês' : 'listas pendentes no mês'}</small>
-          </article>
-          <article>
             <span>Contas</span>
             <strong className="dashboard-value-accent">{openBills}</strong>
             <small>{openBills === 1 ? 'conta aberta no mês' : 'contas abertas no mês'}</small>
           </article>
           <article>
+            <span>Compras</span>
+            <strong className="dashboard-value-accent">{pendingLists}</strong>
+            <small>{pendingLists === 1 ? 'lista pendente no mês' : 'listas pendentes no mês'}</small>
+          </article>
+          <article className="locked">
+            <span>Tarefas</span>
+            <strong className="dashboard-value-accent">--</strong>
+            <small>em pausa para ajustes</small>
+            <b>🔒</b>
+          </article>
+          <article>
             <span>Reserva</span>
             <strong className="dashboard-value-reserve">{formatMoney(reserveBalance)}</strong>
             <small>{reservePercentage}% da meta</small>
-          </article>
-          <article className="locked">
-            <span>Agenda</span>
-            <strong>--</strong>
-            <small>Disponível futuramente</small>
-            <b>🔒</b>
           </article>
         </section>
 
@@ -136,8 +135,8 @@ export default async function HubPage() {
             <div><span>⌂</span><strong>Em construção</strong><small>Novos resumos familiares aparecerão aqui.</small></div>
           </article>
           <article className="dashboard-future-card">
-            <h2>Atividades recentes</h2>
-            <div><span>◷</span><strong>Em construção</strong><small>O histórico de atividades será adicionado futuramente.</small></div>
+            <h2>Hoje em Tarefas</h2>
+            <div><span>📋</span><strong>Em pausa</strong><small>A seção será retomada com o escopo ajustado.</small></div>
           </article>
         </section>
       </main>

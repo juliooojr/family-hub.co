@@ -7,6 +7,18 @@ const AUTHORIZED_EMAILS = new Set([
 ])
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const bypassAuthRoute =
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
+    pathname.startsWith('/auth/sign-in') ||
+    pathname.startsWith('/auth/callback')
+
+  if (bypassAuthRoute) {
+    return NextResponse.next({ request })
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -29,14 +41,9 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  const pathname = request.nextUrl.pathname
   const isPublicRoute =
     pathname === '/' ||
-    pathname === '/login' ||
-    pathname === '/manifest.webmanifest' ||
-    pathname === '/sw.js' ||
-    pathname === '/offline.html' ||
-    pathname.startsWith('/auth/callback')
+    pathname === '/login'
 
   if (!user && !isPublicRoute) {
     const homeUrl = new URL('/', request.url)

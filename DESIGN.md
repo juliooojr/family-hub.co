@@ -311,3 +311,4 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Navegacao inferior mobile deve permanecer acessivel, sem cobrir acoes importantes.
 - Qualquer mudanca em manifest, icone, splash, status bar ou safe area deve ser testada removendo e adicionando novamente o atalho do iPhone.
 - Melhorias de UX publicadas em Compras e Financeiro devem ser validadas tambem no PWA instalado apos deploy em producao.
+- A entrada de Tarefas deve permanecer visualmente bloqueada no menu lateral, navigation mobile e tela inicial ate a primeira versao ser revisada e aprovada.

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function PublicHome({
   googleEnabled,
@@ -31,36 +30,9 @@ export default function PublicHome({
       return
     }
 
-    const callbackUrl = new URL('/auth/callback', window.location.origin)
-    callbackUrl.searchParams.set('next', nextPath)
-    if (callbackUrl.hostname === '0.0.0.0') callbackUrl.hostname = 'localhost'
-
-    const { data, error: authError } = await createClient().auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: callbackUrl.toString(),
-        skipBrowserRedirect: true,
-      },
-    })
-
-    if (authError || !data.url) {
-      setLocalError('Não foi possível abrir o login do Google.')
-      setLoading(false)
-      return
-    }
-
-    const authorizationUrl = new URL(data.url)
-    const returnedCallback = authorizationUrl.searchParams.get('redirect_to')
-
-    if (!returnedCallback || new URL(returnedCallback).origin !== callbackUrl.origin) {
-      setLocalError(
-        `O Supabase não autorizou o retorno para ${callbackUrl.origin}. Adicione ${callbackUrl.origin}/auth/callback às Redirect URLs do projeto.`,
-      )
-      setLoading(false)
-      return
-    }
-
-    window.location.assign(authorizationUrl.toString())
+    const signInUrl = new URL('/auth/sign-in', window.location.origin)
+    signInUrl.searchParams.set('next', nextPath)
+    window.location.assign(signInUrl.toString())
   }
 
   return (

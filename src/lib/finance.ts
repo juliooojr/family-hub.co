@@ -16,7 +16,7 @@ export type FinanceTransaction = {
 export type FinanceBill = {
   id: string; name: string; amount: number; dueDay: number; category: string; owner: string
   recurrence: FinanceTransaction['recurrence']; startMonth: number; endMonth?: number; paidMonths: number[]
-  notes?: string; expenseKind: 'fixed' | 'variable'
+  startDate?: string; notes?: string; expenseKind: 'fixed' | 'variable'
 }
 
 export type FinanceBudget = { id: string; name: string; emoji: string; limit: number; startMonth?: number; endMonth?: number }
@@ -44,13 +44,14 @@ export async function getFinanceData(supabase: SupabaseClient, userId: string) {
   const error = transactionsResult.error ?? billsResult.error ?? budgetsResult.error ?? reserveResult.error
   if (error) throw error
   const transactions: FinanceTransaction[] = (transactionsResult.data ?? []).map((row) => ({
-    id: row.id, type: row.type, name: row.name, amount: Number(row.amount), category: row.category,
+    id: row.id, type: row.type, name: row.name, amount: Number(row.amount), category: row.type === 'income' ? 'Receita' : row.category,
     owner: row.responsible, recurrence: row.recurrence, date: row.transaction_date,
     notes: row.notes ?? undefined, expenseKind: row.expense_kind ?? undefined,
   }))
   const bills: FinanceBill[] = ((billsResult.data ?? []) as BillRow[]).map((row) => ({
     id: row.id, name: row.name, amount: Number(row.amount), dueDay: row.due_day, category: row.category,
     owner: row.responsible, recurrence: row.recurrence, startMonth: Number(row.start_date.slice(5, 7)) - 1,
+    startDate: row.start_date,
     endMonth: row.end_date ? Number(row.end_date.slice(5, 7)) - 1 : undefined,
     paidMonths: (row.finance_bill_payments ?? []).map((payment) => Number(payment.month_date.slice(5, 7)) - 1),
     notes: row.notes ?? undefined, expenseKind: row.expense_kind,

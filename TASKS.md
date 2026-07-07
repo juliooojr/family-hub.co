@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 03/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 06/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -31,6 +31,8 @@ Atualizado em 03/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Melhorias de UX de uso real no Financeiro: data atual em nova transacao, ordenacao cronologica por data registrada, grafico mensal clicavel com valores, filtros compactos e recorrencias/categorias preservando meses anteriores.
 - [x] Ajuste do callback/logout do Google OAuth para persistir cookies de sessao no redirect e evitar falha na primeira tentativa de login.
 - [x] Melhorias de UX de uso real em Compras: Modo Mercado revisado no desktop, preco opcional discreto em itens e edicao de itens.
+- [x] Primeira base experimental de Tarefas criada em branch propria, ainda bloqueada na navegacao para revisao de escopo antes de uso real.
+- [x] Financeiro ajustado para separar despesas em Fixos, Variaveis recorrentes e Transacoes avulsas; transacoes nao usam mais classificacao fixa/variavel.
 
 ## Publicacao do Financeiro
 
@@ -58,7 +60,8 @@ Atualizado em 03/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] App mobile PWA sem publicacao em loja.
 - [x] Melhorias de UX observadas apos uso real do app instalado.
 - [ ] Validar no mobile PWA instalado as melhorias de Compras, Financeiro e login apos publicacao.
-- [ ] Nova secao Tarefas, nome final e escopo a definir em breve.
+- [ ] Retomar a secao Tarefas a partir da base experimental, com navegacao bloqueada ate aprovacao visual e funcional.
+- [ ] Financeiro: criar detalhamento interno para contas variaveis como Cartao de credito, permitindo listar assinaturas/compras que compoem a fatura sem duplicar o total nas transacoes.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.
 - [ ] Flora.

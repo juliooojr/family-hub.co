@@ -64,7 +64,22 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     setNotice(`${action} será habilitado após a definição e aprovação do schema financeiro.`)
   }
 
-  async function saveBill(bill: Bill) {
+  async function saveBill(input: Bill | Bill[]) {
+    if (Array.isArray(input)) {
+      const rows = input.map((bill) => ({
+        id: bill.id, family_id: familyId, name: bill.name, amount: bill.amount, due_day: bill.dueDay,
+        category: bill.category, responsible: bill.owner, recurrence: 'none' as const,
+        start_date: bill.startDate ?? monthStartDate(bill.startMonth), end_date: null,
+        expense_kind: bill.expenseKind, notes: bill.notes || null,
+      }))
+      const { error } = await supabase.from('finance_bills').insert(rows)
+      if (error) return setNotice(`Não foi possível salvar as parcelas: ${error.message}`)
+      setBills((current) => [...current, ...input])
+      setBillModal(null)
+      return
+    }
+
+    const bill = input
     const previous = bills.find((item) => item.id === bill.id)
     const shouldVersion = Boolean(previous && previous.startMonth < monthIndex)
     const effectiveStartMonth = shouldVersion ? Math.max(monthIndex, bill.startMonth) : bill.startMonth
@@ -78,7 +93,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     const { error } = await supabase.from('finance_bills').upsert({
       id: savedBill.id, family_id: familyId, name: savedBill.name, amount: savedBill.amount, due_day: savedBill.dueDay,
       category: savedBill.category, responsible: savedBill.owner, recurrence: savedBill.recurrence,
-      start_date: monthStartDate(savedBill.startMonth), end_date: savedBill.endMonth === undefined ? null : monthStartDate(savedBill.endMonth),
+      start_date: savedBill.startDate ?? monthStartDate(savedBill.startMonth), end_date: savedBill.endMonth === undefined ? null : monthStartDate(savedBill.endMonth),
       expense_kind: savedBill.expenseKind, notes: savedBill.notes || null,
     })
     if (error) return setNotice(`Não foi possível salvar a conta: ${error.message}`)
@@ -90,12 +105,28 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     setBillModal(null)
   }
 
-  async function saveTransaction(transaction: Transaction) {
+  async function saveTransaction(input: Transaction | Transaction[]) {
+    if (Array.isArray(input)) {
+      const savedTransactions = input.map((transaction) => ({ ...transaction, expenseKind: undefined }))
+      const rows = input.map((transaction) => ({
+        id: transaction.id, family_id: familyId, type: transaction.type, name: transaction.name,
+        amount: transaction.amount, category: transaction.category, responsible: transaction.owner,
+        recurrence: 'none' as const, transaction_date: transaction.date,
+        expense_kind: null, notes: transaction.notes || null,
+      }))
+      const { error } = await supabase.from('finance_transactions').insert(rows)
+      if (error) return setNotice(`Não foi possível salvar as parcelas: ${error.message}`)
+      setTransactions((current) => [...current, ...savedTransactions])
+      setTransactionModal(null)
+      return
+    }
+
+    const transaction = { ...input, expenseKind: undefined }
     const { error } = await supabase.from('finance_transactions').upsert({
       id: transaction.id, family_id: familyId, type: transaction.type, name: transaction.name,
       amount: transaction.amount, category: transaction.category, responsible: transaction.owner,
       recurrence: transaction.recurrence, transaction_date: transaction.date,
-      expense_kind: transaction.expenseKind ?? null, notes: transaction.notes || null,
+        expense_kind: null, notes: transaction.notes || null,
     })
     if (error) return setNotice(`Não foi possível salvar a transação: ${error.message}`)
     setTransactions((current) => current.some((item) => item.id === transaction.id)
@@ -116,8 +147,15 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     const originalStartMonth = budget.startMonth ?? monthIndex
     const shouldVersion = Boolean(previous && (previous.startMonth ?? 0) < monthIndex)
     const effectiveStartMonth = shouldVersion ? monthIndex : originalStartMonth
+    const existingEffectiveBudget = shouldVersion
+      ? budgets.find((item) =>
+        item.id !== budget.id &&
+        (item.startMonth ?? 0) === effectiveStartMonth &&
+        item.name.toLocaleLowerCase('pt-BR') === budget.name.toLocaleLowerCase('pt-BR')
+      )
+      : undefined
     const savedBudget = shouldVersion
-      ? { ...budget, id: crypto.randomUUID(), startMonth: effectiveStartMonth, endMonth: undefined }
+      ? { ...budget, id: existingEffectiveBudget?.id ?? crypto.randomUUID(), startMonth: effectiveStartMonth, endMonth: undefined }
       : { ...budget, startMonth: effectiveStartMonth }
     if (previous && previous.name !== savedBudget.name) {
       const effectiveStartDate = monthStartDate(effectiveStartMonth)
@@ -138,11 +176,14 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
       start_date: monthStartDate(effectiveStartMonth), end_date: savedBudget.endMonth === undefined ? null : monthStartDate(savedBudget.endMonth),
     })
     if (error) return setNotice(`Não foi possível salvar o orçamento: ${error.message}`)
-    setBudgets((current) => shouldVersion
-      ? [...current.map((item) => item.id === budget.id ? { ...item, endMonth: effectiveStartMonth - 1 } : item), savedBudget]
-      : current.some((item) => item.id === savedBudget.id)
-        ? current.map((item) => item.id === savedBudget.id ? savedBudget : item)
-        : [...current, savedBudget])
+    setBudgets((current) => {
+      const endedPrevious = shouldVersion
+        ? current.map((item) => item.id === budget.id ? { ...item, endMonth: effectiveStartMonth - 1 } : item)
+        : current
+      return endedPrevious.some((item) => item.id === savedBudget.id)
+        ? endedPrevious.map((item) => item.id === savedBudget.id ? savedBudget : item)
+        : [...endedPrevious, savedBudget]
+    })
     setBudgetModal(null)
   }
 
@@ -262,15 +303,16 @@ function Overview({ transactions, bills, categories: categoryOptions, month, mon
   const reserveMonth = summary.reserveNet
   const reservePercentage = reserveGoal > 0 ? Math.max(0, Math.round((reserveBalance / reserveGoal) * 100)) : 0
   const balancePercentage = summary.income > 0 ? Math.round((summary.balance / summary.income) * 100) : 0
+  const expenseComposition = calculateExpenseComposition(transactions, bills, monthIndex)
 
   return <>
     <SectionToolbar title="VISÃO GERAL" subtitle={`Resumo financeiro · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /></SectionToolbar>
-    <div className="finance-summary-grid">
+    <div className="finance-summary-grid finance-overview-summary">
       <Stat label={`Receita ${month}`} value={formatMoney(summary.income)} tone="income" note={`${summary.incomeCount} receitas no mês`} />
       <Stat label={`Despesas ${month}`} value={formatMoney(summary.expenses)} tone="expense"><div className="finance-tags"><span>Fixo {formatMoney(summary.fixed)}</span><span>Variável {formatMoney(summary.variable)}</span></div></Stat>
-      <Stat label="Contas do mês" value={formatMoney(summary.billsTotal)}><div className="finance-tags"><span className="paid">{formatMoney(summary.billsPaid)} pagas</span><span>{formatMoney(summary.billsPending)} pend.</span></div></Stat>
       <Stat label="Saldo do mês" value={formatMoney(summary.balance)} tone={summary.balance >= 0 ? 'balance' : 'expense'}><div className="finance-tags"><span className={summary.balance >= 0 ? 'paid' : ''}>{balancePercentage}% da receita</span></div></Stat>
     </div>
+    <ExpenseCompositionCard composition={expenseComposition} />
     <div className="finance-main-grid">
       <article className="finance-card"><header className="finance-section-header"><div><h2>ÚLTIMOS 6 MESES</h2><p>Clique em um mês para focar nele</p></div><div className="finance-legend"><span className="income">■ Receita</span><span className="expense">■ Despesa</span><span className="reserve">■ Reserva</span></div></header><div className="finance-six-month-chart">{chart.map((item) => <button type="button" className={item.index === monthIndex ? 'finance-six-month-column active' : 'finance-six-month-column'} key={item.index} onClick={() => onMonth(item.index)} aria-label={`Ver ${monthShort(item.index)}: receita ${formatMoney(item.income)}, despesa ${formatMoney(item.expenses)}, reserva ${formatMoney(item.reserveNet)}`}><div><span className="income" style={{height:`${Math.max(3, (item.income / chartMax) * 100)}%`}} /><span className="expense" style={{height:`${Math.max(3, (item.expenses / chartMax) * 100)}%`}} /><span className="reserve" style={{height:`${Math.max(3, (Math.abs(item.reserveNet) / chartMax) * 100)}%`}} /></div><small>{monthShort(item.index)}</small><span className="finance-chart-tooltip"><b>{monthShort(item.index)}</b><em><i className="income" /> Receita {formatMoney(item.income)}</em><em><i className="expense" /> Despesa {formatMoney(item.expenses)}</em><em><i className="reserve" /> Reserva {formatMoney(item.reserveNet)}</em></span></button>)}</div></article>
       <article className="finance-card"><header className="finance-section-header"><h2>GASTOS POR CATEGORIA</h2></header>{categories.length === 0 ? <div className="finance-empty-state"><strong>Nenhuma despesa no mês</strong></div> : <div className="finance-category-list">{categories.map(([name, value], index) => <div className="finance-category" key={name}><i className={categoryTone(index)} /><span>{categoryEmoji(name, categoryOptions)} {name}</span><div><b className={categoryTone(index)} style={{width:`${(value / maxCategory) * 100}%`}} /></div><strong>{formatMoney(value)}</strong></div>)}</div>}</article>
@@ -296,8 +338,29 @@ function Transactions({ transactions, categories, owner, onOwner, month, monthIn
     ['Despesas', visible.filter((item) => item.type === 'expense' && item.category !== 'Reserva')],
     ['Reserva', visible.filter((item) => item.type === 'reserve_deposit' || item.type === 'reserve_withdrawal')],
   ] as const
+  const incoming = visible.filter((item) => item.type === 'income' || item.type === 'reserve_deposit')
+  const outgoing = visible.filter((item) => item.type === 'expense' || item.type === 'reserve_withdrawal')
+  const incomingTotal = incoming.reduce((sum, item) => sum + item.amount, 0)
+  const outgoingTotal = outgoing.reduce((sum, item) => sum + item.amount, 0)
+  const spentPercentage = incomingTotal > 0 ? Math.round((outgoingTotal / incomingTotal) * 100) : 0
 
-  return <><div className="finance-filter-row"><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Nova</button></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
+  return <><div className="finance-filter-row"><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Nova</button></div><div className="finance-three-grid"><Stat label="Entradas" value={formatMoney(incomingTotal)} tone="income" note={`${incoming.length} ${incoming.length === 1 ? 'transação' : 'transações'}`} /><Stat label="Saídas" value={formatMoney(outgoingTotal)} tone="expense" note={`${outgoing.length} ${outgoing.length === 1 ? 'transação' : 'transações'}`} /><Stat label="% das entradas" value={`${spentPercentage}%`} tone={spentPercentage >= 100 ? 'expense' : spentPercentage >= 75 ? 'accent' : 'balance'} note={incomingTotal > 0 ? `${formatMoney(outgoingTotal)} de ${formatMoney(incomingTotal)}` : 'sem entradas no filtro'} /></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
+}
+
+function ExpenseCompositionCard({ composition }: { composition: ReturnType<typeof calculateExpenseComposition> }) {
+  const items = [
+    { label: 'Fixos', value: composition.fixed, note: 'contas e transações fixas', tone: 'green' },
+    { label: 'Variáveis recorrentes', value: composition.recurringVariable, note: 'contas previsíveis que variam', tone: 'orange' },
+    { label: 'Transações avulsas', value: composition.oneOffVariable, note: 'despesas pontuais do mês', tone: 'blue' },
+  ]
+  const total = Math.max(composition.total, 0)
+  return <article className="finance-card finance-expense-composition">
+    <header className="finance-section-header"><div><h2>COMPOSIÇÃO DAS DESPESAS</h2><p>Distribui o total gasto no mês por tipo</p></div><strong>{formatMoney(composition.total)}</strong></header>
+    <div>{items.map((item) => {
+      const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0
+      return <div className="finance-expense-composition-row" key={item.label}><span>{item.label}</span><strong>{percentage}%</strong><div><b className={item.tone} style={{ width: `${percentage}%` }} /></div><small>{formatMoney(item.value)} · {item.note}</small></div>
+    })}</div>
+  </article>
 }
 
 function Bills({ bills, owner, onOwner, month, monthIndex, onMonth, onCreate, onEdit, onToggle }: { bills: Bill[]; owner: string; onOwner: (owner: string) => void; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
@@ -316,16 +379,24 @@ function Budgets({ budgets, bills, transactions, categories, month, monthIndex, 
   const expenses = calculateCategoryExpenses(bills, transactions, monthIndex)
   const budgetNames = new Set(budgets.map((budget) => budget.name))
   const unbudgeted = [...expenses.entries()].filter(([category, amount]) => amount > 0 && !budgetNames.has(category))
-  const totalBudgeted = budgets.reduce((sum, budget) => sum + budget.limit, 0)
-  const totalSpent = [...expenses.values()].reduce((sum, amount) => sum + amount, 0)
-  const available = totalBudgeted - totalSpent
+  const planning = calculateBudgetPlanning(transactions, bills, budgets, expenses, monthIndex)
 
-  return <><SectionToolbar title="ORÇAMENTO" subtitle={`Semáforo de controle · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Categoria</button></SectionToolbar>{budgets.length === 0 ? <div className="finance-bill-empty">Nenhuma categoria possui orçamento definido.</div> : <div className="finance-budget-list">{budgets.map((budget) => {
+  return <><SectionToolbar title="ORÇAMENTO" subtitle={`Semáforo de controle · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Categoria</button></SectionToolbar><BudgetPlanningCards planning={planning} />{budgets.length === 0 ? <div className="finance-bill-empty">Nenhuma categoria possui orçamento definido.</div> : <div className="finance-budget-list">{budgets.map((budget) => {
     const spent = expenses.get(budget.name) ?? 0
     const percentage = budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0
     const tone = budgetTone(percentage)
     return <button className="finance-budget-row" key={budget.id} onClick={() => onEdit(budget)}><i className={tone} /><strong><span>{budget.emoji}</span> {budget.name}</strong><div><span className={tone} style={{width:`${Math.min(percentage, 100)}%`}} /></div><span><b className={tone}>{formatMoney(spent)}</b><small>de {formatMoney(budget.limit)} · {percentage}%</small></span></button>
-  })}</div>}{unbudgeted.length > 0 ? <section className="finance-unbudgeted"><h3>GASTOS SEM ORÇAMENTO</h3><p>Estas categorias têm despesas no mês, mas ainda não possuem teto definido.</p><div>{unbudgeted.map(([category, amount]) => <span key={category}>{categoryEmoji(category, categories)} {category} <strong>{formatMoney(amount)}</strong></span>)}</div></section> : null}<div className="finance-three-grid"><Stat label="Total orçado" value={formatMoney(totalBudgeted)} /><Stat label="Total gasto" value={formatMoney(totalSpent)} tone="expense" /><Stat label={available >= 0 ? 'Disponível' : 'Acima do orçamento'} value={formatMoney(Math.abs(available))} tone={available >= 0 ? 'income' : 'expense'} /></div></>
+  })}</div>}{unbudgeted.length > 0 ? <section className="finance-unbudgeted"><h3>GASTOS SEM ORÇAMENTO</h3><p>Estas categorias têm despesas no mês, mas ainda não possuem teto definido.</p><div>{unbudgeted.map(([category, amount]) => <span key={category}>{categoryEmoji(category, categories)} {category} <strong>{formatMoney(amount)}</strong></span>)}</div></section> : null}</>
+}
+
+function BudgetPlanningCards({ planning }: { planning: ReturnType<typeof calculateBudgetPlanning> }) {
+  const budgetShare = planning.income > 0 ? Math.round((planning.totalBudgeted / planning.income) * 100) : 0
+  return <div className="finance-summary-grid finance-budget-planning">
+    <Stat label="Receita do mês" value={formatMoney(planning.income)} tone="income" note={`${planning.incomeCount} ${planning.incomeCount === 1 ? 'receita' : 'receitas'}`} />
+    <Stat label="Total orçado" value={formatMoney(planning.totalBudgeted)} tone="accent" note={planning.income > 0 ? `${budgetShare}% da receita` : 'sem receita registrada'} />
+    <Stat label="Gasto orçado" value={formatMoney(planning.budgetedSpent)} tone="expense" note={`${formatMoney(Math.abs(planning.budgetRemaining))} ${planning.budgetRemaining >= 0 ? 'restantes' : 'acima do orçado'}`} />
+    <Stat label={planning.plannedMargin >= 0 ? 'Folga planejada' : 'Receita excedida'} value={formatMoney(Math.abs(planning.plannedMargin))} tone={planning.plannedMargin >= 0 ? 'balance' : 'expense'} note={planning.plannedMargin >= 0 ? 'receita ainda sem destino fixo' : 'orçamento maior que receita'} />
+  </div>
 }
 
 function Investments({ onAction }: { onAction: (action: string) => void }) {
@@ -352,7 +423,7 @@ function BillGroup({ title, items, monthIndex, onEdit, onToggle }: { title: stri
   return <section className="finance-bill-group"><h3>{title}</h3><div>{items.length === 0 ? <div className="finance-bill-empty">Nenhuma conta neste grupo.</div> : items.map((item) => {
     const paid = item.paidMonths.includes(monthIndex)
     const overdue = !paid && monthIndex === 6 && item.dueDay < 7
-    return <div className={`finance-bill ${paid ? 'paid' : overdue ? 'overdue' : 'pending'}`} key={item.id}><button className="finance-bill-check" onClick={() => onToggle(item.id)} aria-label={paid ? 'Marcar como pendente' : 'Marcar como paga'}>{paid ? '✓' : ''}</button><button className="finance-bill-detail" onClick={() => onEdit(item)}><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {paid ? `Pago em ${String(item.dueDay).padStart(2, '0')}/07` : `Vence dia ${String(item.dueDay).padStart(2, '0')}`} · {item.owner}</small></span><span><b>{formatMoney(item.amount)}</b><small>{paid ? 'Pago ✓' : overdue ? `Vencida há ${7 - item.dueDay} dias` : `Falta ${item.dueDay - 7} dias`}</small></span></button></div>
+    return <div className={`finance-bill ${paid ? 'paid' : overdue ? 'overdue' : 'pending'}`} key={item.id}><button className="finance-bill-check" onClick={() => onToggle(item.id)} aria-label={paid ? 'Marcar como pendente' : 'Marcar como paga'}>{paid ? '✓' : ''}</button><button className="finance-bill-detail" onClick={() => onEdit(item)}><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.expenseKind === 'fixed' ? 'Fixo' : 'Variável'} · {paid ? `Pago em ${String(item.dueDay).padStart(2, '0')}/07` : `Vence dia ${String(item.dueDay).padStart(2, '0')}`} · {item.owner}</small></span><span><b>{formatMoney(item.amount)}</b><small>{paid ? 'Pago ✓' : overdue ? `Vencida há ${7 - item.dueDay} dias` : `Falta ${item.dueDay - 7} dias`}</small></span></button></div>
   })}</div></section>
 }
 
@@ -413,42 +484,78 @@ function ReserveModal({ mode, goal, balance, averageMonthlyExpenses, onClose, on
     <div className="modal-actions finance-bill-modal-actions"><span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">{mode === 'goal' ? 'Salvar configuração' : 'Salvar'}</button></div></form></section></div>
 }
 
-function TransactionModal({ transaction, categories, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction) => void }) {
+function TransactionModal({ transaction, categories, onClose, onDelete, onSave }: { transaction: Transaction | null; categories: CategoryOption[]; onClose: () => void; onDelete: (id: string) => void; onSave: (transaction: Transaction | Transaction[]) => void }) {
   const initialCategory = categories[0]?.name ?? 'Outros'
-  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: initialCategory, owner: 'Família', recurrence: 'none', date: localISODate(), notes: '', expenseKind: 'variable' })
+  const [draft, setDraft] = useState<Transaction>(transaction ?? { id: crypto.randomUUID(), type: 'expense', name: '', amount: 0, category: initialCategory, owner: 'Família', recurrence: 'none', date: localISODate(), notes: '' })
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
+  const [customInstallments, setCustomInstallments] = useState(0)
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!draft.name.trim() || draft.amount <= 0 || !draft.date) return
-    onSave({ ...draft, name: draft.name.trim() })
+    const cleanDraft = { ...draft, name: draft.name.trim(), category: draft.type === 'income' ? 'Receita' : draft.category }
+    if (!transaction && customInstallments > 1) {
+      const installmentAmount = Number((cleanDraft.amount / customInstallments).toFixed(2))
+      const lastAmount = Number((cleanDraft.amount - installmentAmount * (customInstallments - 1)).toFixed(2))
+      onSave(Array.from({ length: customInstallments }, (_, index) => ({
+        ...cleanDraft,
+        id: crypto.randomUUID(),
+        name: `${cleanDraft.name} ${index + 1}/${customInstallments}`,
+        amount: index === customInstallments - 1 ? lastAmount : installmentAmount,
+        recurrence: 'none',
+        date: addMonthsToISODate(cleanDraft.date, index + 1),
+        notes: cleanDraft.notes?.trim() || `Parcela ${index + 1}/${customInstallments}`,
+      })))
+      return
+    }
+    onSave(cleanDraft)
   }
 
   const isReserve = draft.type === 'reserve_deposit' || draft.type === 'reserve_withdrawal'
   return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-bill-modal finance-transaction-modal" role="dialog" aria-modal="true" aria-label={transaction ? 'Detalhe da transação' : 'Nova transação'}><header><h2>{transaction ? 'DETALHE DA TRANSAÇÃO' : 'NOVA TRANSAÇÃO'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header>{transaction ? <div className={`finance-transaction-summary ${transactionTone(draft.type)}`}><div><small>{transactionTypeLabel(draft.type)} · {draft.category.toUpperCase()}</small><strong>{transactionSign(draft.type)}{formatMoney(draft.amount)}</strong><span>{draft.name}</span></div><div><span>{formatDate(draft.date)}</span><span>{draft.owner} · {recurrenceLabel(draft.recurrence)}</span></div></div> : null}<form onSubmit={submit}>
-    <div className="finance-type-toggle">{isReserve ? <><button type="button" className={draft.type === 'reserve_deposit' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'reserve_deposit' })}>▲ DEPÓSITO</button><button type="button" className={draft.type === 'reserve_withdrawal' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'reserve_withdrawal' })}>▼ RETIRADA</button></> : <><button type="button" className={draft.type === 'expense' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'expense' })}>▼ DESPESA</button><button type="button" className={draft.type === 'income' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'income' })}>▲ RECEITA</button></>}</div>
+    <div className="finance-type-toggle">{isReserve ? <><button type="button" className={draft.type === 'reserve_deposit' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'reserve_deposit' })}>▲ DEPÓSITO</button><button type="button" className={draft.type === 'reserve_withdrawal' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'reserve_withdrawal' })}>▼ RETIRADA</button></> : <><button type="button" className={draft.type === 'expense' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'expense', category: draft.category === 'Receita' ? initialCategory : draft.category })}>▼ DESPESA</button><button type="button" className={draft.type === 'income' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'income', category: 'Receita' })}>▲ RECEITA</button></>}</div>
     <div className="finance-amount-input"><span>R$</span><input id="transaction-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required autoFocus={!transaction} /></div>
     <div className="finance-form-group"><label htmlFor="transaction-name">DESCRIÇÃO</label><input id="transaction-name" className="field" value={draft.name} placeholder="Ex: Mercado, Aluguel, Salário..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={100} /></div>
-    <div className="finance-form-group"><span className="finance-form-label">CATEGORIA</span><div className="finance-category-chips">{categories.map((category) => <button type="button" className={draft.category === category.name ? 'selected' : ''} key={category.name} onClick={() => setDraft({ ...draft, category: category.name, type: category.name === 'Reserva' ? 'reserve_deposit' : isReserve ? 'expense' : draft.type })}><span>{category.emoji}</span>{category.name}</button>)}</div></div>
+    {draft.type !== 'income' ? <div className="finance-form-group"><span className="finance-form-label">CATEGORIA</span><div className="finance-category-chips">{categories.map((category) => <button type="button" className={draft.category === category.name ? 'selected' : ''} key={category.name} onClick={() => setDraft({ ...draft, category: category.name, type: category.name === 'Reserva' ? 'reserve_deposit' : isReserve ? 'expense' : draft.type })}><span>{category.emoji}</span>{category.name}</button>)}</div></div> : <div className="finance-income-note">Receitas entram no resumo do mês sem categoria de orçamento.</div>}
     <div className="finance-modal-fields"><div className="finance-form-group"><label htmlFor="transaction-date">DATA</label><input id="transaction-date" className="field" type="date" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} required /></div><div className="finance-form-group"><label htmlFor="transaction-owner">RESPONSÁVEL</label><select id="transaction-owner" className="field" value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })}>{['Família', 'Julio', 'Carol'].map((owner) => <option key={owner}>{owner}</option>)}</select></div></div>
-    <div className="finance-form-group"><span className="finance-form-label">RECORRÊNCIA</span><div className="finance-recurrence-options">{recurrences.map(([value, label]) => <button type="button" className={draft.recurrence === value ? 'selected' : ''} key={value} onClick={() => setDraft({ ...draft, recurrence: value })}>{label}</button>)}</div></div>
-    {!isReserve && draft.type === 'expense' ? <ExpenseKindField value={draft.expenseKind ?? 'variable'} onChange={(expenseKind) => setDraft({ ...draft, expenseKind })} /> : null}
+    <div className="finance-form-group"><span className="finance-form-label">RECORRÊNCIA</span><div className="finance-recurrence-options">{recurrences.map(([value, label]) => <button type="button" className={customInstallments === 0 && draft.recurrence === value ? 'selected' : ''} key={value} onClick={() => { setCustomInstallments(0); setDraft({ ...draft, recurrence: value }) }}>{label}</button>)}{!transaction ? <button type="button" className={customInstallments > 1 ? 'selected' : ''} onClick={() => { setCustomInstallments(customInstallments > 1 ? 0 : 10); setDraft({ ...draft, recurrence: 'none' }) }}>Personalizado</button> : null}</div></div>
+    {!transaction && customInstallments > 1 ? <div className="finance-form-group"><label htmlFor="transaction-installments">QUANTIDADE DE PARCELAS</label><input id="transaction-installments" className="field" type="number" min="2" max="60" value={customInstallments} onChange={(event) => setCustomInstallments(Math.max(2, Number(event.target.value) || 2))} /><small className="finance-helper-text">A primeira parcela entra no próximo mês. O valor será dividido e a descrição receberá 1/{customInstallments}, 2/{customInstallments}...</small></div> : null}
     <div className="finance-form-group"><label htmlFor="transaction-notes">OBSERVAÇÕES (OPCIONAL)</label><input id="transaction-notes" className="field" value={draft.notes ?? ''} placeholder="Notas adicionais..." onChange={(event) => setDraft({ ...draft, notes: event.target.value })} maxLength={240} /></div>
     <div className="modal-actions finance-bill-modal-actions">{transaction ? <button type="button" className="button button-danger" onClick={() => onDelete(transaction.id)}>Excluir</button> : null}<span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">{transaction ? 'Salvar alterações' : 'Salvar Transação'}</button></div>
   </form></section></div>
 }
 
-function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, onToggle }: { bill: Bill | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (bill: Bill) => void; onToggle: (id: string) => void }) {
+function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, onToggle }: { bill: Bill | null; categories: CategoryOption[]; monthIndex: number; onClose: () => void; onDelete: (id: string) => void; onSave: (bill: Bill | Bill[]) => void; onToggle: (id: string) => void }) {
   const initialCategory = categories[0]?.name ?? 'Outros'
   const today = localDateParts()
   const [draft, setDraft] = useState<Bill>(bill ?? { id: crypto.randomUUID(), name: '', amount: 0, dueDay: today.day, category: initialCategory, owner: 'Família', recurrence: 'none', startMonth: today.month, paidMonths: [], notes: '', expenseKind: 'fixed' })
   const paid = draft.paidMonths.includes(monthIndex)
   const recurrences: Array<[Recurrence, string]> = [['none', 'Único'], ['weekly', 'Semanal'], ['monthly', 'Mensal'], ['yearly', 'Anual']]
+  const [customInstallments, setCustomInstallments] = useState(0)
   const dateValue = `2026-${String(draft.startMonth + 1).padStart(2, '0')}-${String(draft.dueDay).padStart(2, '0')}`
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!draft.name.trim() || draft.amount <= 0 || draft.dueDay < 1 || draft.dueDay > 31) return
+    if (!bill && customInstallments > 1) {
+      const installmentAmount = Number((draft.amount / customInstallments).toFixed(2))
+      const lastAmount = Number((draft.amount - installmentAmount * (customInstallments - 1)).toFixed(2))
+      onSave(Array.from({ length: customInstallments }, (_, index) => {
+        const startDate = addMonthsToMonthStart(dateValue, index + 1)
+        return {
+          ...draft,
+          id: crypto.randomUUID(),
+          name: `${draft.name.trim()} ${index + 1}/${customInstallments}`,
+          amount: index === customInstallments - 1 ? lastAmount : installmentAmount,
+          recurrence: 'none',
+          startDate,
+          startMonth: Number(startDate.slice(5, 7)) - 1,
+          paidMonths: [],
+          notes: draft.notes?.trim() || `Parcela ${index + 1}/${customInstallments}`,
+        }
+      }))
+      return
+    }
     onSave({ ...draft, name: draft.name.trim() })
   }
 
@@ -458,7 +565,8 @@ function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, on
     <div className="finance-form-group"><label htmlFor="bill-name">DESCRIÇÃO</label><input id="bill-name" className="field" value={draft.name} placeholder="Ex: Mercado, Aluguel, Condomínio..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={100} /></div>
     <div className="finance-form-group"><span className="finance-form-label">CATEGORIA</span><div className="finance-category-chips">{categories.map((category) => <button type="button" className={draft.category === category.name ? 'selected' : ''} key={category.name} onClick={() => setDraft({ ...draft, category: category.name })}><span>{category.emoji}</span>{category.name}</button>)}</div></div>
     <div className="finance-modal-fields"><div className="finance-form-group"><label htmlFor="bill-date">DATA</label><input id="bill-date" className="field" type="date" value={dateValue} onChange={(event) => { const date = event.target.valueAsDate; if (date) setDraft({ ...draft, dueDay: date.getUTCDate(), startMonth: date.getUTCMonth() }) }} required /></div><div className="finance-form-group"><label htmlFor="bill-owner">RESPONSÁVEL</label><select id="bill-owner" className="field" value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })}>{['Família', 'Julio', 'Carol'].map((owner) => <option key={owner}>{owner}</option>)}</select></div></div>
-    <div className="finance-form-group"><span className="finance-form-label">RECORRÊNCIA</span><div className="finance-recurrence-options">{recurrences.map(([value, label]) => <button type="button" className={draft.recurrence === value ? 'selected' : ''} key={value} onClick={() => setDraft({ ...draft, recurrence: value })}>{label}</button>)}</div></div>
+    <div className="finance-form-group"><span className="finance-form-label">RECORRÊNCIA</span><div className="finance-recurrence-options">{recurrences.map(([value, label]) => <button type="button" className={customInstallments === 0 && draft.recurrence === value ? 'selected' : ''} key={value} onClick={() => { setCustomInstallments(0); setDraft({ ...draft, recurrence: value }) }}>{label}</button>)}{!bill ? <button type="button" className={customInstallments > 1 ? 'selected' : ''} onClick={() => { setCustomInstallments(customInstallments > 1 ? 0 : 10); setDraft({ ...draft, recurrence: 'none' }) }}>Personalizado</button> : null}</div></div>
+    {!bill && customInstallments > 1 ? <div className="finance-form-group"><label htmlFor="bill-installments">QUANTIDADE DE PARCELAS</label><input id="bill-installments" className="field" type="number" min="2" max="60" value={customInstallments} onChange={(event) => setCustomInstallments(Math.max(2, Number(event.target.value) || 2))} /><small className="finance-helper-text">A primeira parcela entra no próximo mês. O valor será dividido e a descrição receberá 1/{customInstallments}, 2/{customInstallments}...</small></div> : null}
     {draft.category !== 'Reserva' ? <ExpenseKindField value={draft.expenseKind} onChange={(expenseKind) => setDraft({ ...draft, expenseKind })} /> : null}
     <div className="finance-form-group"><label htmlFor="bill-notes">OBSERVAÇÕES (OPCIONAL)</label><input id="bill-notes" className="field" value={draft.notes ?? ''} placeholder="Notas adicionais..." onChange={(event) => setDraft({ ...draft, notes: event.target.value })} maxLength={240} /></div>
     <div className="modal-actions finance-bill-modal-actions">{bill ? <button type="button" className="button button-danger" onClick={() => onDelete(bill.id)}>Excluir</button> : null}<span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">Salvar Conta</button></div>
@@ -472,6 +580,18 @@ function localDateParts(date = new Date()) {
 function localISODate(date = new Date()) {
   const { year, month, day } = localDateParts(date)
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function addMonthsToISODate(value: string, months: number) {
+  const date = new Date(`${value}T12:00:00`)
+  const originalDay = date.getDate()
+  date.setMonth(date.getMonth() + months)
+  if (date.getDate() !== originalDay) date.setDate(0)
+  return date.toISOString().slice(0, 10)
+}
+
+function addMonthsToMonthStart(value: string, months: number) {
+  return addMonthsToISODate(value, months).slice(0, 8) + '01'
 }
 
 function monthStartDate(month: number) {
@@ -523,6 +643,64 @@ function calculateCategoryExpenses(bills: Bill[], transactions: Transaction[], m
   return expenses
 }
 
+function calculateBudgetPlanning(
+  transactions: Transaction[],
+  bills: Bill[],
+  budgets: Budget[],
+  expenses: Map<string, number>,
+  month: number,
+) {
+  const monthTransactions = transactions.filter((transaction) => transactionAppearsInMonth(transaction, month))
+  const incomeTransactions = monthTransactions.filter((transaction) => transaction.type === 'income')
+  const income = incomeTransactions.reduce((sum, item) => sum + item.amount, 0)
+  const totalBudgeted = budgets.reduce((sum, budget) => sum + budget.limit, 0)
+  const budgetedSpent = budgets.reduce((sum, budget) => sum + (expenses.get(budget.name) ?? 0), 0)
+  const unbudgetedSpent = [...expenses.entries()].reduce((sum, [category, amount]) =>
+    budgets.some((budget) => budget.name === category) ? sum : sum + amount, 0)
+  const paidReserveBills = bills
+    .filter((bill) => bill.category === 'Reserva' && appearsInMonth(bill, month) && bill.paidMonths.includes(month))
+    .reduce((sum, item) => sum + item.amount, 0)
+  const reserveMovements = monthTransactions.reduce((sum, item) =>
+    sum + (item.type === 'reserve_deposit' ? item.amount : item.type === 'reserve_withdrawal' ? -item.amount : 0), 0)
+
+  return {
+    income,
+    incomeCount: incomeTransactions.length,
+    totalBudgeted,
+    budgetedSpent,
+    unbudgetedSpent,
+    budgetRemaining: totalBudgeted - budgetedSpent,
+    plannedMargin: income - totalBudgeted - reserveMovements - paidReserveBills,
+  }
+}
+
+function calculateExpenseComposition(transactions: Transaction[], bills: Bill[], month: number) {
+  const monthTransactions = transactions.filter((transaction) =>
+    transaction.type === 'expense' &&
+    transaction.category !== 'Reserva' &&
+    transactionAppearsInMonth(transaction, month)
+  )
+  const monthBills = bills.filter((bill) =>
+    bill.category !== 'Reserva' &&
+    appearsInMonth(bill, month)
+  )
+  const fixedBills = monthBills
+    .filter((bill) => bill.expenseKind === 'fixed')
+    .reduce((sum, bill) => sum + bill.amount, 0)
+  const recurringVariable = monthBills
+    .filter((bill) => bill.expenseKind === 'variable')
+    .reduce((sum, bill) => sum + bill.amount, 0)
+  const oneOffVariable = monthTransactions
+    .reduce((sum, transaction) => sum + transaction.amount, 0)
+
+  return {
+    fixed: fixedBills,
+    recurringVariable,
+    oneOffVariable,
+    total: fixedBills + recurringVariable + oneOffVariable,
+  }
+}
+
 function calculateMonthSummary(transactions: Transaction[], bills: Bill[], month: number) {
   const monthTransactions = transactions.filter((transaction) => transactionAppearsInMonth(transaction, month))
   const monthBills = bills.filter((bill) => appearsInMonth(bill, month))
@@ -531,7 +709,7 @@ function calculateMonthSummary(transactions: Transaction[], bills: Bill[], month
   const expenseBills = monthBills.filter((bill) => bill.category !== 'Reserva')
   const income = incomeTransactions.reduce((sum, item) => sum + item.amount, 0)
   const expenses = expenseTransactions.reduce((sum, item) => sum + item.amount, 0) + expenseBills.reduce((sum, item) => sum + item.amount, 0)
-  const fixed = expenseTransactions.filter((item) => item.expenseKind === 'fixed').reduce((sum, item) => sum + item.amount, 0) + expenseBills.filter((item) => item.expenseKind === 'fixed').reduce((sum, item) => sum + item.amount, 0)
+  const fixed = expenseBills.filter((item) => item.expenseKind === 'fixed').reduce((sum, item) => sum + item.amount, 0)
   const variable = expenses - fixed
   const billsTotal = monthBills.reduce((sum, item) => sum + item.amount, 0)
   const billsPaid = monthBills.filter((item) => item.paidMonths.includes(month)).reduce((sum, item) => sum + item.amount, 0)
@@ -615,7 +793,7 @@ function buildExportData(transactions: Transaction[], bills: Bill[], budgets: Bu
 
 function exportCsv(data: ReturnType<typeof buildExportData>) {
   const rows = [['Origem', 'Tipo', 'Descrição', 'Categoria', 'Responsável', 'Valor', 'Data/Vencimento', 'Recorrência', 'Tipo de gasto']]
-  for (const item of data.transactions) rows.push(['Transação', transactionTypeLabel(item.type), item.name, item.category, item.owner, String(item.amount).replace('.', ','), item.date, recurrenceLabel(item.recurrence), item.expenseKind === 'fixed' ? 'Fixo' : item.expenseKind === 'variable' ? 'Variável' : ''])
+  for (const item of data.transactions) rows.push(['Transação', transactionTypeLabel(item.type), item.name, item.category, item.owner, String(item.amount).replace('.', ','), item.date, recurrenceLabel(item.recurrence), item.type === 'expense' ? 'Avulsa' : ''])
   for (const item of data.bills) rows.push(['Conta', 'Despesa', item.name, item.category, item.owner, String(item.amount).replace('.', ','), `Dia ${item.dueDay}`, recurrenceLabel(item.recurrence), item.expenseKind === 'fixed' ? 'Fixo' : 'Variável'])
   return rows.map((row) => row.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(';')).join('\r\n')
 }

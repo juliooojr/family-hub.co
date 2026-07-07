@@ -20,10 +20,10 @@ Producao: https://family-hub-co.vercel.app
 - Lista de Compras esta funcional e persistida no Supabase.
 - Compras recebeu melhorias de uso real: Modo Mercado revisado no desktop, item com preco opcional discreto e edicao de itens.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
-- Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos e recorrencias/categorias preservando meses anteriores.
+- Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
 - Fluxo de login Google foi ajustado para aplicar os cookies de sessao no redirect do callback e evitar falha na primeira tentativa.
 - Investimentos permanece bloqueado para uma etapa futura.
-- Tarefas aparece como proxima secao candidata do sistema, com nome e escopo ainda a definir.
+- Tarefas possui uma primeira base experimental na branch atual, mas esta bloqueada no menu e na tela inicial ate revisao final de escopo, visual e comportamento.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
@@ -32,10 +32,12 @@ Producao: https://family-hub-co.vercel.app
 - Os dados sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
 - Transacoes registram receitas, despesas, depositos e retiradas da reserva.
 - Contas podem ser recorrentes e possuem pagamentos mensais independentes.
+- Contas podem ser classificadas como fixas ou variaveis recorrentes; transacoes de despesa sao tratadas como transacoes avulsas.
 - Edicoes de contas recorrentes e categorias/orcamentos valem do mes em edicao para frente, preservando meses anteriores.
 - Marcar uma conta como paga nao cria outra transacao; a propria conta e a fonte do valor.
 - Contas da categoria Reserva aumentam a reserva somente quando pagas.
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
+- Contas variaveis como Cartao de credito devem representar o total da fatura; compras e assinaturas dentro do cartao nao devem ser lancadas como transacoes normais para evitar duplicidade. O detalhamento interno da fatura esta no backlog.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
 - O grafico da Visao Geral permite ver valores por barra e clicar em um mes para focar o periodo.
 - Categorias exibidas em Transacoes e Contas seguem as categorias criadas no Orcamento; categorias padrao aparecem apenas quando ainda nao ha categorias cadastradas.
@@ -61,6 +63,7 @@ Leia nesta ordem antes de iniciar qualquer tarefa:
 5. `BRAIN.md`: visao do produto, seguranca e especificacoes dos modulos.
 6. `PRIMEIRA-VERSAO.md`: registro historico da primeira entrega.
 7. `TASKS.md`: backlog historico, sempre conferindo o que ja foi concluido.
+8. `PROMPT-CONTINUACAO-TAREFAS.md`: prompt pronto para retomar Tarefas em um novo chat.
 
 O codigo funcional atual e este README prevalecem quando documentos antigos estiverem desatualizados.
 
@@ -257,7 +260,7 @@ Concluido:
 
 1. Publicar e validar em producao as melhorias de UX de Compras, Financeiro e login.
 2. Validar no mobile PWA instalado, especialmente Modo Mercado, modais de item e Financeiro.
-3. Definir a nova secao Tarefas, incluindo nome final, escopo, dados e fluxos principais.
+3. Retomar a nova secao Tarefas a partir da base experimental, desbloqueando menu e tela inicial apenas depois da aprovacao.
 4. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
 5. Revisar membros e permissoes das plataformas.
 6. Definir rotina de backup do Supabase.
