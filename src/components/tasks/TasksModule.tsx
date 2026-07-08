@@ -54,6 +54,7 @@ export default function TasksModule({
   const [tasks, setTasks] = useState(initialTasks)
   const [entries, setEntries] = useState(initialEntries)
   const [modal, setModal] = useState<Modal>(null)
+  const [deleteCandidate, setDeleteCandidate] = useState<RoutineTask | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(initialError)
   const [manualAmounts, setManualAmounts] = useState<Record<string, string>>({})
@@ -130,13 +131,13 @@ export default function TasksModule({
   }
 
   async function removeTask(task: RoutineTask) {
-    if (!confirm(`Excluir "${task.name}"? O histórico dessa tarefa também será removido.`)) return
     setBusy(true)
     try {
       await deleteTask(supabase, task.id, userId)
       setTasks((current) => current.filter((item) => item.id !== task.id))
       setEntries((current) => current.filter((entry) => entry.taskId !== task.id))
       setModal(null)
+      setDeleteCandidate(null)
     } catch (taskError) {
       setError(taskError instanceof Error ? taskError.message : 'Não foi possível excluir a tarefa.')
     } finally {
@@ -217,7 +218,15 @@ export default function TasksModule({
           todayKey={todayKey}
           onClose={() => setModal(null)}
           onSubmit={submitTask}
-          onDelete={modal === 'new' ? undefined : () => removeTask(modal)}
+          onDelete={modal === 'new' ? undefined : () => setDeleteCandidate(modal)}
+        />
+      ) : null}
+      {deleteCandidate ? (
+        <DeleteTaskModal
+          task={deleteCandidate}
+          busy={busy}
+          onClose={() => setDeleteCandidate(null)}
+          onConfirm={() => void removeTask(deleteCandidate)}
         />
       ) : null}
     </main>
@@ -432,6 +441,37 @@ function TaskModal({
             <button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : 'Salvar'}</button>
           </div>
         </form>
+      </section>
+    </div>
+  )
+}
+
+function DeleteTaskModal({
+  task,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  task: RoutineTask
+  busy: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div className="modal-overlay task-delete-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section className="modal-card task-delete-modal" role="dialog" aria-modal="true" aria-label="Confirmar exclusão de tarefa">
+        <header>
+          <h2>EXCLUIR TAREFA</h2>
+          <button onClick={onClose} aria-label="Fechar">×</button>
+        </header>
+        <div className="confirm-copy">
+          <p>A tarefa <strong>{task.emoji} {task.name}</strong> será excluída.</p>
+          <p>O histórico dessa tarefa também será removido.</p>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="button button-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="button" className="button button-danger" onClick={onConfirm} disabled={busy}>{busy ? 'Excluindo...' : 'Excluir tarefa'}</button>
+        </div>
       </section>
     </div>
   )

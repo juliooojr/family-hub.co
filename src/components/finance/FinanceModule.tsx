@@ -53,6 +53,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const [reserveModal, setReserveModal] = useState<'deposit' | 'withdrawal' | 'goal' | null>(null)
   const [reserveGoal, setReserveGoal] = useState(initialReserveGoal)
   const [exportOpen, setExportOpen] = useState(false)
+  const [summariesCollapsed, setSummariesCollapsed] = useState(true)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const activeBudgets = budgets.filter((budget) => budgetAppearsInMonth(budget, monthIndex))
@@ -255,7 +256,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   }
 
   return (
-    <main className="finance-shell">
+    <main className={`finance-shell ${summariesCollapsed ? 'summaries-collapsed' : ''}`}>
       <header className="finance-topbar">
         <div className="finance-topbar-main">
           <Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link>
@@ -265,6 +266,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
           </nav>
         </div>
         <div className="finance-actions">
+          <button className="button button-ghost finance-summary-toggle" type="button" onClick={() => setSummariesCollapsed((collapsed) => !collapsed)}>{summariesCollapsed ? 'Mostrar cards' : 'Ocultar cards'}</button>
           <div className="finance-export"><button className="button button-ghost" onClick={() => setExportOpen((open) => !open)} aria-expanded={exportOpen}>Exportar ▾</button>{exportOpen ? <div><button onClick={() => exportFinance('png')}>Imagem PNG</button><button onClick={() => exportFinance('csv')}>Planilha CSV</button><button onClick={() => exportFinance('json')}>Dados JSON</button></div> : null}</div>
           <button className="button button-primary" onClick={() => tab === 'contas' ? setBillModal('new') : tab === 'visao' || tab === 'transacoes' ? setTransactionModal('new') : tab === 'orcamento' ? setBudgetModal('new') : demoAction(selectedTab.action)}>{selectedTab.action}</button>
         </div>
@@ -439,7 +441,7 @@ function BudgetModal({ budget, monthIndex, onClose, onDelete, onSave }: { budget
 
   return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-budget-modal" role="dialog" aria-modal="true" aria-label={budget ? 'Editar orçamento' : 'Definir orçamento'}><header><h2>{budget ? 'EDITAR ORÇAMENTO' : 'DEFINIR ORÇAMENTO'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header><form onSubmit={submit}>
     <div className="finance-form-group"><span className="finance-form-label">EMOJI DA CATEGORIA</span><div className="finance-emoji-grid">{emojis.map((emoji) => <button type="button" className={draft.emoji === emoji ? 'selected' : ''} key={emoji} onClick={() => setDraft({ ...draft, emoji })} aria-label={`Usar emoji ${emoji}`}>{emoji}</button>)}</div></div>
-    <div className="finance-form-group"><label htmlFor="budget-name">CATEGORIA</label><input id="budget-name" className="field" value={draft.name} placeholder="Ex: Moradia, Alimentação..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={40} autoFocus={!budget} /></div>
+    <div className="finance-form-group"><label htmlFor="budget-name">CATEGORIA</label><input id="budget-name" className="field" value={draft.name} placeholder="Ex: Moradia, Alimentação..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={40} /></div>
     <div className="finance-form-group"><label htmlFor="budget-limit">TETO MENSAL</label><div className="finance-amount-input compact"><span>R$</span><input id="budget-limit" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.limit || ''} onChange={(event) => setDraft({ ...draft, limit: Number(event.target.value) })} required /></div></div>
     <div className="modal-actions finance-bill-modal-actions">{budget ? <button type="button" className="button button-danger" onClick={() => onDelete(budget.id)}>Excluir</button> : null}<span /><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary">Salvar</button></div>
   </form></section></div>

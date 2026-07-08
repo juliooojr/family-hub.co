@@ -166,3 +166,41 @@
   .market-mode>header{background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(18px)}
 }
 
+.finance-summary-toggle{display:none}.task-delete-overlay{z-index:130}.task-delete-modal{max-width:420px}
+@media(max-width:720px){
+  .finance-summary-toggle{display:inline-flex;align-items:center;justify-content:center}
+  .finance-actions>.button-primary{display:none}
+  .finance-actions{gap:6px}
+  .finance-export .button{padding-inline:11px}
+  .finance-shell.summaries-collapsed .finance-summary-grid,
+  .finance-shell.summaries-collapsed .finance-three-grid,
+  .finance-shell.summaries-collapsed .finance-budget-planning{display:none}
+  .finance-tabs{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:3px 3px 9px;scrollbar-gutter:stable;overscroll-behavior-x:contain}
+  .finance-tabs button{white-space:nowrap}
+  .finance-expense-composition>div{grid-template-columns:1fr}
+  .finance-expense-composition-row{grid-template-columns:minmax(0,1fr) auto}
+  .finance-category{grid-template-columns:8px minmax(86px,1fr) minmax(82px,1.1fr) auto}
+  .finance-category>div{display:block!important}
+  .finance-category>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .finance-category>strong{white-space:nowrap}
+  .internal-app.light .finance-owners button{background:var(--surface);border-color:var(--border2);color:var(--text2);box-shadow:0 1px 0 rgba(80,60,35,.08)}
+  .internal-app.light .finance-owners button.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .shopping-shell .topbar-actions{display:flex;flex-direction:row;gap:8px}
+  .shopping-shell .topbar-actions .button-ghost{display:inline-flex}
+  .market-mode>header{padding-top:max(16px,env(safe-area-inset-top));align-items:center}
+  .tasks-content{padding-top:10px;overflow:visible;-webkit-overflow-scrolling:touch}
+  .tasks-topbar{gap:10px}
+  .tasks-list{overflow:visible;padding-bottom:10px}
+}
+@media(max-width:400px){
+  .finance-category{grid-template-columns:8px minmax(0,1fr)}
+  .finance-category>div{grid-column:2;display:block!important;width:100%}
+  .finance-category>strong{grid-column:2;text-align:left}
+  .finance-expense-composition .finance-section-header>strong{font-size:20px}
+  .shopping-shell .topbar-actions .button{padding-inline:9px}
+}
+@media(display-mode:standalone) and (max-width:720px){
+  .market-mode>header{padding-top:calc(16px + env(safe-area-inset-top))}
+  .internal-content .tasks-topbar{position:relative;top:auto}
+}
+

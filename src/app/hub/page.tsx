@@ -62,8 +62,8 @@ function getGreeting(date: Date) {
     timeZone: 'America/Sao_Paulo',
   }).format(date))
 
-  if (hour < 12) return 'Bom dia'
-  if (hour < 18) return 'Boa tarde'
+  if (hour >= 6 && hour < 12) return 'Bom dia'
+  if (hour >= 12 && hour < 18) return 'Boa tarde'
   return 'Boa noite'
 }
 

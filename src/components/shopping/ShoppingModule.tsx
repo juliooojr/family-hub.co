@@ -321,7 +321,10 @@ export default function ShoppingModule({
         </div>
         <div className="topbar-actions">
           {currentView === 'lists' ? (
-            <button className="button button-primary" onClick={() => { setEditing(false); setModal('list') }}>+ Nova Lista</button>
+            <>
+              <button className="button button-ghost" onClick={() => openView('archive')}>Arquivo</button>
+              <button className="button button-primary" onClick={() => { setEditing(false); setModal('list') }}>+ Nova Lista</button>
+            </>
           ) : null}
           {currentView === 'detail' && selected ? (
             <>
@@ -340,7 +343,6 @@ export default function ShoppingModule({
         {!loading && currentView === 'lists' ? (
           <ListsView
             lists={activeLists}
-            onArchive={() => openView('archive')}
             onOpen={openDetail}
             onToggle={toggleItem}
             onDelete={removeItem}
@@ -404,9 +406,8 @@ export default function ShoppingModule({
   )
 }
 
-function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onEdit, onAdd, onNew }: {
+function ListsView({ lists, onOpen, onToggle, onDelete, onEdit, onAdd, onNew }: {
   lists: ShoppingList[]
-  onArchive: () => void
   onOpen: (list: ShoppingList) => void
   onToggle: (item: ShoppingItem) => void
   onDelete: (event: MouseEvent, item: ShoppingItem) => void
@@ -416,7 +417,6 @@ function ListsView({ lists, onArchive, onOpen, onToggle, onDelete, onEdit, onAdd
 }) {
   return (
     <>
-      <div className="archive-link-row"><button className="archive-link" onClick={onArchive}>📦 Arquivo</button></div>
       <div className="shopping-grid">
         {lists.length === 0 ? <EmptyState title="NENHUMA LISTA ATIVA" copy="Crie a primeira lista para começar." /> : null}
         {lists.map((list) => (
@@ -576,7 +576,7 @@ function ItemModal({ initial, busy, onClose, onSubmit }: { initial: ShoppingItem
     if (estimatedPrice !== null && (Number.isNaN(estimatedPrice) || estimatedPrice < 0)) return
     onSubmit({ name, estimatedPrice })
   }
-  return <ModalShell title={initial ? 'EDITAR ITEM' : 'ADICIONAR ITEM'} onClose={onClose}><form onSubmit={submit}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" required maxLength={160} /><div className="item-price-field"><label className="field-label" htmlFor="item-price">PREÇO OPCIONAL</label><input id="item-price" className="field" value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" placeholder="Ex: 12,90" /></div><p className="field-hint">O preço é opcional e aparece discretamente como referência.</p><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : initial ? 'Salvar' : 'Adicionar'}</button></div></form></ModalShell>
+  return <ModalShell title={initial ? 'EDITAR ITEM' : 'ADICIONAR ITEM'} onClose={onClose}><form onSubmit={submit}><label className="field-label" htmlFor="item-name">NOME DO ITEM</label><input id="item-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Arroz 5kg" required maxLength={160} /><div className="item-price-field"><label className="field-label" htmlFor="item-price">PREÇO OPCIONAL</label><input id="item-price" className="field" value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" placeholder="Ex: 12,90" /></div><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : initial ? 'Salvar' : 'Adicionar'}</button></div></form></ModalShell>
 }
 
 function ConfirmModal({ title, busy, onClose, onConfirm, children }: { title: string; busy: boolean; onClose: () => void; onConfirm: () => void; children: React.ReactNode }) {
