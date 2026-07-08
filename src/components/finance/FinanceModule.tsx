@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FinanceBill, FinanceBudget, FinanceTransaction } from '@/lib/finance'
@@ -39,6 +40,7 @@ const investments = [
 ]
 
 export default function FinanceModule({ familyId, transactions: initialTransactions, bills: initialBills, budgets: initialBudgets, reserveGoal: initialReserveGoal }: { familyId: string; transactions: Transaction[]; bills: Bill[]; budgets: Budget[]; reserveGoal: number }) {
+  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [tab, setTab] = useState<Tab>('visao')
   const [owner, setOwner] = useState('Família')
@@ -53,7 +55,8 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const [reserveModal, setReserveModal] = useState<'deposit' | 'withdrawal' | 'goal' | null>(null)
   const [reserveGoal, setReserveGoal] = useState(initialReserveGoal)
   const [exportOpen, setExportOpen] = useState(false)
-  const [summariesCollapsed, setSummariesCollapsed] = useState(true)
+  const [summariesCollapsed, setSummariesCollapsed] = useState(false)
+  const [pendingBillIds, setPendingBillIds] = useState<string[]>([])
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const activeBudgets = budgets.filter((budget) => budgetAppearsInMonth(budget, monthIndex))
@@ -243,16 +246,22 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
     if (!bill) return
     const monthDate = `2026-${String(monthIndex + 1).padStart(2, '0')}-01`
     const paid = bill.paidMonths.includes(monthIndex)
+    setPendingBillIds((current) => current.includes(id) ? current : [...current, id])
     const result = paid
       ? await supabase.from('finance_bill_payments').delete().eq('bill_id', id).eq('month_date', monthDate).eq('family_id', familyId)
-      : await supabase.from('finance_bill_payments').insert({ family_id: familyId, bill_id: id, month_date: monthDate })
-    if (result.error) return setNotice(`Não foi possível atualizar o pagamento: ${result.error.message}`)
+      : await supabase.from('finance_bill_payments').upsert({ family_id: familyId, bill_id: id, month_date: monthDate }, { onConflict: 'bill_id,month_date' })
+    if (result.error) {
+      setPendingBillIds((current) => current.filter((item) => item !== id))
+      return setNotice(`Não foi possível atualizar o pagamento: ${result.error.message}`)
+    }
     setBills((current) => current.map((item) => item.id !== id ? item : {
       ...item,
       paidMonths: item.paidMonths.includes(monthIndex)
         ? item.paidMonths.filter((month) => month !== monthIndex)
         : [...item.paidMonths, monthIndex],
     }))
+    setPendingBillIds((current) => current.filter((item) => item !== id))
+    router.refresh()
   }
 
   return (
@@ -276,7 +285,7 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
         {notice ? <div className="finance-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Fechar">×</button></div> : null}
         {tab === 'visao' ? <Overview transactions={transactions} bills={bills} categories={categoryOptions} month={months[monthIndex]} monthIndex={monthIndex} onMonth={setMonthIndex} reserveGoal={reserveGoal} onReserve={setReserveModal} /> : null}
         {tab === 'transacoes' ? <Transactions transactions={transactions} categories={categoryOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setTransactionModal('new')} onEdit={setTransactionModal} /> : null}
-        {tab === 'contas' ? <Bills bills={bills} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
+        {tab === 'contas' ? <Bills bills={bills} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} pendingBillIds={pendingBillIds} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
         {tab === 'orcamento' ? <Budgets budgets={activeBudgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
@@ -327,6 +336,7 @@ function Transactions({ transactions, categories, owner, onOwner, month, monthIn
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Categorias')
   const [type, setType] = useState('Tipos')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const visible = transactions.filter((transaction) => {
     const matchesMonth = transactionAppearsInMonth(transaction, monthIndex)
     const matchesOwner = owner === 'Família' || transaction.owner === owner
@@ -346,7 +356,7 @@ function Transactions({ transactions, categories, owner, onOwner, month, monthIn
   const outgoingTotal = outgoing.reduce((sum, item) => sum + item.amount, 0)
   const spentPercentage = incomingTotal > 0 ? Math.round((outgoingTotal / incomingTotal) * 100) : 0
 
-  return <><div className="finance-filter-row"><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Nova</button></div><div className="finance-three-grid"><Stat label="Entradas" value={formatMoney(incomingTotal)} tone="income" note={`${incoming.length} ${incoming.length === 1 ? 'transação' : 'transações'}`} /><Stat label="Saídas" value={formatMoney(outgoingTotal)} tone="expense" note={`${outgoing.length} ${outgoing.length === 1 ? 'transação' : 'transações'}`} /><Stat label="% das entradas" value={`${spentPercentage}%`} tone={spentPercentage >= 100 ? 'expense' : spentPercentage >= 75 ? 'accent' : 'balance'} note={incomingTotal > 0 ? `${formatMoney(outgoingTotal)} de ${formatMoney(incomingTotal)}` : 'sem entradas no filtro'} /></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
+  return <><div className="finance-mobile-filter-toggle"><button className="button button-ghost" type="button" onClick={() => setFiltersOpen((open) => !open)}>{filtersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}</button><button className="button button-primary" onClick={onCreate}>+ Nova</button></div><div className={`finance-filter-row ${filtersOpen ? 'open' : ''}`}><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="🔍  Buscar..." aria-label="Buscar transações" /><select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filtrar por categoria"><option>Categorias</option>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><select className="field" value={type} onChange={(event) => setType(event.target.value)} aria-label="Filtrar por tipo"><option>Tipos</option><option>Receita</option><option>Despesa</option><option>Reserva</option></select><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary finance-filter-create" onClick={onCreate}>+ Nova</button></div><div className="finance-three-grid"><Stat label="Entradas" value={formatMoney(incomingTotal)} tone="income" note={`${incoming.length} ${incoming.length === 1 ? 'transação' : 'transações'}`} /><Stat label="Saídas" value={formatMoney(outgoingTotal)} tone="expense" note={`${outgoing.length} ${outgoing.length === 1 ? 'transação' : 'transações'}`} /><Stat label="% das entradas" value={`${spentPercentage}%`} tone={spentPercentage >= 100 ? 'expense' : spentPercentage >= 75 ? 'accent' : 'balance'} note={incomingTotal > 0 ? `${formatMoney(outgoingTotal)} de ${formatMoney(incomingTotal)}` : 'sem entradas no filtro'} /></div>{visible.length === 0 ? <div className="finance-bill-empty">Nenhuma transação encontrada com estes filtros.</div> : groups.map(([group, items]) => items.length > 0 ? <section className="finance-transaction-group" key={group}><h3>{group}</h3><div>{items.map((item) => <button className="finance-transaction" key={item.id} onClick={() => onEdit(item)}><span className="finance-transaction-icon">{categoryEmoji(item.category, categories)}</span><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.recurrence !== 'none' ? 'Recorrente · ' : ''}{item.owner}</small></span><span className={transactionTone(item.type)}><strong>{transactionSign(item.type)}{formatMoney(item.amount)}</strong><small>{formatTransactionDate(item, monthIndex)}</small></span></button>)}</div></section> : null)}</>
 }
 
 function ExpenseCompositionCard({ composition }: { composition: ReturnType<typeof calculateExpenseComposition> }) {
@@ -365,7 +375,7 @@ function ExpenseCompositionCard({ composition }: { composition: ReturnType<typeo
   </article>
 }
 
-function Bills({ bills, owner, onOwner, month, monthIndex, onMonth, onCreate, onEdit, onToggle }: { bills: Bill[]; owner: string; onOwner: (owner: string) => void; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
+function Bills({ bills, owner, onOwner, month, monthIndex, pendingBillIds, onMonth, onCreate, onEdit, onToggle }: { bills: Bill[]; owner: string; onOwner: (owner: string) => void; month: string; monthIndex: number; pendingBillIds: string[]; onMonth: (value: number) => void; onCreate: () => void; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
   const visible = bills.filter((bill) => appearsInMonth(bill, monthIndex) && (owner === 'Família' || bill.owner === owner))
   const paid = visible.filter((bill) => bill.paidMonths.includes(monthIndex))
   const pending = visible.filter((bill) => !bill.paidMonths.includes(monthIndex))
@@ -374,7 +384,7 @@ function Bills({ bills, owner, onOwner, month, monthIndex, onMonth, onCreate, on
   const pendingTotal = pending.reduce((sum, bill) => sum + bill.amount, 0)
   const percentage = total > 0 ? Math.round((paidTotal / total) * 100) : 0
 
-  return <><SectionToolbar title="CONTAS" subtitle={`Compromissos recorrentes · ${month} 2026`}><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Conta</button></SectionToolbar><div className="finance-three-grid"><Stat label="Total do mês" value={formatMoney(total)} note={`${visible.length} ${visible.length === 1 ? 'conta' : 'contas'}`} /><Stat label="Já pagas" value={formatMoney(paidTotal)} tone="income" note={`${paid.length} contas · ${percentage}%`} /><Stat label="Pendentes" value={formatMoney(pendingTotal)} tone="accent" note={`${pending.length} contas`} /></div><BillGroup title="⏳ Pendentes" items={pending} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /><BillGroup title="✅ Pagas" items={paid} monthIndex={monthIndex} onEdit={onEdit} onToggle={onToggle} /></>
+  return <><SectionToolbar title="CONTAS" subtitle={`Compromissos recorrentes · ${month} 2026`}><OwnerFilter owner={owner} onOwner={onOwner} /><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /><button className="button button-primary" onClick={onCreate}>+ Conta</button></SectionToolbar><div className="finance-three-grid"><Stat label="Total do mês" value={formatMoney(total)} note={`${visible.length} ${visible.length === 1 ? 'conta' : 'contas'}`} /><Stat label="Já pagas" value={formatMoney(paidTotal)} tone="income" note={`${paid.length} contas · ${percentage}%`} /><Stat label="Pendentes" value={formatMoney(pendingTotal)} tone="accent" note={`${pending.length} contas`} /></div><BillGroup title="⏳ Pendentes" items={pending} monthIndex={monthIndex} pendingBillIds={pendingBillIds} onEdit={onEdit} onToggle={onToggle} /><BillGroup title="✅ Pagas" items={paid} monthIndex={monthIndex} pendingBillIds={pendingBillIds} onEdit={onEdit} onToggle={onToggle} /></>
 }
 
 function Budgets({ budgets, bills, transactions, categories, month, monthIndex, onMonth, onCreate, onEdit }: { budgets: Budget[]; bills: Bill[]; transactions: Transaction[]; categories: CategoryOption[]; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (budget: Budget) => void }) {
@@ -421,11 +431,12 @@ function ExpenseKindField({ value, onChange }: { value: ExpenseKind; onChange: (
   return <div className="finance-form-group"><span className="finance-form-label">TIPO DE GASTO</span><div className="finance-recurrence-options"><button type="button" className={value === 'fixed' ? 'selected' : ''} onClick={() => onChange('fixed')}>Fixo</button><button type="button" className={value === 'variable' ? 'selected' : ''} onClick={() => onChange('variable')}>Variável</button></div></div>
 }
 
-function BillGroup({ title, items, monthIndex, onEdit, onToggle }: { title: string; items: Bill[]; monthIndex: number; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
+function BillGroup({ title, items, monthIndex, pendingBillIds, onEdit, onToggle }: { title: string; items: Bill[]; monthIndex: number; pendingBillIds: string[]; onEdit: (bill: Bill) => void; onToggle: (id: string) => void }) {
   return <section className="finance-bill-group"><h3>{title}</h3><div>{items.length === 0 ? <div className="finance-bill-empty">Nenhuma conta neste grupo.</div> : items.map((item) => {
     const paid = item.paidMonths.includes(monthIndex)
     const overdue = !paid && monthIndex === 6 && item.dueDay < 7
-    return <div className={`finance-bill ${paid ? 'paid' : overdue ? 'overdue' : 'pending'}`} key={item.id}><button className="finance-bill-check" onClick={() => onToggle(item.id)} aria-label={paid ? 'Marcar como pendente' : 'Marcar como paga'}>{paid ? '✓' : ''}</button><button className="finance-bill-detail" onClick={() => onEdit(item)}><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.expenseKind === 'fixed' ? 'Fixo' : 'Variável'} · {paid ? `Pago em ${String(item.dueDay).padStart(2, '0')}/07` : `Vence dia ${String(item.dueDay).padStart(2, '0')}`} · {item.owner}</small></span><span><b>{formatMoney(item.amount)}</b><small>{paid ? 'Pago ✓' : overdue ? `Vencida há ${7 - item.dueDay} dias` : `Falta ${item.dueDay - 7} dias`}</small></span></button></div>
+    const pending = pendingBillIds.includes(item.id)
+    return <div className={`finance-bill ${paid ? 'paid' : overdue ? 'overdue' : 'pending'} ${pending ? 'updating' : ''}`} key={item.id}><button className="finance-bill-check" onClick={() => onToggle(item.id)} disabled={pending} aria-label={pending ? 'Atualizando pagamento' : paid ? 'Marcar como pendente' : 'Marcar como paga'}>{pending ? '' : paid ? '✓' : ''}</button><button className="finance-bill-detail" onClick={() => onEdit(item)} disabled={pending}><span><strong>{item.name}</strong><small>{item.category.toUpperCase()} · {item.expenseKind === 'fixed' ? 'Fixo' : 'Variável'} · {paid ? `Pago em ${String(item.dueDay).padStart(2, '0')}/07` : `Vence dia ${String(item.dueDay).padStart(2, '0')}`} · {item.owner}</small></span><span><b>{formatMoney(item.amount)}</b><small>{pending ? 'Atualizando...' : paid ? 'Pago ✓' : overdue ? `Vencida há ${7 - item.dueDay} dias` : `Falta ${item.dueDay - 7} dias`}</small></span></button></div>
   })}</div></section>
 }
 
@@ -516,7 +527,7 @@ function TransactionModal({ transaction, categories, onClose, onDelete, onSave }
   const isReserve = draft.type === 'reserve_deposit' || draft.type === 'reserve_withdrawal'
   return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-bill-modal finance-transaction-modal" role="dialog" aria-modal="true" aria-label={transaction ? 'Detalhe da transação' : 'Nova transação'}><header><h2>{transaction ? 'DETALHE DA TRANSAÇÃO' : 'NOVA TRANSAÇÃO'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header>{transaction ? <div className={`finance-transaction-summary ${transactionTone(draft.type)}`}><div><small>{transactionTypeLabel(draft.type)} · {draft.category.toUpperCase()}</small><strong>{transactionSign(draft.type)}{formatMoney(draft.amount)}</strong><span>{draft.name}</span></div><div><span>{formatDate(draft.date)}</span><span>{draft.owner} · {recurrenceLabel(draft.recurrence)}</span></div></div> : null}<form onSubmit={submit}>
     <div className="finance-type-toggle">{isReserve ? <><button type="button" className={draft.type === 'reserve_deposit' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'reserve_deposit' })}>▲ DEPÓSITO</button><button type="button" className={draft.type === 'reserve_withdrawal' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'reserve_withdrawal' })}>▼ RETIRADA</button></> : <><button type="button" className={draft.type === 'expense' ? 'expense active' : 'expense'} onClick={() => setDraft({ ...draft, type: 'expense', category: draft.category === 'Receita' ? initialCategory : draft.category })}>▼ DESPESA</button><button type="button" className={draft.type === 'income' ? 'income active' : 'income'} onClick={() => setDraft({ ...draft, type: 'income', category: 'Receita' })}>▲ RECEITA</button></>}</div>
-    <div className="finance-amount-input"><span>R$</span><input id="transaction-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required autoFocus={!transaction} /></div>
+    <div className="finance-amount-input"><span>R$</span><input id="transaction-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required /></div>
     <div className="finance-form-group"><label htmlFor="transaction-name">DESCRIÇÃO</label><input id="transaction-name" className="field" value={draft.name} placeholder="Ex: Mercado, Aluguel, Salário..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={100} /></div>
     {draft.type !== 'income' ? <div className="finance-form-group"><span className="finance-form-label">CATEGORIA</span><div className="finance-category-chips">{categories.map((category) => <button type="button" className={draft.category === category.name ? 'selected' : ''} key={category.name} onClick={() => setDraft({ ...draft, category: category.name, type: category.name === 'Reserva' ? 'reserve_deposit' : isReserve ? 'expense' : draft.type })}><span>{category.emoji}</span>{category.name}</button>)}</div></div> : <div className="finance-income-note">Receitas entram no resumo do mês sem categoria de orçamento.</div>}
     <div className="finance-modal-fields"><div className="finance-form-group"><label htmlFor="transaction-date">DATA</label><input id="transaction-date" className="field" type="date" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} required /></div><div className="finance-form-group"><label htmlFor="transaction-owner">RESPONSÁVEL</label><select id="transaction-owner" className="field" value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })}>{['Família', 'Julio', 'Carol'].map((owner) => <option key={owner}>{owner}</option>)}</select></div></div>
@@ -563,7 +574,7 @@ function BillModal({ bill, categories, monthIndex, onClose, onDelete, onSave, on
 
   return <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card finance-bill-modal finance-transaction-modal" role="dialog" aria-modal="true" aria-label={bill ? 'Detalhe da conta' : 'Nova conta'}><header><h2>{bill ? 'DETALHE DA CONTA' : 'NOVA CONTA'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header>{bill ? <div className={`finance-bill-modal-summary ${paid ? 'paid' : ''}`}><div><small>{paid ? 'PAGA' : 'PENDENTE'} · {draft.category.toUpperCase()}</small><strong>{formatMoney(draft.amount)}</strong><span>{draft.name}</span></div><button type="button" onClick={() => { onToggle(draft.id); setDraft((current) => ({ ...current, paidMonths: paid ? current.paidMonths.filter((month) => month !== monthIndex) : [...current.paidMonths, monthIndex] })) }}>{paid ? '↶ Marcar pendente' : '✓ Marcar paga'}</button></div> : null}<form onSubmit={submit}>
     <div className="finance-expense-type">▼ DESPESA</div>
-    <div className="finance-amount-input"><span>R$</span><input id="bill-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required autoFocus={!bill} /></div>
+    <div className="finance-amount-input"><span>R$</span><input id="bill-amount" type="number" inputMode="decimal" min="0.01" step="0.01" placeholder="0,00" value={draft.amount || ''} onChange={(event) => setDraft({ ...draft, amount: Number(event.target.value) })} required /></div>
     <div className="finance-form-group"><label htmlFor="bill-name">DESCRIÇÃO</label><input id="bill-name" className="field" value={draft.name} placeholder="Ex: Mercado, Aluguel, Condomínio..." onChange={(event) => setDraft({ ...draft, name: event.target.value })} required maxLength={100} /></div>
     <div className="finance-form-group"><span className="finance-form-label">CATEGORIA</span><div className="finance-category-chips">{categories.map((category) => <button type="button" className={draft.category === category.name ? 'selected' : ''} key={category.name} onClick={() => setDraft({ ...draft, category: category.name })}><span>{category.emoji}</span>{category.name}</button>)}</div></div>
     <div className="finance-modal-fields"><div className="finance-form-group"><label htmlFor="bill-date">DATA</label><input id="bill-date" className="field" type="date" value={dateValue} onChange={(event) => { const date = event.target.valueAsDate; if (date) setDraft({ ...draft, dueDay: date.getUTCDate(), startMonth: date.getUTCMonth() }) }} required /></div><div className="finance-form-group"><label htmlFor="bill-owner">RESPONSÁVEL</label><select id="bill-owner" className="field" value={draft.owner} onChange={(event) => setDraft({ ...draft, owner: event.target.value })}>{['Família', 'Julio', 'Carol'].map((owner) => <option key={owner}>{owner}</option>)}</select></div></div>
