@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FinanceBill, FinanceBudget, FinanceTransaction } from '@/lib/finance'
 
@@ -57,6 +57,8 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   const [exportOpen, setExportOpen] = useState(false)
   const [summariesCollapsed, setSummariesCollapsed] = useState(false)
   const [pendingBillIds, setPendingBillIds] = useState<string[]>([])
+  const [refreshing, setRefreshing] = useState(false)
+  const touchStartY = useRef<number | null>(null)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const activeBudgets = budgets.filter((budget) => budgetAppearsInMonth(budget, monthIndex))
@@ -66,6 +68,27 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
 
   function demoAction(action: string) {
     setNotice(`${action} será habilitado após a definição e aprovação do schema financeiro.`)
+  }
+
+  useEffect(() => {
+    if (!refreshing) return
+    const timeout = window.setTimeout(() => setRefreshing(false), 900)
+    return () => window.clearTimeout(timeout)
+  }, [refreshing])
+
+  function startPullRefresh(event: React.TouchEvent<HTMLElement>) {
+    if (window.scrollY > 0) return
+    touchStartY.current = event.touches[0]?.clientY ?? null
+  }
+
+  function finishPullRefresh(event: React.TouchEvent<HTMLElement>) {
+    const startY = touchStartY.current
+    touchStartY.current = null
+    if (startY === null || window.scrollY > 0 || refreshing) return
+    const distance = (event.changedTouches[0]?.clientY ?? startY) - startY
+    if (distance < 84) return
+    setRefreshing(true)
+    router.refresh()
   }
 
   async function saveBill(input: Bill | Bill[]) {
@@ -265,7 +288,8 @@ export default function FinanceModule({ familyId, transactions: initialTransacti
   }
 
   return (
-    <main className={`finance-shell ${summariesCollapsed ? 'summaries-collapsed' : ''}`}>
+    <main className={`finance-shell ${summariesCollapsed ? 'summaries-collapsed' : ''}`} onTouchStart={startPullRefresh} onTouchEnd={finishPullRefresh}>
+      <div className={`finance-refresh-indicator ${refreshing ? 'active' : ''}`} aria-hidden="true">Atualizando...</div>
       <header className="finance-topbar">
         <div className="finance-topbar-main">
           <Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link>
@@ -350,8 +374,8 @@ function Transactions({ transactions, categories, owner, onOwner, month, monthIn
     ['Despesas', visible.filter((item) => item.type === 'expense' && item.category !== 'Reserva')],
     ['Reserva', visible.filter((item) => item.type === 'reserve_deposit' || item.type === 'reserve_withdrawal')],
   ] as const
-  const incoming = visible.filter((item) => item.type === 'income' || item.type === 'reserve_deposit')
-  const outgoing = visible.filter((item) => item.type === 'expense' || item.type === 'reserve_withdrawal')
+  const incoming = visible.filter((item) => item.type === 'income')
+  const outgoing = visible.filter((item) => item.type === 'expense')
   const incomingTotal = incoming.reduce((sum, item) => sum + item.amount, 0)
   const outgoingTotal = outgoing.reduce((sum, item) => sum + item.amount, 0)
   const spentPercentage = incomingTotal > 0 ? Math.round((outgoingTotal / incomingTotal) * 100) : 0
@@ -670,12 +694,6 @@ function calculateBudgetPlanning(
   const budgetedSpent = budgets.reduce((sum, budget) => sum + (expenses.get(budget.name) ?? 0), 0)
   const unbudgetedSpent = [...expenses.entries()].reduce((sum, [category, amount]) =>
     budgets.some((budget) => budget.name === category) ? sum : sum + amount, 0)
-  const paidReserveBills = bills
-    .filter((bill) => bill.category === 'Reserva' && appearsInMonth(bill, month) && bill.paidMonths.includes(month))
-    .reduce((sum, item) => sum + item.amount, 0)
-  const reserveMovements = monthTransactions.reduce((sum, item) =>
-    sum + (item.type === 'reserve_deposit' ? item.amount : item.type === 'reserve_withdrawal' ? -item.amount : 0), 0)
-
   return {
     income,
     incomeCount: incomeTransactions.length,
@@ -683,7 +701,7 @@ function calculateBudgetPlanning(
     budgetedSpent,
     unbudgetedSpent,
     budgetRemaining: totalBudgeted - budgetedSpent,
-    plannedMargin: income - totalBudgeted - reserveMovements - paidReserveBills,
+    plannedMargin: income - totalBudgeted,
   }
 }
 
@@ -730,7 +748,7 @@ function calculateMonthSummary(transactions: Transaction[], bills: Bill[], month
   for (const item of [...expenseTransactions, ...expenseBills]) categories.set(item.category, (categories.get(item.category) ?? 0) + item.amount)
   const directReserve = monthTransactions.reduce((sum, item) => sum + (item.type === 'reserve_deposit' ? item.amount : item.type === 'reserve_withdrawal' ? -item.amount : 0), 0)
   const paidReserveBills = monthBills.filter((item) => item.category === 'Reserva' && item.paidMonths.includes(month)).reduce((sum, item) => sum + item.amount, 0)
-  return { income, incomeCount: incomeTransactions.length, expenses, fixed, variable, billsTotal, billsPaid, billsPending: billsTotal - billsPaid, balance: income - expenses - directReserve - paidReserveBills, categories, reserveNet: directReserve + paidReserveBills }
+  return { income, incomeCount: incomeTransactions.length, expenses, fixed, variable, billsTotal, billsPaid, billsPending: billsTotal - billsPaid, balance: income - expenses, categories, reserveNet: directReserve + paidReserveBills }
 }
 
 function calculateReserveBalance(transactions: Transaction[], bills: Bill[], month: number) {
