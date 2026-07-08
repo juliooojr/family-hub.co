@@ -331,3 +331,18 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - A Visao Geral do Financeiro possui grafico mensal clicavel com valores por barra.
 - Tarefas possui primeira base experimental na branch atual, mas os acessos pelo menu lateral, navigation mobile e tela inicial estao bloqueados ate revisao e aprovacao.
 - Investimentos, Calendario, Flora, Documentos e Emergencia permanecem bloqueados para escopos futuros.
+
+---
+
+## ATUALIZACAO DE ESTADO REAL - 08/07/2026
+
+Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
+
+- Tarefas possui primeira versao pequena desbloqueada na navegacao desktop e mobile para teste.
+- Compras, Financeiro, Tarefas e Hub receberam ajustes mobile de responsividade e usabilidade nesta branch.
+- Financeiro mobile possui cards visiveis por padrao com opcao de minimizar, filtros de Transacoes recolhiveis, abas sem scrollbar aparente cortando itens e gesto interno de puxar para atualizar.
+- Contas exibem feedback visual ao marcar pagamento, com preenchimento verde rapido no card, e usam gravacao idempotente para evitar erro de pagamento mensal duplicado.
+- Movimentacoes diretas de Reserva aparecem como transacoes de reserva, mas nao somam em receitas, despesas, saldo comum ou margem planejada.
+- Orcamento permite expandir uma categoria para listar os itens do mes que compoem o valor gasto, incluindo contas e transacoes.
+- O controle de expandir categoria no Orcamento deve permanecer discreto, sem caixa quadrada pesada; usar seta/chevron simples alinhado ao fim da linha.
+- Proxima sessao deve validar em producao/PWA instalado e continuar apenas os refinamentos observados em uso real.

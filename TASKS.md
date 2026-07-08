@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 06/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -31,8 +31,13 @@ Atualizado em 06/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Melhorias de UX de uso real no Financeiro: data atual em nova transacao, ordenacao cronologica por data registrada, grafico mensal clicavel com valores, filtros compactos e recorrencias/categorias preservando meses anteriores.
 - [x] Ajuste do callback/logout do Google OAuth para persistir cookies de sessao no redirect e evitar falha na primeira tentativa de login.
 - [x] Melhorias de UX de uso real em Compras: Modo Mercado revisado no desktop, preco opcional discreto em itens e edicao de itens.
-- [x] Primeira base experimental de Tarefas criada em branch propria, ainda bloqueada na navegacao para revisao de escopo antes de uso real.
+- [x] Primeira versao pequena de Tarefas revisada e desbloqueada na navegacao para teste.
 - [x] Financeiro ajustado para separar despesas em Fixos, Variaveis recorrentes e Transacoes avulsas; transacoes nao usam mais classificacao fixa/variavel.
+- [x] Ajustes gerais mobile aplicados em Financeiro, Compras e Tarefas.
+- [x] Financeiro mobile com cards visiveis por padrao e opcao de minimizar, filtros de Transacoes recolhiveis, abas sem scrollbar aparente cortando os itens e gesto interno de puxar para atualizar.
+- [x] Contas com feedback visual ao marcar pagamento e gravacao idempotente para evitar erro de pagamento duplicado.
+- [x] Reserva de emergencia tratada como movimentacao patrimonial: aparece em Transacoes, mas nao soma em receitas, despesas, saldo comum ou margem planejada.
+- [x] Orcamento permite expandir uma categoria e ver os itens do mes que compoem o valor, separando contas e transacoes.
 
 ## Publicacao do Financeiro
 
@@ -59,8 +64,8 @@ Atualizado em 06/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
 - [x] App mobile PWA sem publicacao em loja.
 - [x] Melhorias de UX observadas apos uso real do app instalado.
-- [ ] Validar no mobile PWA instalado as melhorias de Compras, Financeiro e login apos publicacao.
-- [ ] Retomar a secao Tarefas a partir da base experimental, com navegacao bloqueada ate aprovacao visual e funcional.
+- [ ] Validar no mobile PWA instalado as melhorias de Compras, Financeiro, Tarefas e login apos publicacao.
+- [ ] Continuar Tarefas apos uso real, refinando apenas pontos observados no teste mobile/desktop.
 - [ ] Financeiro: criar detalhamento interno para contas variaveis como Cartao de credito, permitindo listar assinaturas/compras que compoem a fatura sem duplicar o total nas transacoes.
 - [ ] Investimentos, somente quando houver escopo aprovado.
 - [ ] Calendario com Google Calendar.

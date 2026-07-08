@@ -20,10 +20,13 @@ Producao: https://family-hub-co.vercel.app
 - Lista de Compras esta funcional e persistida no Supabase.
 - Compras recebeu melhorias de uso real: Modo Mercado revisado no desktop, item com preco opcional discreto e edicao de itens.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
-- Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
+- Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos/recolhiveis no mobile, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
+- Financeiro mobile possui cards visiveis por padrao com opcao de minimizar, abas sem scrollbar aparente cortando os itens, gesto interno de puxar para atualizar e feedback visual ao marcar contas como pagas.
+- Orcamento permite expandir categorias para ver contas e transacoes do mes que compoem o valor gasto.
+- Movimentacoes de Reserva aparecem em Transacoes, mas nao entram nos totais de receita, despesa, saldo comum ou margem planejada.
 - Fluxo de login Google foi ajustado para aplicar os cookies de sessao no redirect do callback e evitar falha na primeira tentativa.
 - Investimentos permanece bloqueado para uma etapa futura.
-- Tarefas possui uma primeira base experimental na branch atual, mas esta bloqueada no menu e na tela inicial ate revisao final de escopo, visual e comportamento.
+- Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
@@ -37,6 +40,8 @@ Producao: https://family-hub-co.vercel.app
 - Marcar uma conta como paga nao cria outra transacao; a propria conta e a fonte do valor.
 - Contas da categoria Reserva aumentam a reserva somente quando pagas.
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
+- Clicar em uma categoria do Orcamento abre um detalhamento inline com os itens daquele mes que compoem o valor.
+- Depositos e retiradas da Reserva sao movimentacoes patrimoniais; nao contam como receita ou despesa comum.
 - Contas variaveis como Cartao de credito devem representar o total da fatura; compras e assinaturas dentro do cartao nao devem ser lancadas como transacoes normais para evitar duplicidade. O detalhamento interno da fatura esta no backlog.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
 - O grafico da Visao Geral permite ver valores por barra e clicar em um mes para focar o periodo.

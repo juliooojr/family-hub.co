@@ -412,6 +412,7 @@ function Bills({ bills, owner, onOwner, month, monthIndex, pendingBillIds, onMon
 }
 
 function Budgets({ budgets, bills, transactions, categories, month, monthIndex, onMonth, onCreate, onEdit }: { budgets: Budget[]; bills: Bill[]; transactions: Transaction[]; categories: CategoryOption[]; month: string; monthIndex: number; onMonth: (value: number) => void; onCreate: () => void; onEdit: (budget: Budget) => void }) {
+  const [expandedBudgetId, setExpandedBudgetId] = useState<string | null>(null)
   const expenses = calculateCategoryExpenses(bills, transactions, monthIndex)
   const budgetNames = new Set(budgets.map((budget) => budget.name))
   const unbudgeted = [...expenses.entries()].filter(([category, amount]) => amount > 0 && !budgetNames.has(category))
@@ -421,7 +422,9 @@ function Budgets({ budgets, bills, transactions, categories, month, monthIndex, 
     const spent = expenses.get(budget.name) ?? 0
     const percentage = budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0
     const tone = budgetTone(percentage)
-    return <button className="finance-budget-row" key={budget.id} onClick={() => onEdit(budget)}><i className={tone} /><strong><span>{budget.emoji}</span> {budget.name}</strong><div><span className={tone} style={{width:`${Math.min(percentage, 100)}%`}} /></div><span><b className={tone}>{formatMoney(spent)}</b><small>de {formatMoney(budget.limit)} · {percentage}%</small></span></button>
+    const expanded = expandedBudgetId === budget.id
+    const breakdown = budgetBreakdown(budget.name, bills, transactions, monthIndex)
+    return <article className={`finance-budget-item ${expanded ? 'open' : ''}`} key={budget.id}><button className="finance-budget-row" onClick={() => setExpandedBudgetId(expanded ? null : budget.id)} aria-expanded={expanded}><i className={tone} /><strong><span>{budget.emoji}</span> {budget.name}</strong><div><span className={tone} style={{width:`${Math.min(percentage, 100)}%`}} /></div><span><b className={tone}>{formatMoney(spent)}</b><small>de {formatMoney(budget.limit)} · {percentage}%</small></span><em aria-hidden="true">⌄</em></button>{expanded ? <div className="finance-budget-breakdown"><header><span>{breakdown.length} {breakdown.length === 1 ? 'item' : 'itens'} em {month}</span><button type="button" className="button button-ghost" onClick={() => onEdit(budget)}>Editar categoria</button></header>{breakdown.length === 0 ? <p>Nenhum lançamento nesta categoria para o mês selecionado.</p> : <div>{breakdown.map((item) => <div className="finance-budget-breakdown-row" key={item.id}><span><strong>{item.name}</strong><small>{item.source} · {item.owner} · {item.date}</small></span><b>{formatMoney(item.amount)}</b></div>)}</div>}</div> : null}</article>
   })}</div>}{unbudgeted.length > 0 ? <section className="finance-unbudgeted"><h3>GASTOS SEM ORÇAMENTO</h3><p>Estas categorias têm despesas no mês, mas ainda não possuem teto definido.</p><div>{unbudgeted.map(([category, amount]) => <span key={category}>{categoryEmoji(category, categories)} {category} <strong>{formatMoney(amount)}</strong></span>)}</div></section> : null}</>
 }
 
@@ -678,6 +681,31 @@ function calculateCategoryExpenses(bills: Bill[], transactions: Transaction[], m
     expenses.set(transaction.category, (expenses.get(transaction.category) ?? 0) + transaction.amount)
   }
   return expenses
+}
+
+function budgetBreakdown(category: string, bills: Bill[], transactions: Transaction[], month: number) {
+  const billItems = bills
+    .filter((bill) => bill.category === category && appearsInMonth(bill, month))
+    .map((bill) => ({
+      id: `bill-${bill.id}`,
+      name: bill.name,
+      amount: bill.amount,
+      owner: bill.owner,
+      source: bill.expenseKind === 'fixed' ? 'Conta fixa' : 'Conta variável',
+      date: `Dia ${String(bill.dueDay).padStart(2, '0')}`,
+    }))
+  const transactionItems = transactions
+    .filter((transaction) => transaction.type === 'expense' && transaction.category === category && transactionAppearsInMonth(transaction, month))
+    .map((transaction) => ({
+      id: `transaction-${transaction.id}`,
+      name: transaction.name,
+      amount: transaction.amount,
+      owner: transaction.owner,
+      source: transaction.recurrence === 'none' ? 'Transação avulsa' : 'Transação recorrente',
+      date: formatTransactionDate(transaction, month),
+    }))
+
+  return [...billItems, ...transactionItems].sort((a, b) => b.amount - a.amount)
 }
 
 function calculateBudgetPlanning(
