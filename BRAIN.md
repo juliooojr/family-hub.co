@@ -345,4 +345,9 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Movimentacoes diretas de Reserva aparecem como transacoes de reserva, mas nao somam em receitas, despesas, saldo comum ou margem planejada.
 - Orcamento permite expandir uma categoria para listar os itens do mes que compoem o valor gasto, incluindo contas e transacoes.
 - O controle de expandir categoria no Orcamento deve permanecer discreto, sem caixa quadrada pesada; usar seta/chevron simples alinhado ao fim da linha.
-- Proxima sessao deve validar em producao/PWA instalado e continuar apenas os refinamentos observados em uso real.
+- Backlog atual: P0 validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites; P1 revisar como Tarefas aparece na Visao Geral; P2 manter seguranca/operacao; P3 manter Investimentos, Calendario, Documentos e Emergencia.
+- Family Hub agora evolui para produto multi-familia: cada usuario pode criar uma familia propria ou entrar por convite; dados seguem isolados por `family_id`; Julio permanece owner e Carol admin da familia atual.
+- A area "Gerenciar" aparece apenas para owner/admin e concentra membros, edicao do nome da familia e convites.
+- Convites pendentes podem ser excluidos pela interface; isso remove o registro de `family_invites` e invalida imediatamente o link `/convite/[token]`.
+- Remover membro revoga o acesso daquele usuario a familia, mas nao apaga o historico do que ele ja fez.
+- No mobile, a navegacao inferior deve mostrar carregamento ao trocar de modulo, e campos numericos de Tarefas devem evitar zoom automatico.

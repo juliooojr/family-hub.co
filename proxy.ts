@@ -1,11 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const AUTHORIZED_EMAILS = new Set([
-  'juliojr0410@gmail.com',
-  'carolinneagro@gmail.com',
-])
-
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const bypassAuthRoute =
@@ -13,7 +8,8 @@ export async function proxy(request: NextRequest) {
     pathname === '/sw.js' ||
     pathname === '/offline.html' ||
     pathname.startsWith('/auth/sign-in') ||
-    pathname.startsWith('/auth/callback')
+    pathname.startsWith('/auth/callback') ||
+    pathname.startsWith('/convite')
 
   if (bypassAuthRoute) {
     return NextResponse.next({ request })
@@ -49,11 +45,6 @@ export async function proxy(request: NextRequest) {
     const homeUrl = new URL('/', request.url)
     homeUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
     return NextResponse.redirect(homeUrl)
-  }
-
-  if (user && !AUTHORIZED_EMAILS.has(user.email?.toLowerCase() ?? '')) {
-    await supabase.auth.signOut()
-    return NextResponse.redirect(new URL('/?erro=nao-autorizado', request.url))
   }
 
   if (user && (pathname === '/' || pathname === '/login')) {

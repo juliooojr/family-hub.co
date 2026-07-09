@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 
-type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping'
+type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
 type NavigationItem = {
   id: string
   label: string
@@ -25,9 +25,11 @@ const navigation: NavigationItem[] = [
 
 export default function InternalShell({
   active,
+  canManageFamily = false,
   children,
 }: {
   active: ActiveModule
+  canManageFamily?: boolean
   children: ReactNode
 }) {
   const theme = usePreference('fh-theme', 'light')
@@ -40,7 +42,8 @@ export default function InternalShell({
     navigation.forEach((item) => {
       if (item.href && item.href !== pathname) router.prefetch(item.href)
     })
-  }, [pathname, router])
+    if (canManageFamily && pathname !== '/familia') router.prefetch('/familia')
+  }, [canManageFamily, pathname, router])
 
   function toggleTheme() {
     setPreference('fh-theme', theme === 'light' ? 'dark' : 'light')
@@ -86,6 +89,11 @@ export default function InternalShell({
             <button className="internal-side-action" type="button" onClick={toggleTheme}>
               <span>☀︎ / ☾</span><strong>Alternar tema</strong>
             </button>
+            {canManageFamily ? (
+              <Link className={`internal-side-action ${active === 'family' ? 'active' : ''}`} href="/familia" prefetch>
+                <strong>Gerenciar</strong><NavPendingHint />
+              </Link>
+            ) : null}
             <a className="internal-side-action" href="/auth/logout">
               <span>↩</span><strong>Sair</strong>
             </a>
@@ -95,11 +103,12 @@ export default function InternalShell({
         <div className="internal-content">{children}</div>
       </div>
 
-      <nav className="internal-mobile-nav" aria-label="Navegação principal">
+      <nav className={`internal-mobile-nav ${canManageFamily ? 'can-manage-family' : ''}`} aria-label="Navegação principal">
         <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início">🏠<NavPendingHint /></Link>
         <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças">💰<NavPendingHint /></Link>
         <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras">🛒<NavPendingHint /></Link>
         <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas">📋<NavPendingHint /></Link>
+        {canManageFamily ? <Link className={active === 'family' ? 'active' : ''} href="/familia" prefetch aria-label="Gerenciar família">👥<NavPendingHint /></Link> : null}
         <a href="/auth/logout" aria-label="Sair">↩</a>
       </nav>
     </div>

@@ -2,7 +2,7 @@ import PublicHome from '@/components/auth/PublicHome'
 
 const ERROR_MESSAGES: Record<string, string> = {
   auth: 'Não foi possível concluir o login. Tente novamente.',
-  'nao-autorizado': 'Este e-mail ainda não tem acesso ao Family Hub.',
+  convite: 'Não foi possível aceitar o convite. Confira o link e o e-mail usado no Google.',
 }
 
 export default async function Home({

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getCurrentFamilyContext } from '@/lib/family'
 
 export type TaskGoalType = 'check' | 'quantity'
 export type TaskFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly'
@@ -135,14 +136,9 @@ function mapEntry(row: EntryRow): RoutineEntry {
 }
 
 async function getFamilyId(supabase: SupabaseClient, userId: string): Promise<string> {
-  const { data, error } = await supabase
-    .from('family_members')
-    .select('family_id')
-    .eq('user_id', userId)
-    .single()
-
-  if (error || !data) throw error ?? new Error('Familia nao encontrada.')
-  return data.family_id as string
+  const context = await getCurrentFamilyContext(supabase, userId)
+  if (!context) throw new Error('Crie ou aceite uma família para usar Tarefas.')
+  return context.family.id
 }
 
 export async function getTasksData(supabase: SupabaseClient, userId: string) {

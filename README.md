@@ -1,6 +1,6 @@
 # Family Hub
 
-Sistema privado da familia Julio e Carol para centralizar compras, financas, agenda, documentos, cuidados com a Flora e outras rotinas familiares.
+Sistema multi-familia para centralizar compras, financas, tarefas, agenda, documentos e outras rotinas familiares em um espaco privado por familia.
 
 Producao: https://family-hub-co.vercel.app
 
@@ -9,8 +9,9 @@ Producao: https://family-hub-co.vercel.app
 - Modulo Compras publicado e em uso.
 - Modulo Financeiro publicado em producao e em teste de uso real.
 - Google OAuth e a unica forma de login.
-- Apenas Julio e Carol estao autorizados.
-- Ambos acessam a mesma familia e os mesmos dados.
+- Cadastro aberto por Google OAuth com criacao de familia propria ou entrada por convite.
+- Julio e Carol continuam vinculados a familia atual, com os dados existentes preservados.
+- Cada familia possui seus proprios membros e dados isolados por `family_id`.
 - RLS esta habilitado nas tabelas publicas do Supabase.
 - Nova home publica e novo Hub interno responsivo estao funcionando.
 - Navegacao interna unificada com menu lateral no desktop e barra inferior no mobile.
@@ -27,12 +28,14 @@ Producao: https://family-hub-co.vercel.app
 - Fluxo de login Google foi ajustado para aplicar os cookies de sessao no redirect do callback e evitar falha na primeira tentativa.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
+- Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
+- Convites pendentes podem ser excluidos; ao excluir, o link e invalidado imediatamente.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
 ## Modulo Financeiro
 
-- Os dados sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
+- Os dados sao compartilhados pelos membros da mesma familia por meio de `family_id` e RLS.
 - Transacoes registram receitas, despesas, depositos e retiradas da reserva.
 - Contas podem ser recorrentes e possuem pagamentos mensais independentes.
 - Contas podem ser classificadas como fixas ou variaveis recorrentes; transacoes de despesa sao tratadas como transacoes avulsas.
@@ -42,7 +45,7 @@ Producao: https://family-hub-co.vercel.app
 - Orcamentos somam despesas de Contas e Transacoes por categoria.
 - Clicar em uma categoria do Orcamento abre um detalhamento inline com os itens daquele mes que compoem o valor.
 - Depositos e retiradas da Reserva sao movimentacoes patrimoniais; nao contam como receita ou despesa comum.
-- Contas variaveis como Cartao de credito devem representar o total da fatura; compras e assinaturas dentro do cartao nao devem ser lancadas como transacoes normais para evitar duplicidade. O detalhamento interno da fatura esta no backlog.
+- Contas variaveis como Cartao de credito representam o total da fatura; compras e assinaturas internas nao devem ser lancadas como transacoes normais para evitar duplicidade.
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
 - O grafico da Visao Geral permite ver valores por barra e clicar em um mes para focar o periodo.
 - Categorias exibidas em Transacoes e Contas seguem as categorias criadas no Orcamento; categorias padrao aparecem apenas quando ainda nao ha categorias cadastradas.
@@ -51,11 +54,23 @@ Producao: https://family-hub-co.vercel.app
 
 ## Modulo Compras
 
-- Listas e itens sao compartilhados por Julio e Carol por meio de `family_id` e RLS.
+- Listas e itens sao compartilhados pelos membros da mesma familia por meio de `family_id` e RLS.
 - Itens podem ter preco opcional para referencia historica ou planejamento de compra.
 - O preco do item e exibido de forma discreta nas listas, detalhe, arquivo e Modo Mercado.
 - Modo Mercado deve funcionar em desktop e mobile com contraste adequado, toque facil e acoes de item acessiveis.
 - As migrations de Compras sao aditivas e nao inserem dados ficticios.
+
+## Familias, cadastro e convites
+
+- Qualquer pessoa pode iniciar pelo botao "Criar minha familia" e autenticar com Google.
+- Se o usuario autenticado ainda nao possui vinculo em `family_members`, o sistema cria uma nova `family` e vincula esse usuario como `owner`.
+- Usuarios existentes entram pelo botao "Entrar" e sao levados para a familia ja vinculada.
+- Owner e admin podem acessar "Gerenciar" dentro do sistema, visualizar membros, editar o nome da familia e gerar convites para `admin` ou `member`.
+- Convites geram link copiavel em `/convite/[token]`, expiram em 48 horas, podem ser excluidos para invalidar o link imediatamente e nao podem ser reutilizados apos aceite.
+- O aceite exige login Google com o mesmo e-mail do convite.
+- `owner` gerencia tudo; `admin` pode convidar, revogar convites e gerenciar dados; `member` usa os modulos sem gerenciar membros ou convites.
+- Financeiro e Compras continuam compartilhados por familia; Tarefas continuam pessoais por usuario e tambem respeitam `family_id`.
+- A familia original Julio e Carol e adaptada por migration idempotente: Julio como owner, Carol como admin, sem apagar, recriar ou duplicar dados.
 
 ## Documentos de referencia
 
@@ -112,7 +127,8 @@ npm.cmd run build
 - Toda nova tabela publica precisa de RLS e isolamento por `family_id`.
 - Acoes criticas devem ser registradas em `audit_log` quando aplicavel.
 - Nenhuma rota ou dado privado pode ficar acessivel sem autenticacao.
-- Contas nao autorizadas devem continuar bloqueadas.
+- Acesso aos dados privados depende de vinculo valido em `family_members`.
+- Convites sao vinculados a uma familia, expiram em 48 horas e exigem e-mail autenticado igual ao e-mail convidado.
 
 ## Banco de dados durante o desenvolvimento
 
@@ -263,11 +279,14 @@ Concluido:
 
 ## Proximas prioridades
 
-1. Publicar e validar em producao as melhorias de UX de Compras, Financeiro e login.
-2. Validar no mobile PWA instalado, especialmente Modo Mercado, modais de item e Financeiro.
-3. Retomar a nova secao Tarefas a partir da base experimental, desbloqueando menu e tela inicial apenas depois da aprovacao.
-4. Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-5. Revisar membros e permissoes das plataformas.
-6. Definir rotina de backup do Supabase.
-7. Acompanhar logs da Vercel e do Supabase.
-8. Considerar um Supabase separado para desenvolvimento no futuro.
+1. P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
+2. P1: Revisar como Tarefas deve aparecer na Visao Geral.
+3. P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+4. P2: Revisar membros e permissoes das plataformas.
+5. P2: Definir rotina de backup do Supabase.
+6. P2: Acompanhar logs da Vercel e do Supabase.
+7. P2: Considerar um Supabase separado para desenvolvimento no futuro.
+8. P3: Investimentos, somente quando houver escopo aprovado.
+9. P3: Calendario com Google Calendar.
+10. P3: Documentos.
+11. P3: Emergencia.

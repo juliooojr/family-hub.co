@@ -22,7 +22,6 @@ type View = 'lists' | 'detail' | 'archive'
 type Modal = 'list' | 'item' | 'reopen' | null
 
 const EMOJIS = ['🛒', '🐕', '💊', '🏠', '👶', '🥩', '🧹', '🍕', '📦', '🎁', '🌿', '⚡', '🔧', '🐾']
-const RESPONSIBLES = ['Família', 'Julio', 'Carol'] as const
 const collator = new Intl.Collator('pt-BR', { sensitivity: 'base' })
 
 function sortItems(items: ShoppingItem[]) {
@@ -66,10 +65,12 @@ function progress(list: ShoppingList) {
 export default function ShoppingModule({
   initialLists,
   initialError = '',
+  responsibleOptions = ['Família'],
   demo = false,
 }: {
   initialLists: ShoppingList[]
   initialError?: string
+  responsibleOptions?: string[]
   demo?: boolean
 }) {
   const supabase = useMemo(() => createClient(), [])
@@ -375,6 +376,7 @@ export default function ShoppingModule({
       {modal === 'list' ? (
         <ListModal
           initial={editing ? selected : null}
+          responsibleOptions={responsibleOptions}
           busy={busy}
           onClose={() => { setModal(null); setEditing(false) }}
           onSubmit={submitList}
@@ -540,8 +542,9 @@ function MarketMode({ list, onExit, onToggle, onDelete, onEdit, onAdd }: {
   )
 }
 
-function ListModal({ initial, busy, onClose, onSubmit }: {
+function ListModal({ initial, responsibleOptions, busy, onClose, onSubmit }: {
   initial: ShoppingList | null
+  responsibleOptions: string[]
   busy: boolean
   onClose: () => void
   onSubmit: (input: ListInput) => void
@@ -549,9 +552,9 @@ function ListModal({ initial, busy, onClose, onSubmit }: {
   const [emoji, setEmoji] = useState(initial?.emoji ?? '🛒')
   const [name, setName] = useState(initial?.name ?? '')
   const [date, setDate] = useState(initial?.scheduledDate ?? '')
-  const initialResponsible = RESPONSIBLES.includes(initial?.responsible as typeof RESPONSIBLES[number])
+  const initialResponsible = responsibleOptions.includes(initial?.responsible ?? '')
     ? initial!.responsible
-    : 'Família'
+    : responsibleOptions[0] ?? 'Família'
   const [responsible, setResponsible] = useState(initialResponsible)
   function submit(event: FormEvent) { event.preventDefault(); if (name.trim()) onSubmit({ emoji, name, scheduledDate: date || null, responsible }) }
   return (
@@ -559,7 +562,7 @@ function ListModal({ initial, busy, onClose, onSubmit }: {
       <form onSubmit={submit}>
         <label className="field-label">ÍCONE</label><div className="emoji-grid">{EMOJIS.map((option) => <button type="button" className={emoji === option ? 'selected' : ''} key={option} onClick={() => setEmoji(option)}>{option}</button>)}</div>
         <label className="field-label" htmlFor="list-name">NOME DA LISTA</label><input id="list-name" className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Mercado da Semana" required maxLength={100} />
-        <div className="field-row"><div><label className="field-label" htmlFor="list-date">DATA PREVISTA</label><input id="list-date" className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} /></div><div><label className="field-label" htmlFor="list-owner">RESPONSÁVEL</label><select id="list-owner" className="field" value={responsible} onChange={(event) => setResponsible(event.target.value)}>{RESPONSIBLES.map((option) => <option key={option}>{option}</option>)}</select></div></div>
+        <div className="field-row"><div><label className="field-label" htmlFor="list-date">DATA PREVISTA</label><input id="list-date" className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} /></div><div><label className="field-label" htmlFor="list-owner">RESPONSÁVEL</label><select id="list-owner" className="field" value={responsible} onChange={(event) => setResponsible(event.target.value)}>{responsibleOptions.map((option) => <option key={option}>{option}</option>)}</select></div></div>
         <div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : initial ? 'Salvar' : 'Criar Lista'}</button></div>
       </form>
     </ModalShell>
