@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getCurrentFamilyContext, responsibleOptions } from '@/lib/family'
 
 export type FinanceTransaction = {
   id: string
@@ -32,9 +33,9 @@ type BudgetRow = {
 }
 
 export async function getFinanceData(supabase: SupabaseClient, userId: string) {
-  const { data: member, error: memberError } = await supabase.from('family_members').select('family_id').eq('user_id', userId).single()
-  if (memberError || !member) throw memberError ?? new Error('Família não encontrada.')
-  const familyId = member.family_id as string
+  const context = await getCurrentFamilyContext(supabase, userId)
+  if (!context) throw new Error('Crie ou aceite uma família para usar o Financeiro.')
+  const familyId = context.family.id
   const [transactionsResult, billsResult, budgetsResult, reserveResult] = await Promise.all([
     supabase.from('finance_transactions').select('*').eq('family_id', familyId).order('transaction_date'),
     supabase.from('finance_bills').select('*, finance_bill_payments(month_date)').eq('family_id', familyId).order('name'),
@@ -61,5 +62,12 @@ export async function getFinanceData(supabase: SupabaseClient, userId: string) {
     startMonth: row.start_date ? Number(row.start_date.slice(5, 7)) - 1 : 0,
     endMonth: row.end_date ? Number(row.end_date.slice(5, 7)) - 1 : undefined,
   }))
-  return { familyId, transactions, bills, budgets, reserveGoal: Number(reserveResult.data?.goal_amount ?? 30000) }
+  return {
+    familyId,
+    responsibleOptions: responsibleOptions(context.members),
+    transactions,
+    bills,
+    budgets,
+    reserveGoal: Number(reserveResult.data?.goal_amount ?? 30000),
+  }
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import InternalShell from '@/components/layout/InternalShell'
+import { canManageFamily, getCurrentFamilyContext } from '@/lib/family'
 import { getFinanceData, type FinanceBill, type FinanceTransaction } from '@/lib/finance'
 import { getShoppingLists, type ShoppingList } from '@/lib/shopping'
 import { createClient } from '@/lib/supabase/server'
@@ -71,6 +72,8 @@ export default async function HubPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/?next=/hub')
+  const familyContext = await getCurrentFamilyContext(supabase, user.id)
+  if (!familyContext) redirect('/familia/criar')
 
   const now = new Date()
   const yearMonth = new Intl.DateTimeFormat('en-CA', {
@@ -108,7 +111,7 @@ export default async function HubPage() {
   const reservePercentage = reserveGoal > 0 ? Math.max(0, Math.round((reserveBalance / reserveGoal) * 100)) : 0
 
   return (
-    <InternalShell active="home">
+    <InternalShell active="home" canManageFamily={canManageFamily(familyContext.member.role)}>
       <main className="dashboard-main">
         <header className="dashboard-heading">
           <div>

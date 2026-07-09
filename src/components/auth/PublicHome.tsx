@@ -20,7 +20,7 @@ export default function PublicHome({
     setTheme((current) => current === 'light' ? 'dark' : 'light')
   }
 
-  async function signIn() {
+  async function startGoogle(next: string) {
     setLoading(true)
     setLocalError('')
 
@@ -31,7 +31,7 @@ export default function PublicHome({
     }
 
     const signInUrl = new URL('/auth/sign-in', window.location.origin)
-    signInUrl.searchParams.set('next', nextPath)
+    signInUrl.searchParams.set('next', next)
     window.location.assign(signInUrl.toString())
   }
 
@@ -50,14 +50,14 @@ export default function PublicHome({
               <br />
               Aqui ela encontra seu lugar.
             </h1>
-            <p>Tudo o que faz parte da sua casa, reunido de forma simples e organizada.</p>
+            <p>Finanças, compras, tarefas e rotina da casa em um espaço familiar privado.</p>
             {error ? <div className="error-banner" role="alert">{error}</div> : null}
             <div className="public-home-actions">
-              <button className="public-home-btn primary" type="button" onClick={signIn} disabled={loading}>
+              <button className="public-home-btn primary" type="button" onClick={() => startGoogle(nextPath)} disabled={loading}>
                 {loading ? 'Abrindo...' : 'Entrar'}
               </button>
-              <button className="public-home-btn ghost" type="button" onClick={toggleTheme}>
-                Alternar tema
+              <button className="public-home-btn ghost" type="button" onClick={() => startGoogle('/familia/criar')} disabled={loading}>
+                Criar minha família
               </button>
             </div>
           </div>

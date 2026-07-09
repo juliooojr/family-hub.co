@@ -24,7 +24,7 @@ Objetivo:
 
 Validar a versao publicada no PWA instalado, especialmente Financeiro, Compras e Tarefas. Corrigir apenas refinamentos observados em uso real, mantendo o escopo pequeno e sem mexer em dados reais de forma destrutiva.
 
-Validacao obrigatoria ao final:
+Validacao obrigatoria ao final de subir para produção, não precisa ser depois de qualquer coisa:
 
 ```powershell
 npm.cmd run lint

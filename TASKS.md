@@ -38,6 +38,9 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Contas com feedback visual ao marcar pagamento e gravacao idempotente para evitar erro de pagamento duplicado.
 - [x] Reserva de emergencia tratada como movimentacao patrimonial: aparece em Transacoes, mas nao soma em receitas, despesas, saldo comum ou margem planejada.
 - [x] Orcamento permite expandir uma categoria e ver os itens do mes que compoem o valor, separando contas e transacoes.
+- [x] Base multi-familia implementada com cadastro aberto, owner/admin/member e convites por link.
+- [x] Refinamentos de Familia: botao Gerenciar para owner/admin, edicao do nome da familia, remocao de membros preservando historico e exclusao de convites pendentes invalidando links.
+- [x] Refinamentos mobile: feedback de carregamento na navegacao inferior e campo de valor em Tarefas sem zoom automatico no responsivo.
 
 ## Publicacao do Financeiro
 
@@ -64,14 +67,17 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Novo layout geral do sistema, mantendo seguranca, responsividade e funcoes ja publicadas.
 - [x] App mobile PWA sem publicacao em loja.
 - [x] Melhorias de UX observadas apos uso real do app instalado.
-- [ ] Validar no mobile PWA instalado as melhorias de Compras, Financeiro, Tarefas e login apos publicacao.
-- [ ] Continuar Tarefas apos uso real, refinando apenas pontos observados no teste mobile/desktop.
-- [ ] Financeiro: criar detalhamento interno para contas variaveis como Cartao de credito, permitindo listar assinaturas/compras que compoem a fatura sem duplicar o total nas transacoes.
-- [ ] Investimentos, somente quando houver escopo aprovado.
-- [ ] Calendario com Google Calendar.
-- [ ] Flora.
-- [ ] Documentos.
-- [ ] Emergencia.
+- [ ] P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
+- [ ] P1: Revisar como Tarefas deve aparecer na Visao Geral.
+- [ ] P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+- [ ] P2: Revisar membros e permissoes das plataformas.
+- [ ] P2: Definir rotina de backup do Supabase.
+- [ ] P2: Acompanhar logs da Vercel e do Supabase.
+- [ ] P2: Considerar um Supabase separado para desenvolvimento no futuro.
+- [ ] P3: Investimentos, somente quando houver escopo aprovado.
+- [ ] P3: Calendario com Google Calendar.
+- [ ] P3: Documentos.
+- [ ] P3: Emergencia.
 
 ## Regras permanentes
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getCurrentFamilyContext } from '@/lib/family'
 
 export type ShoppingStatus = 'active' | 'archived'
 
@@ -91,25 +92,9 @@ function mapList(row: ListRow): ShoppingList {
 }
 
 async function getFamilyId(supabase: SupabaseClient): Promise<string> {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-  if (userError || !user) throw new Error('Sessão expirada. Entre novamente.')
-
-  const { data, error } = await supabase
-    .from('family_members')
-    .select('family_id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (error || !data) {
-    if (error?.code === 'PGRST205' || error?.code === '42P01') {
-      throw new Error('O módulo de compras ainda não foi configurado no banco de dados.')
-    }
-    throw new Error('Seu usuário ainda não foi vinculado à família.')
-  }
-  return data.family_id as string
+  const context = await getCurrentFamilyContext(supabase)
+  if (!context) throw new Error('Crie ou aceite uma família para usar Compras.')
+  return context.family.id
 }
 
 export async function getShoppingLists(supabase: SupabaseClient): Promise<ShoppingList[]> {
