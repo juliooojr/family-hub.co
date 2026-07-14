@@ -53,3 +53,22 @@ Envie o cabeçalho `Authorization: Bearer <CRON_SECRET>`. O job também pode ser
 - A permissão só é solicitada após o toque no switch.
 - Crie uma tarefa para dois ou três minutos à frente, feche o PWA e confirme a chegada e a abertura de `/tarefas` ao tocar no aviso.
 - Se a permissão tiver sido negada antes, reative Notificações nos ajustes do sistema.
+
+## 5. Regras funcionais
+
+- Assinaturas e tarefas são filtradas pelo mesmo `user_id`; nenhum membro recebe tarefas de outro usuário.
+- Cada navegador ou PWA instalado possui assinatura própria. Ao adicionar um aparelho, desligue e ligue o switch nele para registrar a assinatura.
+- O fuso IANA do aparelho define data e horário locais do lembrete. O Supabase pode exibir timestamps de auditoria em UTC (`+00`).
+- Frequência, início, dias específicos e status ativo são verificados antes do envio.
+- Se houver `routine_entries.completed = true` para a tarefa na data local, o aviso não é enviado.
+- A chave de deduplicação é tarefa + assinatura + data + horário. O mesmo minuto não duplica; editar para mais tarde permite novo envio no dia.
+- Ao tocar, abrir ou focar `/tarefas`.
+- O texto `From` ou equivalente é uma identificação de segurança do navegador/sistema e não pode ser alterado pelo payload.
+- `lang: pt-BR` ajuda tecnologias assistivas e metadados de idioma, mas não traduz a interface do sistema operacional.
+
+## 6. Diagnóstico
+
+- `401` na função: conferir `CRON_SECRET` e o header `Authorization: Bearer ...`.
+- Erro `Failed to decode base64Url`: revisar o par VAPID, sem prefixos, aspas, espaços ou digest.
+- Entrega ausente: conferir tarefa ativa, horário, fuso, frequência, conclusão e existência de assinatura do aparelho.
+- Entrega registrada sem aviso visível: conferir permissões, modo Foco e se a assinatura pertence ao aparelho testado.

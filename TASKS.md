@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 14/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -43,6 +43,19 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Refinamentos mobile: feedback de carregamento na navegacao inferior e campo de valor em Tarefas sem zoom automatico no responsivo.
 - [x] Refinamentos de Compras: rolagem interna no Modo Mercado, finalizacao confirmada com reaproveitamento de pendencias em sete dias e link opcional por item.
 - [x] Convites enviados podem ser removidos da listagem com confirmacao, inclusive depois do aceite sem revogar o acesso do membro.
+- [x] Compras sincroniza listas e itens entre membros por Supabase Realtime, com retomada por foco e reconciliacao periodica.
+- [x] Modo Mercado mobile isolado da navegacao inferior, com rolagem propria, folga apos o ultimo item e saida fixa acessivel.
+- [x] Callback OAuth preserva o host recebido e guarda o destino interno em cookie temporario.
+- [x] PR #9 integrado na `master` com os refinamentos de Compras e Familia.
+
+## Publicacao de Compras colaborativa
+
+- [x] Migration versionada para link de produto e finalizacao atomica.
+- [x] Migration versionada para publicacao Realtime de `shopping_lists` e `shopping_items`.
+- [ ] Confirmar aplicacao das duas migrations no Supabase de Production.
+- [ ] Confirmar deploy Production como `Ready` na Vercel.
+- [ ] Validar dois usuarios marcando itens simultaneamente na mesma lista.
+- [ ] Validar Modo Mercado e finalizacao no navegador mobile e no PWA reinstalado/atualizado.
 
 ## Publicacao do Financeiro
 
@@ -70,6 +83,7 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] App mobile PWA sem publicacao em loja.
 - [x] Melhorias de UX observadas apos uso real do app instalado.
 - [ ] P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
+- [ ] P0: Concluir validacao operacional de Compras colaborativa e finalizacao em Production.
 - [ ] P1: Revisar como Tarefas deve aparecer na Visao Geral.
 - [ ] P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
 - [ ] P2: Revisar membros e permissoes das plataformas.
@@ -90,3 +104,15 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - Desenvolvimento permanece local ate existir uma versao estavel para Preview.
 - Fluxo de entrega: branch, Preview, Pull Request, revisao, merge na `master`, Production.
 - Mudancas em PWA, manifest, icones, splash screen e status bar devem ser testadas no iPhone removendo e adicionando novamente o atalho.
+
+## Operacao de notificacoes de Tarefas
+
+- [x] Web Push individual por usuario e aparelho com horario e fuso local.
+- [x] Migration de assinaturas e entregas versionada.
+- [x] Reagendamento posterior permitido no mesmo dia sem duplicar o mesmo minuto.
+- [x] Tarefa concluida no dia nao recebe lembrete.
+- [x] Edge Function `task-reminders` e Supabase Cron por minuto preparados.
+- [x] Icones vetoriais em Compras e navegacao, Familia dentro do menu mobile e confirmacao de logout.
+- [ ] Confirmar em Production `202607140002_task_reminder_reschedule.sql`.
+- [ ] Confirmar deploy atualizado da Edge Function `task-reminders`.
+- [ ] Revalidar no PWA: pendente recebe; concluida nao recebe; reagendamento posterior envia novamente.

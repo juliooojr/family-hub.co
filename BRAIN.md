@@ -5,12 +5,12 @@
 ---
 
 ## VISÃO GERAL
-**Family Hub** é um sistema web privado para a família Julio & Carol.
-Centraliza finanças, agenda, documentos, pets e compras em um hub digital seguro.
+**Family Hub** é um sistema web multi-familia para rotinas familiares privadas.
+Centraliza finanças, tarefas, compras e, futuramente, agenda, documentos, pets e emergencia em um hub digital seguro.
 Acesso via browser (desktop + mobile responsivo, 360px até 1440px+).
 Login obrigatório via Google OAuth.
 
-## FAMÍLIA
+## FAMÍLIA ORIGINAL
 | Membro | Perfil |
 |--------|--------|
 | Julio | Pai, 34 anos — admin principal |
@@ -23,7 +23,7 @@ Login obrigatório via Google OAuth.
 ## STACK OBRIGATÓRIA
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | Next.js 14 (App Router) + TypeScript |
+| Frontend | Next.js 16.2.9 (App Router) + React 19.2.4 + TypeScript |
 | Estilização | Tailwind CSS + shadcn/ui customizado |
 | Backend/Auth | Supabase (PostgreSQL + Auth + Storage + RLS) |
 | Autenticação | OAuth Google (login por Gmail) |
@@ -41,7 +41,7 @@ Login obrigatório via Google OAuth.
 4. Zero variáveis sensíveis no código — tudo via `.env.local` e Vercel env vars
 5. Documentos em bucket privado Supabase Storage, acesso só via signed URL com expiração
 6. Toda ação crítica registrada em tabela `audit_log`
-7. Novos usuários acessam via convite por email — acesso total, sem restrição de módulo
+7. Novos usuarios autenticam por Google e criam uma familia ou aceitam convite; todo acesso privado depende de `family_members`
 8. Nenhum dado sensível em query params de URL
 9. Cursor `default` em todos os elementos não-interativos; `pointer` apenas em clicáveis
 10. `user-select: none` em todos os elementos não-editáveis para evitar cursor de texto
@@ -51,13 +51,14 @@ Login obrigatório via Google OAuth.
 ## MÓDULOS E STATUS
 | Módulo | Status | Prioridade |
 |--------|--------|-----------|
-| 🔐 Auth (Google OAuth) | 🔴 A fazer | 1 |
-| 💰 Financeiro | 🔴 A fazer | 2 |
-| 🛒 Lista de Compras | 🔴 A fazer | 3 |
-| 📅 Calendário | 🔒 Bloqueado (futuro) | 4 |
-| 🐾 Flora (Pet) | 🔒 Bloqueado (futuro) | 5 |
-| 📁 Documentos | 🔒 Bloqueado (futuro) | 6 |
-| 🚨 Emergência | 🔒 Bloqueado (futuro) | 7 |
+| 🔐 Auth (Google OAuth) | 🟢 Publicado | 1 |
+| 💰 Financeiro | 🟢 Publicado | 2 |
+| 🛒 Lista de Compras | 🟢 Publicado | 3 |
+| 📋 Tarefas | 🟡 Primeira versao em validacao | 4 |
+| 📅 Calendário | 🔒 Bloqueado (futuro) | 5 |
+| 🐾 Flora (Pet) | 🔒 Bloqueado (futuro) | 6 |
+| 📁 Documentos | 🔒 Bloqueado (futuro) | 7 |
+| 🚨 Emergência | 🔒 Bloqueado (futuro) | 8 |
 
 **Módulos bloqueados = UI existe no mockup mas backend ainda não será implementado.**
 **Na UI, módulos bloqueados aparecem com cadeado 🔒, sem hover, cursor not-allowed.**
@@ -249,7 +250,7 @@ audit_log (
 ```
 Fase 1 — Fundação
   ├── Setup Supabase + Google OAuth + tabelas + RLS
-  ├── Setup Next.js 14 + TypeScript + Tailwind + shadcn/ui
+  ├── Setup Next.js 16 + React 19 + TypeScript + Tailwind
   ├── Login Google + proteção de rotas (middleware)
   └── Layout base: hub orbital + float nav
 
@@ -287,7 +288,7 @@ Antes de mexer no código, leia AGENTS.md, README.md, TASKS.md, DESIGN.md e BRAI
 Contexto importante:
 - O PWA mobile já está publicado em produção.
 - Compras e Financeiro estão em uso real.
-- A primeira base experimental de Tarefas já existe, mas os acessos pelo menu lateral, navigation mobile e tela inicial estão bloqueados até revisão.
+- Tarefas possui primeira versao pequena desbloqueada na navegacao desktop e mobile para validacao.
 - Tarefas deve ser exclusiva por usuário, diferente de Compras/Financeiro que são por família.
 - A proposta atual é manter o nome Tarefas por enquanto.
 - A seção deve seguir o padrão visual do Family Hub, funcionando bem no desktop e responsivo.
@@ -297,7 +298,7 @@ Contexto importante:
 - Existe backlog para detalhar contas variáveis como Cartão de crédito sem duplicar o total nas transações.
 
 Objetivo da sessão:
-Revisar a primeira base de Tarefas, propor/implementar apenas os ajustes necessários para uma primeira versão pequena e útil, e só então desbloquear os acessos se a experiência estiver aprovada.
+Validar a primeira versao de Tarefas e realizar apenas refinamentos pequenos observados em uso real.
 
 Validação obrigatória ao final:
 npm.cmd run lint
@@ -329,7 +330,7 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Financeiro separa despesas em Fixos, Variaveis recorrentes e Transacoes avulsas. Apenas Contas usam a classificacao fixo/variavel; Transacoes sao sempre avulsas.
 - Contas variaveis como Cartao de credito devem representar o total da fatura. O detalhamento interno da fatura esta no backlog e nao deve duplicar despesas em Transacoes.
 - A Visao Geral do Financeiro possui grafico mensal clicavel com valores por barra.
-- Tarefas possui primeira base experimental na branch atual, mas os acessos pelo menu lateral, navigation mobile e tela inicial estao bloqueados ate revisao e aprovacao.
+- Tarefas possui primeira versao pequena desbloqueada para validacao na navegacao desktop e mobile.
 - Investimentos, Calendario, Flora, Documentos e Emergencia permanecem bloqueados para escopos futuros.
 
 ---
@@ -351,3 +352,32 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Convites pendentes podem ser excluidos pela interface; isso remove o registro de `family_invites` e invalida imediatamente o link `/convite/[token]`.
 - Remover membro revoga o acesso daquele usuario a familia, mas nao apaga o historico do que ele ja fez.
 - No mobile, a navegacao inferior deve mostrar carregamento ao trocar de modulo, e campos numericos de Tarefas devem evitar zoom automatico.
+
+---
+
+## ATUALIZACAO DE ESTADO REAL - 14/07/2026
+
+Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
+
+- PR #9 foi integrado na `master` com refinamentos de Compras, Familia e callback OAuth.
+- Compras permite finalizar uma lista com confirmacao. Se houver pendencias, o usuario escolhe finalizar mantendo-as no arquivo ou move-las atomicamente para uma nova lista com data atual + 7 dias.
+- Itens de Compras possuem preco e URL opcionais; a URL abre por icone discreto em nova pagina.
+- Compras usa Supabase Realtime para sincronizar listas e itens entre membros da mesma familia, respeitando RLS, com refresh ao retomar o app e contingencia periodica.
+- Modo Mercado mobile possui viewport e rolagem proprias, esconde a navegacao global, oferece saida fixa e reserva espaco depois do ultimo item.
+- Convites pendentes ou aceitos podem ser removidos da listagem. Excluir convite aceito nao remove o membro nem revoga seu acesso.
+- Callback OAuth preserva o host da requisicao e armazena o caminho interno em cookie temporario. Para teste mobile autenticado, usar Preview HTTPS; IP local pode ser rejeitado pelo Supabase e cair no Site URL de Production.
+- Ambientes devem ser identificados pelo dominio: IP/localhost = Local, URL temporaria Vercel = Preview, `family-hub-co.vercel.app` e PWA instalado = Production.
+- Migrations `202607130001_shopping_finish_and_product_urls.sql` e `202607130002_shopping_realtime.sql` precisam estar aplicadas para o frontend publicado funcionar integralmente.
+- Validacao operacional pendente: confirmar migrations/deploy e testar Compras simultaneamente com dois usuarios no PWA instalado.
+
+### Notificacoes push de Tarefas
+
+- Lembretes Web Push sao individuais por usuario e aparelho, com RLS em `push_subscriptions`.
+- O fuso vem do aparelho; servidor valida horario local, frequencia, data inicial e dias especificos.
+- Tarefa concluida na data local nao recebe lembrete.
+- Entregas sao unicas por tarefa, aparelho, data e horario, permitindo reagendamento posterior no mesmo dia.
+- O service worker abre `/tarefas` ao tocar no aviso.
+- Infraestrutura: VAPID, Edge Function `task-reminders` e Supabase Cron por minuto.
+- `VAPID_PRIVATE_KEY` e `CRON_SECRET` ficam no Supabase; somente a chave publica vai ao frontend/Vercel.
+- O rotulo de origem do sistema operacional nao e controlavel pelo app.
+- Migrations: `202607140001_task_push_subscriptions.sql` e `202607140002_task_reminder_reschedule.sql`.
