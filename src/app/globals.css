@@ -51,6 +51,19 @@
   .bub-emergencia{grid-column:1/-1;height:76px}.bub-emergencia .bubble-inner{justify-content:center}.sos-pulse{display:none}
 }
 
+.task-notification,.task-reminder-time{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;margin-top:18px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
+.task-notification.enabled{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.task-notification strong,.task-reminder-time strong{display:block;font-size:12px}
+.task-notification small,.task-reminder-time small{display:block;margin-top:3px;color:var(--text3);font-size:10px}
+.task-notification-switch{position:relative;width:46px;height:26px;padding:0;border:1px solid var(--border2);border-radius:999px;background:var(--surface2);transition:.2s ease}
+.task-notification-switch span{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--text3);transition:.2s ease}
+.task-notification.enabled .task-notification-switch{border-color:var(--accent);background:var(--accent-dim)}
+.task-notification.enabled .task-notification-switch span{left:23px;background:var(--accent)}
+.task-reminder-time{margin-top:8px;background:var(--surface)}
+.task-reminder-time input{width:96px;min-height:36px;padding:7px 9px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text);font:500 13px "JetBrains Mono",monospace;color-scheme:dark}
+
+@media(max-width:560px){.task-notification,.task-reminder-time{gap:10px;padding:12px}.task-reminder-time input{width:104px;min-height:38px;font-size:16px}}
+
 /* Compras: alvos de toque, modais e navegação adaptados para telas pequenas. */
 @media(max-width:620px){
   .shopping-shell{padding-bottom:78px}.topbar{flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px}.topbar-left{flex:1}.topbar-title{font-size:21px}.topbar-actions{width:100%;justify-content:flex-end}.topbar-actions .button-ghost{display:inline-flex}.topbar-actions .button{min-height:40px;padding:9px 12px}
