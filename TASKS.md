@@ -41,6 +41,8 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Base multi-familia implementada com cadastro aberto, owner/admin/member e convites por link.
 - [x] Refinamentos de Familia: botao Gerenciar para owner/admin, edicao do nome da familia, remocao de membros preservando historico e exclusao de convites pendentes invalidando links.
 - [x] Refinamentos mobile: feedback de carregamento na navegacao inferior e campo de valor em Tarefas sem zoom automatico no responsivo.
+- [x] Refinamentos de Compras: rolagem interna no Modo Mercado, finalizacao confirmada com reaproveitamento de pendencias em sete dias e link opcional por item.
+- [x] Convites enviados podem ser removidos da listagem com confirmacao, inclusive depois do aceite sem revogar o acesso do membro.
 
 ## Publicacao do Financeiro
 

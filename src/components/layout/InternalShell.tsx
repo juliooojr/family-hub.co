@@ -56,7 +56,7 @@ export default function InternalShell({
   return (
     <div className={`internal-app ${theme === 'light' ? 'light' : ''} ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <header className="internal-mobile-bar">
-        <div className="internal-logo">FAMILY<span>.</span>HUB</div>
+        <div className="internal-logo">FAMILY<span>.</span>HUB{process.env.NODE_ENV === 'development' ? <small className="environment-badge">LOCAL</small> : null}</div>
         <button className="internal-icon-button" type="button" onClick={toggleTheme} aria-label="Alternar tema">
           ☀︎ / ☾
         </button>
@@ -65,7 +65,7 @@ export default function InternalShell({
       <div className="internal-shell">
         <aside className="internal-sidebar">
           <div className="internal-side-head">
-            <div className="internal-logo internal-logo-full">FAMILY<span>.</span>HUB</div>
+            <div className="internal-logo internal-logo-full">FAMILY<span>.</span>HUB{process.env.NODE_ENV === 'development' ? <small className="environment-badge">LOCAL</small> : null}</div>
             <div className="internal-logo internal-logo-short">F<span>.</span>H</div>
           </div>
 

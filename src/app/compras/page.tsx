@@ -26,6 +26,7 @@ export default async function ShoppingPage() {
         initialLists={lists}
         initialError={initialError}
         responsibleOptions={responsibleOptions(familyContext.members)}
+        familyId={familyContext.family.id}
       />
     </InternalShell>
   )
