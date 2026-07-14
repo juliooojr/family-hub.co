@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent, type MouseEvent } from 'react'
 import Link from 'next/link'
+import { Pencil, SquareArrowOutUpRight, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   createShoppingItem,
@@ -544,9 +545,9 @@ function CheckRow({ item, onToggle, onDelete, onEdit }: {
       onClick={() => onToggle(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggle(item) }}>
       <span className="check-box">{item.checked ? '✓' : ''}</span>
       <span className="check-text"><span className="check-name">{item.name}</span>{item.estimatedPrice !== null ? <span className="check-price">{formatItemPrice(item.estimatedPrice)}</span> : null}</span>
+      <button className="item-action-icon edit-item" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`} title="Editar"><Pencil aria-hidden /></button>
       {item.productUrl ? <ProductLink url={item.productUrl} name={item.name} /> : null}
-      <button className="edit-item" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`}>Editar</button>
-      <button className="delete-item" onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`}>×</button>
+      <button className="item-action-icon delete-item" onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`} title="Excluir"><Trash2 aria-hidden /></button>
     </div>
   )
 }
@@ -615,7 +616,7 @@ function MarketMode({ list, onExit, onToggle, onDelete, onEdit, onAdd, onFinish 
       <header><div><h2>{list.emoji} {list.name.toUpperCase()}</h2><p>{remaining} itens restantes</p></div><div className="market-actions"><button className="button button-ghost" onClick={onAdd}>+ Item</button><button className="button button-success" onClick={onFinish}>✓ Finalizar</button><button className="button button-danger market-exit-desktop" onClick={onExit}>× Sair</button></div></header>
       <div className="market-list">{sortItems(list.items).map((item) => (
         <div className={`market-item ${item.checked ? 'done' : ''}`} key={item.id} onClick={() => onToggle(item)}>
-          <span className="market-check">{item.checked ? '✓' : ''}</span><strong>{item.name}{item.estimatedPrice !== null ? <small>{formatItemPrice(item.estimatedPrice)}</small> : null}</strong>{item.productUrl ? <ProductLink url={item.productUrl} name={item.name} /> : null}<button className="market-edit" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`}>Editar</button><button onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`}>×</button>
+          <span className="market-check">{item.checked ? '✓' : ''}</span><strong>{item.name}{item.estimatedPrice !== null ? <small>{formatItemPrice(item.estimatedPrice)}</small> : null}</strong><button className="item-action-icon market-edit" onClick={(event) => onEdit(event, item)} aria-label={`Editar ${item.name}`} title="Editar"><Pencil aria-hidden /></button>{item.productUrl ? <ProductLink url={item.productUrl} name={item.name} /> : null}<button className="item-action-icon market-delete" onClick={(event) => onDelete(event, item)} aria-label={`Excluir ${item.name}`} title="Excluir"><Trash2 aria-hidden /></button>
         </div>
       ))}</div>
     </div>
@@ -671,7 +672,7 @@ function FinishListModal({ list, busy, onClose, onFinish }: { list: ShoppingList
 }
 
 function ProductLink({ url, name }: { url: string; name: string }) {
-  return <a className="product-link" href={url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} aria-label={`Abrir link de ${name} em nova página`} title="Abrir produto">↗</a>
+  return <a className="product-link item-action-icon" href={url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} aria-label={`Abrir link de ${name} em nova página`} title="Abrir produto"><SquareArrowOutUpRight aria-hidden /></a>
 }
 
 function normalizeProductUrl(value: string) {

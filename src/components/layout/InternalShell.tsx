@@ -1,26 +1,27 @@
 'use client'
 
-import Link, { useLinkStatus } from 'next/link'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { CalendarDays, ClipboardList, FileText, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, TriangleAlert, Users, Wallet, type LucideIcon } from 'lucide-react'
 
 type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
 type NavigationItem = {
   id: string
   label: string
-  icon: string
+  icon: LucideIcon
   href?: string
   locked?: boolean
 }
 
 const navigation: NavigationItem[] = [
-  { id: 'home', label: 'Início', icon: '🏠', href: '/hub' },
-  { id: 'finance', label: 'Finanças', icon: '💰', href: '/financeiro' },
-  { id: 'shopping', label: 'Compras', icon: '🛒', href: '/compras' },
-  { id: 'tasks', label: 'Tarefas', icon: '📋', href: '/tarefas' },
-  { id: 'calendar', label: 'Agenda', icon: '📅', locked: true },
-  { id: 'documents', label: 'Documentos', icon: '📁', locked: true },
-  { id: 'emergency', label: 'Emergência', icon: '🚨', locked: true },
+  { id: 'home', label: 'Início', icon: House, href: '/hub' },
+  { id: 'finance', label: 'Finanças', icon: Wallet, href: '/financeiro' },
+  { id: 'shopping', label: 'Compras', icon: ShoppingCart, href: '/compras' },
+  { id: 'tasks', label: 'Tarefas', icon: ClipboardList, href: '/tarefas' },
+  { id: 'calendar', label: 'Agenda', icon: CalendarDays, locked: true },
+  { id: 'documents', label: 'Documentos', icon: FileText, locked: true },
+  { id: 'emergency', label: 'Emergência', icon: TriangleAlert, locked: true },
 ]
 
 export default function InternalShell({
@@ -36,6 +37,8 @@ export default function InternalShell({
   const sidebar = usePreference('fh-sidebar', 'expanded')
   const pathname = usePathname()
   const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [logoutConfirmationOpen, setLogoutConfirmationOpen] = useState(false)
   const collapsed = sidebar === 'collapsed'
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export default function InternalShell({
       <header className="internal-mobile-bar">
         <div className="internal-logo">FAMILY<span>.</span>HUB{process.env.NODE_ENV === 'development' ? <small className="environment-badge">LOCAL</small> : null}</div>
         <button className="internal-icon-button" type="button" onClick={toggleTheme} aria-label="Alternar tema">
-          ☀︎ / ☾
+          {theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}
         </button>
       </header>
 
@@ -70,54 +73,68 @@ export default function InternalShell({
           </div>
 
           <button className="internal-menu-toggle" type="button" onClick={toggleSidebar} aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'} title={collapsed ? 'Expandir menu' : 'Recolher menu'}>
-            <span>☰</span><strong>{collapsed ? 'Expandir' : 'Recolher menu'}</strong>
+            <span><Menu aria-hidden /></span><strong>{collapsed ? 'Expandir' : 'Recolher menu'}</strong>
           </button>
 
           <nav className="internal-nav" aria-label="Módulos">
-            {navigation.map((item) => item.locked ? (
+            {navigation.map((item) => {
+              const Icon = item.icon
+              return item.locked ? (
               <span className="internal-nav-item locked" data-tooltip={`${item.label} · em breve`} title={`${item.label} em breve`} key={item.id}>
-                <i>{item.icon}</i><strong>{item.label}</strong><small>🔒</small>
+                <i><Icon aria-hidden /></i><strong>{item.label}</strong><small><Lock aria-hidden /></small>
               </span>
             ) : (
               <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} title={item.label} key={item.id}>
-                <i>{item.icon}</i><strong>{item.label}</strong><NavPendingHint />
+                <i><Icon aria-hidden /></i><strong>{item.label}</strong>
               </Link>
-            ))}
+            )})}
           </nav>
 
           <div className="internal-side-bottom">
             <button className="internal-side-action" type="button" onClick={toggleTheme}>
-              <span>☀︎ / ☾</span><strong>Alternar tema</strong>
+              <span>{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}</span><strong>Alternar tema</strong>
             </button>
             {canManageFamily ? (
               <Link className={`internal-side-action ${active === 'family' ? 'active' : ''}`} href="/familia" prefetch>
-                <strong>Gerenciar</strong><NavPendingHint />
+                <span><Users aria-hidden /></span><strong>Gerenciar</strong>
               </Link>
             ) : null}
-            <a className="internal-side-action" href="/auth/logout">
-              <span>↩</span><strong>Sair</strong>
-            </a>
+            <button className="internal-side-action" type="button" onClick={() => setLogoutConfirmationOpen(true)}>
+              <span><LogOut aria-hidden /></span><strong>Sair</strong>
+            </button>
           </div>
         </aside>
 
         <div className="internal-content">{children}</div>
       </div>
 
-      <nav className={`internal-mobile-nav ${canManageFamily ? 'can-manage-family' : ''}`} aria-label="Navegação principal">
-        <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início">🏠<NavPendingHint /></Link>
-        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças">💰<NavPendingHint /></Link>
-        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras">🛒<NavPendingHint /></Link>
-        <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas">📋<NavPendingHint /></Link>
-        {canManageFamily ? <Link className={active === 'family' ? 'active' : ''} href="/familia" prefetch aria-label="Gerenciar família">👥<NavPendingHint /></Link> : null}
-        <a href="/auth/logout" aria-label="Sair">↩</a>
+      {mobileMenuOpen ? <div className="internal-mobile-menu" role="dialog" aria-label="Menu rápido">
+        <button type="button" onClick={() => { toggleTheme(); setMobileMenuOpen(false) }}>{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}<span>Alternar tema</span></button>
+        {canManageFamily ? <Link href="/familia" prefetch onClick={() => setMobileMenuOpen(false)}><Users aria-hidden /><span>Gerenciar família</span></Link> : null}
+        <button type="button" onClick={() => { setMobileMenuOpen(false); setLogoutConfirmationOpen(true) }}><LogOut aria-hidden /><span>Sair</span></button>
+      </div> : null}
+      <nav className="internal-mobile-nav" aria-label="Navegação principal">
+        <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início"><House aria-hidden /></Link>
+        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças"><Wallet aria-hidden /></Link>
+        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras"><ShoppingCart aria-hidden /></Link>
+        <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas"><ClipboardList aria-hidden /></Link>
+        <button className={mobileMenuOpen ? 'active' : ''} type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label="Abrir menu" aria-expanded={mobileMenuOpen}><Menu aria-hidden /></button>
       </nav>
+      {logoutConfirmationOpen ? <LogoutConfirmation onClose={() => setLogoutConfirmationOpen(false)} /> : null}
     </div>
   )
 }
 
-function NavPendingHint() {
-  const { pending } = useLinkStatus()
-  return <span className={`nav-pending-hint ${pending ? 'is-pending' : ''}`} aria-hidden />
+function LogoutConfirmation({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section className="modal-card logout-confirmation" role="dialog" aria-modal="true" aria-label="Confirmar saída">
+        <header><h2>SAIR DO FAMILY HUB</h2><button type="button" onClick={onClose} aria-label="Fechar">×</button></header>
+        <div className="confirm-copy"><p>Tem certeza que deseja sair?</p></div>
+        <div className="modal-actions"><button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button><a className="button button-danger" href="/auth/logout">Sair</a></div>
+      </section>
+    </div>
+  )
 }
 
 function usePreference(key: string, fallback: string) {

@@ -22,7 +22,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public-key>
 
 ## 3. Configurar e publicar no Supabase
 
-1. Aplique `supabase/migrations/202607140001_task_push_subscriptions.sql`.
+1. Aplique, em ordem, `supabase/migrations/202607140001_task_push_subscriptions.sql` e `supabase/migrations/202607140002_task_reminder_reschedule.sql`.
 2. Em Edge Functions > Secrets, crie:
 
 ```text
