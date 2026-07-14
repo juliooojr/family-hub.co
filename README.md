@@ -19,17 +19,18 @@ Producao: https://family-hub-co.vercel.app
 - App instalavel como PWA publicado em producao, com manifest, service worker, icone proprio e splash screen no iOS.
 - Experiencia mobile revisada para uso pelo atalho da tela inicial, incluindo status bar, safe area, navegacao inferior e modais de Compras.
 - Lista de Compras esta funcional e persistida no Supabase.
-- Compras recebeu melhorias de uso real: Modo Mercado revisado no desktop, item com preco opcional discreto e edicao de itens.
+- Compras recebeu melhorias de uso real no desktop e mobile: Modo Mercado com rolagem interna e saida acessivel, finalizacao confirmada, reaproveitamento de pendencias, preco e link opcionais por item.
+- Compras possui sincronizacao em tempo real entre membros da familia, com atualizacao ao retomar o app e reconciliacao periodica como contingencia.
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
 - Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos/recolhiveis no mobile, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
 - Financeiro mobile possui cards visiveis por padrao com opcao de minimizar, abas sem scrollbar aparente cortando os itens, gesto interno de puxar para atualizar e feedback visual ao marcar contas como pagas.
 - Orcamento permite expandir categorias para ver contas e transacoes do mes que compoem o valor gasto.
 - Movimentacoes de Reserva aparecem em Transacoes, mas nao entram nos totais de receita, despesa, saldo comum ou margem planejada.
-- Fluxo de login Google foi ajustado para aplicar os cookies de sessao no redirect do callback e evitar falha na primeira tentativa.
+- Fluxo de login Google aplica os cookies de sessao no redirect e preserva o host recebido. OAuth mobile deve ser validado em Preview HTTPS; o Supabase compartilhado pode rejeitar callback por IP local e voltar ao Site URL de Production.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
 - Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
-- Convites pendentes podem ser excluidos; ao excluir, o link e invalidado imediatamente.
+- Convites podem ser removidos da listagem; pendentes sao invalidados imediatamente e aceitos podem ser limpos sem revogar o acesso do membro.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
@@ -59,8 +60,12 @@ Producao: https://family-hub-co.vercel.app
 - O preco do item e exibido de forma discreta nas listas, detalhe, arquivo e Modo Mercado.
 - Itens podem guardar um link opcional de produto, aberto por um icone discreto em nova pagina.
 - Listas podem ser finalizadas com confirmacao; itens pendentes podem ser movidos para uma nova lista agendada para sete dias depois.
+- Alteracoes em listas e itens sao sincronizadas por Supabase Realtime entre membros autorizados da mesma familia.
+- A interface informa se a sincronizacao esta ativa ou em reconexao e refaz a leitura ao recuperar foco/visibilidade.
 - Modo Mercado deve funcionar em desktop e mobile com contraste adequado, toque facil e acoes de item acessiveis.
 - As migrations de Compras sao aditivas e nao inserem dados ficticios.
+- `202607130001_shopping_finish_and_product_urls.sql` adiciona link de produto e a finalizacao atomica.
+- `202607130002_shopping_realtime.sql` inclui listas e itens na publicacao `supabase_realtime`.
 
 ## Familias, cadastro e convites
 
@@ -112,6 +117,18 @@ Para acesso na rede local:
 ```powershell
 npm.cmd run dev:network
 ```
+
+No celular, use o IPv4 do computador, por exemplo `http://192.168.0.101:3000`; `localhost` aponta para o proprio celular e `0.0.0.0` nao e um endereco de navegacao.
+
+## Ambientes de teste
+
+- Local desktop: `http://localhost:3000`, codigo ainda nao publicado.
+- Local na rede: `http://IP-DO-COMPUTADOR:3000`, util para layout, mas OAuth por IP pode voltar ao Site URL do Supabase.
+- Preview Vercel: branch publicada em HTTPS; ambiente correto para validar OAuth e fluxo mobile antes do merge.
+- Production: `https://family-hub-co.vercel.app`, acompanha somente `master`.
+- PWA instalado: abre Production e nao reflete alteracoes locais ou de Preview.
+
+Antes de testar uma mudanca, confirme o dominio na barra do navegador. Um login iniciado no IP local que termina em `family-hub-co.vercel.app` esta em Production.
 
 Validacao obrigatoria antes de concluir qualquer mudanca:
 
@@ -281,14 +298,30 @@ Concluido:
 
 ## Proximas prioridades
 
-1. P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
-2. P1: Revisar como Tarefas deve aparecer na Visao Geral.
-3. P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-4. P2: Revisar membros e permissoes das plataformas.
-5. P2: Definir rotina de backup do Supabase.
-6. P2: Acompanhar logs da Vercel e do Supabase.
-7. P2: Considerar um Supabase separado para desenvolvimento no futuro.
-8. P3: Investimentos, somente quando houver escopo aprovado.
-9. P3: Calendario com Google Calendar.
-10. P3: Documentos.
-11. P3: Emergencia.
+1. P0: Confirmar em Production as migrations de finalizacao/link e Realtime de Compras.
+2. P0: Validar Compras colaborativa com dois usuarios no PWA instalado.
+3. P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
+4. P1: Revisar como Tarefas deve aparecer na Visao Geral.
+5. P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+6. P2: Revisar membros e permissoes das plataformas.
+7. P2: Definir rotina de backup do Supabase.
+8. P2: Acompanhar logs da Vercel e do Supabase.
+9. P2: Considerar um Supabase separado para desenvolvimento no futuro.
+10. P3: Investimentos, somente quando houver escopo aprovado.
+11. P3: Calendario com Google Calendar.
+12. P3: Documentos.
+13. P3: Emergencia.
+
+## Notificacoes push de Tarefas
+
+- Lembretes usam Web Push nativo, service worker do PWA, chaves VAPID, Supabase Edge Function e Supabase Cron a cada minuto; nao dependem de Firebase ou OneSignal.
+- Cada assinatura pertence a um `user_id` e `family_id`, com RLS. Tarefas e notificacoes permanecem individuais por usuario e cada aparelho cria sua propria assinatura.
+- O fuso e capturado do aparelho como nome IANA, por exemplo `America/Sao_Paulo`. Horarios `timestamptz` aparecem em UTC no Supabase sem alterar o horario local do lembrete.
+- Frequencia, data inicial e dias especificos sao verificados antes do envio. Tarefa concluida na data local do usuario nao recebe notificacao.
+- A deduplicacao considera tarefa, aparelho, data e horario. Editar para um horario posterior permite novo envio no mesmo dia; repeticoes no mesmo minuto sao bloqueadas.
+- Ao tocar no aviso, o app abre `/tarefas` ou foca a janela existente.
+- O switch inicia desligado, pede permissao somente por gesto do usuario e revela horario padrao `12:00` em formato de 24 horas.
+- O rotulo externo `From` pertence ao navegador/sistema operacional e nao pode ser removido ou substituido pela Web Push API.
+- Secrets privados ficam somente no Supabase. Vercel e navegador recebem apenas `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
+- Migrations: `202607140001_task_push_subscriptions.sql` e `202607140002_task_reminder_reschedule.sql`.
+- A Edge Function `task-reminders` precisa ser republicada quando sua logica mudar; alterar apenas Secrets nao exige novo deploy.

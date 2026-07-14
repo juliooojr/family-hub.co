@@ -274,6 +274,11 @@ border: 1px dashed var(--border2); background: none; color: var(--text3);
 .mercado-item-nome { font-size: 18px; font-weight: 500; }
 ```
 
+- No mobile, o Modo Mercado ocupa a viewport, esconde a navegacao inferior e possui rolagem interna propria.
+- O botao de sair deve permanecer fixo e acessivel no topo, sem depender da navegacao global.
+- Reservar folga inferior suficiente depois do ultimo item, incluindo `safe-area-inset-bottom`.
+- A acao Finalizar deve permanecer visivel no cabecalho e abrir a modal padrao de confirmacao.
+
 ### Preco opcional de item
 
 - O preco de item em Compras e opcional e deve aparecer como informacao secundaria.
@@ -281,6 +286,8 @@ border: 1px dashed var(--border2); background: none; color: var(--text3);
 - O preco nunca deve competir visualmente com o nome do item nem aumentar demais a altura da linha.
 - A acao de editar item deve ser discreta no desktop e acessivel em touch.
 - Modo Mercado deve manter contraste adequado no desktop e no mobile; evitar topo escuro com texto sem contraste.
+- Link opcional de produto usa icone externo discreto, alvo de toque adequado e abre nova pagina sem transformar o nome inteiro em hyperlink.
+- Estado de sincronizacao deve ser discreto: verde para conectado e laranja para reconexao, sem competir com o conteudo.
 
 ---
 ## FINANCEIRO — PADRÕES VISUAIS ESPECÍFICOS
@@ -311,4 +318,13 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Navegacao inferior mobile deve permanecer acessivel, sem cobrir acoes importantes.
 - Qualquer mudanca em manifest, icone, splash, status bar ou safe area deve ser testada removendo e adicionando novamente o atalho do iPhone.
 - Melhorias de UX publicadas em Compras e Financeiro devem ser validadas tambem no PWA instalado apos deploy em producao.
-- A entrada de Tarefas deve permanecer visualmente bloqueada no menu lateral, navigation mobile e tela inicial ate a primeira versao ser revisada e aprovada.
+- Tarefas possui primeira versao desbloqueada na navegacao desktop e mobile; modulos futuros continuam bloqueados.
+
+## TAREFAS — NOTIFICACOES
+
+- A modal usa switch desativado por padrao; o estado muda imediatamente e mostra feedback durante o cadastro do aparelho.
+- O campo de horario aparece somente com o switch ativo, inicia em `12:00` e usa formato de 24 horas.
+- O horario segue os demais campos: compacto no desktop e no minimo 16px no mobile para evitar zoom do iOS.
+- Erros de permissao, service worker ou assinatura aparecem no banner do modulo; o switch nunca deve ficar carregando indefinidamente.
+- Icone, titulo e corpo seguem a identidade Family Hub. Rotulos externos de origem pertencem ao sistema operacional.
+- Acoes de Compras e navegacao usam icones vetoriais Lucide com `currentColor`, tamanho, alinhamento e hover uniformes.
