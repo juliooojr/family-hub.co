@@ -51,6 +51,43 @@
   .bub-emergencia{grid-column:1/-1;height:76px}.bub-emergencia .bubble-inner{justify-content:center}.sos-pulse{display:none}
 }
 
+/* Ícones vetoriais de ações e navegação */
+.item-action-icon{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;padding:0;border:0;border-radius:7px;background:transparent;color:var(--text3);opacity:.72;transition:.15s}
+.item-action-icon svg{width:16px;height:16px;stroke-width:1.8}
+.check-row:hover .item-action-icon,.check-row:focus-within .item-action-icon{opacity:1}
+.item-action-icon.edit-item:hover,.item-action-icon.product-link:hover{color:var(--accent);background:var(--accent-dim)}
+.item-action-icon.delete-item:hover,.item-action-icon.market-delete:hover{color:#e66a5d;background:var(--red-dim)}
+.market-item .item-action-icon{width:36px;height:36px;flex-basis:36px;min-width:36px;padding:0}
+.market-item .item-action-icon svg{width:18px;height:18px}
+.check-row .product-link,.market-item .product-link{border:0;background:transparent;color:var(--text3)}
+.check-row .product-link:hover,.market-item .product-link:hover{border:0;background:var(--accent-dim);color:var(--accent)}
+.public-home-theme svg,.internal-icon-button svg{width:18px;height:18px;stroke-width:1.8}
+.internal-side-bottom button.internal-side-action{width:100%;text-align:left}
+.internal-side-bottom .internal-side-action,.internal-side-bottom .internal-side-action strong{font-family:"Inter",sans-serif;font-size:11px;font-weight:700;line-height:1.2}
+.internal-side-action>span{width:20px;height:20px;flex:0 0 20px;display:grid;place-items:center;font-size:0}
+.internal-side-action>span svg{display:block;width:18px;height:18px;stroke-width:1.8}
+.logout-confirmation{max-width:420px}
+.logout-confirmation .modal-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.market-item .market-edit{min-width:36px;padding:0;font-size:inherit}
+.internal-nav-item i{display:grid;place-items:center}
+.internal-nav-item i svg{width:19px;height:19px;stroke-width:1.8}
+.internal-nav-item small{display:grid;place-items:center}
+.internal-nav-item small svg{width:13px;height:13px}
+.internal-menu-toggle span,.internal-side-action span{display:grid;place-items:center}
+.internal-menu-toggle svg,.internal-side-action svg{width:18px;height:18px;stroke-width:1.8}
+
+@media(max-width:860px){
+  .internal-mobile-nav a,.internal-mobile-nav button{display:grid;place-items:center;min-height:40px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--text2);text-decoration:none}
+  .internal-mobile-nav a svg,.internal-mobile-nav button svg{width:20px;height:20px;stroke-width:1.9}
+  .internal-mobile-nav a.active,.internal-mobile-nav button.active{background:var(--accent);color:#fff}
+  .internal-mobile-menu{position:fixed;z-index:79;right:18px;bottom:74px;width:190px;display:grid;gap:5px;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--internal-shadow)}
+  .internal-mobile-menu button,.internal-mobile-menu a{min-height:42px;display:flex;align-items:center;gap:10px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:var(--text2);font-size:12px;text-decoration:none}
+  .internal-mobile-menu button:hover,.internal-mobile-menu a:hover{background:var(--surface2);color:var(--text)}
+  .internal-mobile-menu svg{width:17px;height:17px}
+}
+
+@media(hover:none){.item-action-icon{opacity:.78}}
+
 .task-notification,.task-reminder-time{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;margin-top:18px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
 .task-notification.enabled{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
 .task-notification strong,.task-reminder-time strong{display:block;font-size:12px}
@@ -274,4 +311,10 @@
   .shopping-shell .check-row{min-width:0}
   .shopping-shell .check-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+
+/* Mantém as ações de Compras uniformes após os estilos legados do módulo. */
+.check-row .item-action-icon{width:30px;height:30px;flex:0 0 30px;padding:0;font-size:inherit}
+.market-item .item-action-icon,.market-item .market-edit,.market-item .market-delete,.market-item .product-link{width:36px;height:36px;min-width:36px;flex:0 0 36px;padding:0;font-size:inherit}
+.check-row .item-action-icon svg,.market-item .item-action-icon svg{display:block;width:16px;height:16px}
+.market-item .item-action-icon svg{width:18px;height:18px}
 

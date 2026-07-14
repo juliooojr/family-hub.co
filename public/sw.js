@@ -36,6 +36,7 @@ self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {}
   event.waitUntil(self.registration.showNotification(data.title || 'Family Hub', {
     body: data.body || 'Você tem uma tarefa prevista agora.',
+    lang: 'pt-BR',
     icon: '/icons/family-hub-icon-192.png',
     badge: '/icons/family-hub-icon-192.png',
     tag: data.tag || 'family-hub-task',

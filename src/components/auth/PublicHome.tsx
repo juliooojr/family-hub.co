@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Moon, Sun } from 'lucide-react'
 
 export default function PublicHome({
   googleEnabled,
@@ -40,7 +41,7 @@ export default function PublicHome({
       <div className="public-home-app">
         <header className="public-home-top">
           <div className="public-home-logo">FAMILY<span>.</span>HUB</div>
-          <button className="public-home-theme" type="button" onClick={toggleTheme}>☀︎ / ☾</button>
+          <button className="public-home-theme" type="button" onClick={toggleTheme} aria-label="Alternar tema" title="Alternar tema">{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}</button>
         </header>
         <section className="public-home-wrap" aria-labelledby="public-home-title">
           <div className="public-home-card">

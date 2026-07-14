@@ -31,10 +31,22 @@ Deno.serve(async (request) => {
   let delivered = 0
   for (const subscription of (subscriptions ?? []) as SubscriptionRow[]) {
     const local = localSchedule(new Date(), subscription.timezone)
+    const { data: completedEntries, error: completedEntriesError } = await supabase
+      .from('routine_entries')
+      .select('task_id')
+      .eq('user_id', subscription.user_id)
+      .eq('entry_date', local.date)
+      .eq('completed', true)
+    if (completedEntriesError) {
+      console.error('Não foi possível verificar tarefas concluídas.', completedEntriesError.message)
+      continue
+    }
+    const completedTaskIds = new Set((completedEntries ?? []).map((entry) => entry.task_id as string))
     for (const task of ((tasks ?? []) as TaskRow[]).filter((item) => item.user_id === subscription.user_id && item.notification_time?.slice(0, 5) === local.time)) {
+      if (completedTaskIds.has(task.id)) continue
       if (!isDue(task, local.date)) continue
       const { data: claim } = await supabase.from('routine_notification_deliveries')
-        .insert({ task_id: task.id, subscription_id: subscription.id, scheduled_date: local.date }).select('id').maybeSingle()
+        .insert({ task_id: task.id, subscription_id: subscription.id, scheduled_date: local.date, scheduled_time: local.time }).select('id').maybeSingle()
       if (!claim) continue
       try {
         await webpush.sendNotification({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } }, JSON.stringify({
@@ -45,7 +57,7 @@ Deno.serve(async (request) => {
         }))
         delivered += 1
       } catch (error) {
-        await supabase.from('routine_notification_deliveries').delete().eq('task_id', task.id).eq('subscription_id', subscription.id).eq('scheduled_date', local.date)
+        await supabase.from('routine_notification_deliveries').delete().eq('task_id', task.id).eq('subscription_id', subscription.id).eq('scheduled_date', local.date).eq('scheduled_time', local.time)
         if (expired(error)) await supabase.from('push_subscriptions').delete().eq('id', subscription.id)
       }
     }
