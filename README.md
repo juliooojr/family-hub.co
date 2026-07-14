@@ -57,6 +57,8 @@ Producao: https://family-hub-co.vercel.app
 - Listas e itens sao compartilhados pelos membros da mesma familia por meio de `family_id` e RLS.
 - Itens podem ter preco opcional para referencia historica ou planejamento de compra.
 - O preco do item e exibido de forma discreta nas listas, detalhe, arquivo e Modo Mercado.
+- Itens podem guardar um link opcional de produto, aberto por um icone discreto em nova pagina.
+- Listas podem ser finalizadas com confirmacao; itens pendentes podem ser movidos para uma nova lista agendada para sete dias depois.
 - Modo Mercado deve funcionar em desktop e mobile com contraste adequado, toque facil e acoes de item acessiveis.
 - As migrations de Compras sao aditivas e nao inserem dados ficticios.
 
