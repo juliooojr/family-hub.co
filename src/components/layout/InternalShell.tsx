@@ -2,7 +2,8 @@
 
 import Link, { useLinkStatus } from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import FamilyHubLogo from '@/components/brand/FamilyHubLogo'
 
 type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
 type NavigationItem = {
@@ -37,6 +38,7 @@ export default function InternalShell({
   const pathname = usePathname()
   const router = useRouter()
   const collapsed = sidebar === 'collapsed'
+  const [routeLoading, setRouteLoading] = useState(false)
 
   useEffect(() => {
     navigation.forEach((item) => {
@@ -44,6 +46,22 @@ export default function InternalShell({
     })
     if (canManageFamily && pathname !== '/familia') router.prefetch('/familia')
   }, [canManageFamily, pathname, router])
+
+  useEffect(() => {
+    function showRouteLoading() {
+      setRouteLoading(true)
+    }
+
+    window.addEventListener('fh-route-loading', showRouteLoading)
+    return () => window.removeEventListener('fh-route-loading', showRouteLoading)
+  }, [])
+
+  useEffect(() => {
+    if (!routeLoading) return
+
+    const timer = window.setTimeout(() => setRouteLoading(false), 760)
+    return () => window.clearTimeout(timer)
+  }, [pathname, routeLoading])
 
   function toggleTheme() {
     setPreference('fh-theme', theme === 'light' ? 'dark' : 'light')
@@ -100,7 +118,10 @@ export default function InternalShell({
           </div>
         </aside>
 
-        <div className="internal-content">{children}</div>
+        <div className="internal-content">
+          <RouteLoadingOverlay active={routeLoading} />
+          {children}
+        </div>
       </div>
 
       <nav className={`internal-mobile-nav ${canManageFamily ? 'can-manage-family' : ''}`} aria-label="Navegação principal">
@@ -117,7 +138,30 @@ export default function InternalShell({
 
 function NavPendingHint() {
   const { pending } = useLinkStatus()
+
+  useEffect(() => {
+    if (!pending) return
+    window.dispatchEvent(new Event('fh-route-loading'))
+  }, [pending])
+
   return <span className={`nav-pending-hint ${pending ? 'is-pending' : ''}`} aria-hidden />
+}
+
+function RouteLoadingOverlay({ active }: { active: boolean }) {
+  return (
+    <div className={`fh-route-loading ${active ? 'is-active' : ''}`} aria-hidden={!active}>
+      <FamilyHubLogo
+        animated={active}
+        animationStyle="bloom"
+        markVariant="reference"
+        className="fh-route-loading-logo"
+        title="Family Hub carregando"
+      />
+      <div className="fh-route-loading-progress" aria-hidden>
+        <span />
+      </div>
+    </div>
+  )
 }
 
 function usePreference(key: string, fallback: string) {

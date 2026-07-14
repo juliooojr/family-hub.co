@@ -1,0 +1,870 @@
+html:has(.logo-lab),
+body:has(.logo-lab) {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-y: auto !important;
+}
+
+.logo-lab {
+  --logo-page-bg: #f5f1e9;
+  --logo-page-surface: #fffaf1;
+  --logo-page-border: rgba(34, 35, 31, .12);
+  --logo-page-text: #22231f;
+  --logo-page-muted: #706f68;
+  --fh-logo-accent: #e8760a;
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  padding: clamp(14px, 3vw, 28px) clamp(14px, 3vw, 34px) 64px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(232, 118, 10, .08), transparent 34%),
+    var(--logo-page-bg);
+  color: var(--logo-page-text);
+}
+
+.logo-lab.dark {
+  --logo-page-bg: #10110f;
+  --logo-page-surface: #1e201d;
+  --logo-page-border: rgba(232, 233, 228, .12);
+  --logo-page-text: #f1f2ec;
+  --logo-page-muted: #9a9c94;
+}
+
+.logo-lab-header {
+  width: min(1120px, 100%);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.logo-lab-header span,
+.logo-grid article > span {
+  display: block;
+  color: var(--fh-logo-accent);
+  font: 500 10px/1 "JetBrains Mono", monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.logo-lab-header h1 {
+  margin: 7px 0 0;
+  font: 400 clamp(24px, 5vw, 44px)/.9 "Bebas Neue", sans-serif;
+  letter-spacing: .05em;
+}
+
+.logo-lab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.logo-segmented {
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--logo-page-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--logo-page-surface) 82%, transparent);
+}
+
+.logo-segmented a,
+.logo-replay {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--logo-page-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logo-segmented a {
+  text-decoration: none;
+}
+
+.logo-segmented a.active,
+.logo-replay {
+  background: var(--fh-logo-accent);
+  color: #fff;
+}
+
+.logo-stage {
+  width: min(1120px, 100%);
+  min-height: clamp(250px, 42svh, 390px);
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--logo-page-border);
+  border-radius: 18px;
+  background: var(--logo-page-surface);
+  overflow: hidden;
+}
+
+.fh-splash-preview {
+  width: 100%;
+  min-height: inherit;
+  display: grid;
+  place-items: center;
+}
+
+.fh-splash-logo {
+  width: min(66vw, 450px);
+  color: var(--logo-page-text);
+}
+
+.fh-logo-svg {
+  display: block;
+  overflow: visible;
+}
+
+.fh-logo-house {
+  stroke-width: 10;
+}
+
+.fh-logo-dot {
+  opacity: 0;
+}
+
+.fh-logo-animate-full .fh-logo-f,
+.fh-logo-animate-full .fh-logo-h {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fhLogoFade .5s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.fh-logo-animate-full .fh-logo-h {
+  animation-delay: .24s;
+}
+
+.fh-logo-animate-full .fh-logo-roof,
+.fh-logo-animate-full .fh-logo-sides,
+.fh-logo-animate-house .fh-logo-roof,
+.fh-logo-animate-house .fh-logo-sides,
+.fh-logo-animate-soft .fh-logo-roof,
+.fh-logo-animate-soft .fh-logo-sides,
+.fh-logo-animate-anchor .fh-logo-roof,
+.fh-logo-animate-anchor .fh-logo-sides,
+.fh-logo-animate-bloom .fh-logo-roof,
+.fh-logo-animate-bloom .fh-logo-sides {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fh-logo-animate-full .fh-logo-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(.4);
+  animation: fhLogoDot .42s cubic-bezier(.2,.8,.2,1) .62s forwards, fhLogoDotOut .34s ease 1.08s forwards;
+}
+
+.fh-logo-animate-full .fh-logo-roof {
+  transform: translateY(10px) scale(.82);
+  animation: fhLogoBuildRoof .9s cubic-bezier(.2,.8,.2,1) .98s forwards;
+}
+
+.fh-logo-animate-full .fh-logo-sides {
+  transform: translateY(-14px);
+  animation: fhLogoBuildSides .78s cubic-bezier(.2,.8,.2,1) 1.48s forwards;
+}
+
+.fh-logo-animate-full .fh-logo-window {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fh-logo-animate-full .fh-logo-window-tile {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateY(7px) scale(.45);
+  animation: fhLogoTileIn .52s cubic-bezier(.2,.8,.2,1) 2.1s forwards;
+}
+
+.fh-logo-animate-full .fh-logo-window-tile:nth-child(2) {
+  animation-delay: 2.16s;
+}
+
+.fh-logo-animate-full .fh-logo-window-tile:nth-child(3) {
+  animation-delay: 2.22s;
+}
+
+.fh-logo-animate-full .fh-logo-window-tile:nth-child(4) {
+  animation-delay: 2.28s;
+}
+
+.fh-logo-animate-house .fh-logo-letter {
+  opacity: .2;
+}
+
+.fh-logo-animate-house .fh-logo-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(.4);
+  animation: fhLogoDot .36s cubic-bezier(.2,.8,.2,1) .04s forwards, fhLogoDotOut .32s ease .5s forwards;
+}
+
+.fh-logo-animate-house .fh-logo-house {
+  opacity: 1;
+}
+
+.fh-logo-animate-house .fh-logo-roof {
+  transform: translateY(10px) scale(.82);
+  animation: fhLogoBuildRoof .78s cubic-bezier(.2,.8,.2,1) .44s forwards;
+}
+
+.fh-logo-animate-house .fh-logo-sides {
+  transform: translateY(-14px);
+  animation: fhLogoBuildSides .68s cubic-bezier(.2,.8,.2,1) .92s forwards;
+}
+
+.fh-logo-animate-house .fh-logo-window {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fh-logo-animate-house .fh-logo-window-tile {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateY(7px) scale(.45);
+  animation: fhLogoTileIn .46s cubic-bezier(.2,.8,.2,1) 1.44s forwards;
+}
+
+.fh-logo-animate-house .fh-logo-window-tile:nth-child(2) {
+  animation-delay: 1.5s;
+}
+
+.fh-logo-animate-house .fh-logo-window-tile:nth-child(3) {
+  animation-delay: 1.56s;
+}
+
+.fh-logo-animate-house .fh-logo-window-tile:nth-child(4) {
+  animation-delay: 1.62s;
+}
+
+.fh-logo-animate-house {
+  animation: none;
+}
+
+.fh-logo-animate-soft .fh-logo-f,
+.fh-logo-animate-soft .fh-logo-h,
+.fh-logo-animate-anchor .fh-logo-f,
+.fh-logo-animate-anchor .fh-logo-h,
+.fh-logo-animate-bloom .fh-logo-f,
+.fh-logo-animate-bloom .fh-logo-h {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fhLogoFade .5s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.fh-logo-animate-soft .fh-logo-h,
+.fh-logo-animate-anchor .fh-logo-h,
+.fh-logo-animate-bloom .fh-logo-h {
+  animation-delay: .24s;
+}
+
+.fh-logo-animate-soft .fh-logo-window,
+.fh-logo-animate-anchor .fh-logo-window,
+.fh-logo-animate-bloom .fh-logo-window {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fh-logo-animate-soft .fh-logo-dot {
+  animation: fhLogoDotHold .46s cubic-bezier(.16,1,.3,1) .5s forwards, fhLogoDotOut .34s ease 1.08s forwards;
+}
+
+.fh-logo-animate-soft .fh-logo-roof {
+  transform: translateY(12px) scale(.76);
+  animation: fhLogoBuildRoof .98s cubic-bezier(.2,.8,.2,1) 1.02s forwards;
+}
+
+.fh-logo-animate-soft .fh-logo-sides {
+  transform: translateY(-16px);
+  animation: fhLogoBuildSides .82s cubic-bezier(.2,.8,.2,1) 1.62s forwards;
+}
+
+.fh-logo-animate-soft .fh-logo-window-tile {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateY(8px) scale(.38);
+  animation: fhLogoTileIn .62s cubic-bezier(.2,.8,.2,1) 2.18s forwards;
+}
+
+.fh-logo-animate-soft .fh-logo-window-tile:nth-child(2) {
+  animation-delay: 2.28s;
+}
+
+.fh-logo-animate-soft .fh-logo-window-tile:nth-child(3) {
+  animation-delay: 2.38s;
+}
+
+.fh-logo-animate-soft .fh-logo-window-tile:nth-child(4) {
+  animation-delay: 2.48s;
+}
+
+.fh-logo-animate-anchor .fh-logo-dot {
+  animation: fhLogoDotGuide 1.06s cubic-bezier(.16,1,.3,1) .52s forwards;
+}
+
+.fh-logo-animate-anchor .fh-logo-roof {
+  transform: translateY(8px) scale(.86);
+  animation: fhLogoBuildRoof .82s cubic-bezier(.2,.8,.2,1) 1.02s forwards;
+}
+
+.fh-logo-animate-anchor .fh-logo-sides {
+  transform: translateY(-12px);
+  animation: fhLogoBuildSides .72s cubic-bezier(.2,.8,.2,1) 1.5s forwards;
+}
+
+.fh-logo-animate-anchor .fh-logo-window-tile {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(.45);
+  animation: fhLogoTileGlow .62s cubic-bezier(.2,.8,.2,1) 2.04s forwards;
+}
+
+.fh-logo-animate-anchor .fh-logo-window-tile:nth-child(2) {
+  animation-delay: 2.1s;
+}
+
+.fh-logo-animate-anchor .fh-logo-window-tile:nth-child(3) {
+  animation-delay: 2.16s;
+}
+
+.fh-logo-animate-anchor .fh-logo-window-tile:nth-child(4) {
+  animation-delay: 2.22s;
+}
+
+.fh-logo-animate-bloom .fh-logo-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fhLogoDotBloom .72s cubic-bezier(.2,.8,.2,1) .62s forwards;
+}
+
+.fh-logo-animate-bloom .fh-logo-roof {
+  transform: scale(.72);
+  animation: fhLogoBloomLine .78s cubic-bezier(.2,.8,.2,1) 1.06s forwards;
+}
+
+.fh-logo-animate-bloom .fh-logo-sides {
+  transform: scale(.84);
+  animation: fhLogoBloomLine .66s cubic-bezier(.2,.8,.2,1) 1.42s forwards;
+}
+
+.fh-logo-animate-bloom .fh-logo-window-tile {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(.2);
+  animation: fhLogoTileGlow .58s cubic-bezier(.2,.8,.2,1) 1.9s forwards;
+}
+
+.fh-logo-animate-bloom .fh-logo-window-tile:nth-child(2) {
+  animation-delay: 1.96s;
+}
+
+.fh-logo-animate-bloom .fh-logo-window-tile:nth-child(3) {
+  animation-delay: 2.02s;
+}
+
+.fh-logo-animate-bloom .fh-logo-window-tile:nth-child(4) {
+  animation-delay: 2.08s;
+}
+
+.logo-grid {
+  width: min(1120px, 100%);
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.logo-grid article {
+  min-height: 230px;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--logo-page-border);
+  border-radius: 14px;
+  background: var(--logo-page-surface);
+}
+
+.logo-static {
+  width: min(100%, 310px);
+  color: var(--logo-page-text);
+}
+
+.logo-option-card .logo-static {
+  width: min(100%, 380px);
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-f,
+.logo-option-card .fh-logo-animate-soft .fh-logo-h,
+.logo-option-card .fh-logo-animate-anchor .fh-logo-f,
+.logo-option-card .fh-logo-animate-anchor .fh-logo-h,
+.logo-option-card .fh-logo-animate-bloom .fh-logo-f,
+.logo-option-card .fh-logo-animate-bloom .fh-logo-h {
+  animation-name: fhLogoFadeLoop;
+  animation-duration: 4.6s;
+  animation-timing-function: cubic-bezier(.2,.8,.2,1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-h,
+.logo-option-card .fh-logo-animate-anchor .fh-logo-h,
+.logo-option-card .fh-logo-animate-bloom .fh-logo-h {
+  animation-delay: .18s;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-dot {
+  animation: fhLogoDotHoldLoop 4.6s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-roof {
+  animation: fhLogoBuildRoofLoop 4.6s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-sides {
+  animation: fhLogoBuildSidesLoop 4.6s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-window-tile {
+  animation: fhLogoTileInLoop 4.6s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-window-tile:nth-child(2) {
+  animation-delay: .08s;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-window-tile:nth-child(3) {
+  animation-delay: .16s;
+}
+
+.logo-option-card .fh-logo-animate-soft .fh-logo-window-tile:nth-child(4) {
+  animation-delay: .24s;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-dot {
+  animation: fhLogoDotBloomLoop 4.2s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-roof {
+  animation: fhLogoBloomLineLoop 4.2s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-sides {
+  animation: fhLogoBloomSidesLoop 4.2s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-window-tile {
+  animation: fhLogoTileGlowLoop 4.2s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-window-tile:nth-child(2) {
+  animation-delay: .06s;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-window-tile:nth-child(3) {
+  animation-delay: .12s;
+}
+
+.logo-option-card .fh-logo-animate-bloom .fh-logo-window-tile:nth-child(4) {
+  animation-delay: .18s;
+}
+
+.logo-option-card .fh-logo-animate-anchor .fh-logo-dot {
+  animation: fhLogoDotGuideLoop 4.4s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-anchor .fh-logo-roof {
+  animation: fhLogoBuildRoofLoop 4.4s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-anchor .fh-logo-sides {
+  animation: fhLogoBuildSidesLoop 4.4s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+.logo-option-card .fh-logo-animate-anchor .fh-logo-window-tile {
+  animation: fhLogoTileGlowLoop 4.4s cubic-bezier(.2,.8,.2,1) infinite both;
+}
+
+@keyframes fhLogoFade {
+  from {
+    opacity: 0;
+    transform: scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoFadeLoop {
+  0%, 8% {
+    opacity: 0;
+    transform: scale(.96);
+  }
+  18%, 82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  92%, 100% {
+    opacity: 0;
+    transform: scale(.98);
+  }
+}
+
+@keyframes fhLogoDraw {
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fhLogoBuildRoof {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: translateY(10px) scale(.82);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fhLogoBuildSides {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: translateY(-14px);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fhLogoDot {
+  70% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoDotHold {
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoDotGuide {
+  0% {
+    opacity: 0;
+    transform: scale(.4);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(.72);
+  }
+}
+
+@keyframes fhLogoDotOut {
+  to {
+    opacity: 0;
+    transform: scale(.7);
+  }
+}
+
+@keyframes fhLogoDotBloom {
+  0% {
+    opacity: 0;
+    transform: scale(.25);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes fhLogoBloomLine {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: scale(.72);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoTileIn {
+  0% {
+    opacity: 0;
+    transform: translateY(7px) scale(.45);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.16);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fhLogoTileGlow {
+  0% {
+    opacity: 0;
+    transform: scale(.45);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--fh-logo-accent) 50%, transparent));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+@keyframes fhLogoDotHoldLoop {
+  0%, 16%, 88%, 100% {
+    opacity: 0;
+    transform: scale(.5);
+  }
+  24%, 35% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  46% {
+    opacity: 0;
+    transform: scale(.75);
+  }
+}
+
+@keyframes fhLogoBuildRoofLoop {
+  0%, 24%, 88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: translateY(12px) scale(.78);
+  }
+  43%, 82% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fhLogoBuildSidesLoop {
+  0%, 34%, 88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: translateY(-14px);
+  }
+  52%, 82% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fhLogoTileInLoop {
+  0%, 48%, 88%, 100% {
+    opacity: 0;
+    transform: translateY(7px) scale(.45);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.16);
+  }
+  70%, 82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fhLogoDotBloomLoop {
+  0%, 18%, 88%, 100% {
+    opacity: 0;
+    transform: scale(.25);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  44% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes fhLogoBloomLineLoop {
+  0%, 30%, 88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: scale(.72);
+  }
+  48%, 82% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoBloomSidesLoop {
+  0%, 38%, 88%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+    transform: scale(.84);
+  }
+  54%, 82% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes fhLogoTileGlowLoop {
+  0%, 52%, 88%, 100% {
+    opacity: 0;
+    transform: scale(.45);
+    filter: none;
+  }
+  66% {
+    opacity: 1;
+    transform: scale(1.14);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--fh-logo-accent) 50%, transparent));
+  }
+  74%, 82% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+@keyframes fhLogoDotGuideLoop {
+  0%, 16%, 88%, 100% {
+    opacity: 0;
+    transform: scale(.4);
+  }
+  26%, 50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  62% {
+    opacity: 0;
+    transform: scale(.72);
+  }
+}
+
+@media (max-width: 1100px) {
+  .logo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fh-logo-svg,
+  .fh-logo-svg * {
+    animation: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo-lab-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .logo-lab-actions {
+    justify-content: flex-start;
+  }
+
+  .logo-stage {
+    min-height: 280px;
+    border-radius: 14px;
+  }
+
+  .fh-splash-logo {
+    width: min(82vw, 360px);
+  }
+
+  .logo-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .logo-grid article {
+    min-height: 210px;
+  }
+
+  .logo-static,
+  .logo-option-card .logo-static {
+    width: min(100%, 330px);
+  }
+}

@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 13/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -69,6 +69,7 @@ Atualizado em 08/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Melhorias de UX observadas apos uso real do app instalado.
 - [ ] P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
 - [ ] P1: Revisar como Tarefas deve aparecer na Visao Geral.
+- [ ] P2: Retomar a branch `codex/logo-splash-animada` quando for hora de finalizar a nova logo/splash. Estado pausado: rota `/logo` preserva as opcoes de animacao; a versao "Referencia anexo" foi escolhida como principal temporaria; falta validar no PWA instalado, revisar timing/impacto de carregamento e decidir se entra em producao.
 - [ ] P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
 - [ ] P2: Revisar membros e permissoes das plataformas.
 - [ ] P2: Definir rotina de backup do Supabase.

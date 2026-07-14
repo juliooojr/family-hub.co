@@ -351,3 +351,15 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - Convites pendentes podem ser excluidos pela interface; isso remove o registro de `family_invites` e invalida imediatamente o link `/convite/[token]`.
 - Remover membro revoga o acesso daquele usuario a familia, mas nao apaga o historico do que ele ja fez.
 - No mobile, a navegacao inferior deve mostrar carregamento ao trocar de modulo, e campos numericos de Tarefas devem evitar zoom automatico.
+
+---
+
+## ATUALIZACAO DE ESTADO REAL - 13/07/2026
+
+Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
+
+- A branch `codex/logo-splash-animada` contem um experimento pausado de nova logo, rota `/logo`, animacoes, splash inicial e carregamentos de tela.
+- A opcao "Referencia anexo" foi escolhida como principal temporaria nessa branch, mas ainda nao deve ser tratada como pronta para producao.
+- Nao apagar as outras opcoes de animacao: elas devem continuar isoladas na rota `/logo` para comparacao futura.
+- Antes de retomar ou publicar esse tema, validar desktop, mobile responsivo e PWA instalado, incluindo safe area, tempo da splash, legibilidade da barra de progresso e impacto nas transicoes.
+- Proximas rodadas podem focar em bugs e melhorias pequenas em uma nova branch limpa, sem misturar a finalizacao da splash/logo.

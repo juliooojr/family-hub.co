@@ -30,6 +30,7 @@ Producao: https://family-hub-co.vercel.app
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
 - Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
 - Convites pendentes podem ser excluidos; ao excluir, o link e invalidado imediatamente.
+- A branch `codex/logo-splash-animada` esta pausada para retomada futura da nova logo/splash; a rota `/logo` deve permanecer como laboratorio de animacoes e a versao "Referencia anexo" e a principal temporaria nessa branch.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
 - O novo layout geral foi implementado; os proximos ajustes devem partir desta identidade.
 
@@ -84,6 +85,7 @@ Leia nesta ordem antes de iniciar qualquer tarefa:
 6. `PRIMEIRA-VERSAO.md`: registro historico da primeira entrega.
 7. `TASKS.md`: backlog historico, sempre conferindo o que ja foi concluido.
 8. `PROMPT-CONTINUACAO-TAREFAS.md`: prompt pronto para retomar Tarefas em um novo chat.
+9. `PROMPT-CORRECOES-MELHORIAS.md`: prompt pronto para rodadas pequenas de bugs, ajustes mobile e melhorias de uso real.
 
 O codigo funcional atual e este README prevalecem quando documentos antigos estiverem desatualizados.
 
@@ -281,12 +283,13 @@ Concluido:
 
 1. P0: Validar o fluxo multi-familia com cadastro aberto, criacao de familia e convites.
 2. P1: Revisar como Tarefas deve aparecer na Visao Geral.
-3. P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
-4. P2: Revisar membros e permissoes das plataformas.
-5. P2: Definir rotina de backup do Supabase.
-6. P2: Acompanhar logs da Vercel e do Supabase.
-7. P2: Considerar um Supabase separado para desenvolvimento no futuro.
-8. P3: Investimentos, somente quando houver escopo aprovado.
-9. P3: Calendario com Google Calendar.
-10. P3: Documentos.
-11. P3: Emergencia.
+3. P2: Retomar a branch `codex/logo-splash-animada` para finalizar a nova logo/splash, validando a rota `/logo`, splash inicial, carregamentos de tela e comportamento no PWA instalado antes de qualquer merge.
+4. P2: Ativar MFA no GitHub, Vercel, Supabase e contas Google.
+5. P2: Revisar membros e permissoes das plataformas.
+6. P2: Definir rotina de backup do Supabase.
+7. P2: Acompanhar logs da Vercel e do Supabase.
+8. P2: Considerar um Supabase separado para desenvolvimento no futuro.
+9. P3: Investimentos, somente quando houver escopo aprovado.
+10. P3: Calendario com Google Calendar.
+11. P3: Documentos.
+12. P3: Emergencia.
