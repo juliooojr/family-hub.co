@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
+import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 
 export default function PublicHome({
   googleEnabled,
@@ -15,6 +16,7 @@ export default function PublicHome({
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+  useGlobalLoading(loading, 'auth')
   const error = localError || initialError
 
   function toggleTheme() {
@@ -26,7 +28,7 @@ export default function PublicHome({
     setLocalError('')
 
     if (!googleEnabled) {
-      setLocalError('O login com Google ainda não foi habilitado no Supabase.')
+      setLocalError('A configuração local do Supabase não está disponível.')
       setLoading(false)
       return
     }

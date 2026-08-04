@@ -1,0 +1,25 @@
+<svg viewBox="0 0 720 360" role="img" aria-labelledby="title" xmlns="http://www.w3.org/2000/svg">
+  <title id="title">Family Hub</title>
+  <rect width="720" height="360" fill="#10110f"/>
+  <g id="F" fill="#f1f2ec">
+    <rect x="84" y="54" width="44" height="252" rx="10"/>
+    <rect x="84" y="54" width="202" height="44" rx="10"/>
+    <rect x="84" y="158" width="166" height="44" rx="10"/>
+  </g>
+  <g id="H" fill="#f1f2ec">
+    <rect x="366" y="54" width="44" height="252" rx="10"/>
+    <rect x="590" y="54" width="44" height="252" rx="10"/>
+    <rect x="366" y="158" width="268" height="44" rx="10"/>
+  </g>
+  <circle id="CenterDot" cx="326" cy="194" r="5.5" fill="#e8760a" opacity="0"/>
+  <g id="House" fill="none" stroke="#e8760a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path id="Roof" d="M 296 286 L 296 228 L 326 194 L 356 228" pathLength="1"/>
+    <path id="HouseSides" d="M 356 228 L 356 286" pathLength="1"/>
+  </g>
+  <g id="Window" fill="#e8760a">
+    <rect x="313" y="248" width="9" height="9" rx="2.25"/>
+    <rect x="330" y="248" width="9" height="9" rx="2.25"/>
+    <rect x="313" y="265" width="9" height="9" rx="2.25"/>
+    <rect x="330" y="265" width="9" height="9" rx="2.25"/>
+  </g>
+</svg>

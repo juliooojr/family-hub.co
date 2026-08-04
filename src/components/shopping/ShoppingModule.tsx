@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent, type MouseEvent } from 'r
 import Link from 'next/link'
 import { Pencil, SquareArrowOutUpRight, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 import {
   createShoppingItem,
   createShoppingList,
@@ -89,6 +90,7 @@ export default function ShoppingModule({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(initialError)
   const [syncStatus, setSyncStatus] = useState<'connecting' | 'online' | 'offline'>('connecting')
+  useGlobalLoading(loading || busy, 'shopping')
 
   const currentView = history.at(-1) ?? 'lists'
   const selected = lists.find((list) => list.id === selectedId) ?? null
