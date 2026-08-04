@@ -11,18 +11,10 @@ export default async function Home({
   searchParams: Promise<{ erro?: string; next?: string }>
 }) {
   const { erro, next } = await searchParams
-  let googleEnabled = false
-
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
-      cache: 'no-store',
-    })
-    const settings = await response.json() as { external?: { google?: boolean } }
-    googleEnabled = settings.external?.google === true
-  } catch {
-    googleEnabled = false
-  }
+  const googleEnabled = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+    && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  )
 
   return (
     <PublicHome

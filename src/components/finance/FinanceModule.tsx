@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 import type { FinanceBill, FinanceBudget, FinanceTransaction } from '@/lib/finance'
 
 type Tab = 'visao' | 'transacoes' | 'contas' | 'orcamento' | 'investimentos'
@@ -58,6 +59,7 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
   const [summariesCollapsed, setSummariesCollapsed] = useState(false)
   const [pendingBillIds, setPendingBillIds] = useState<string[]>([])
   const [refreshing, setRefreshing] = useState(false)
+  useGlobalLoading(refreshing || pendingBillIds.length > 0, 'finance')
   const touchStartY = useRef<number | null>(null)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]

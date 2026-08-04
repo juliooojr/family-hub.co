@@ -2,7 +2,7 @@ type FamilyHubLogoProps = {
   className?: string
   animated?: boolean
   houseOnly?: boolean
-  animationStyle?: 'standard' | 'soft' | 'anchor' | 'bloom'
+  animationStyle?: 'standard' | 'soft' | 'anchor' | 'bloom' | 'minimal' | 'minimal-house' | 'minimal-fluid'
   markVariant?: 'default' | 'sharedLeg' | 'reference'
   title?: string
 }
@@ -21,36 +21,67 @@ export default function FamilyHubLogo({
       : `fh-logo-animate-${animationStyle}`
     : ''
   const house = getHouseGeometry(markVariant)
+  const minimal = animated && (
+    animationStyle === 'minimal'
+    || animationStyle === 'minimal-house'
+    || animationStyle === 'minimal-fluid'
+  )
+  const minimalHouse = animationStyle === 'minimal-house'
 
   return (
     <svg
       className={[className, 'fh-logo-svg', animationClass].filter(Boolean).join(' ')}
-      viewBox="0 0 720 360"
+      viewBox={minimal ? '220 20 280 320' : '0 0 720 360'}
       role="img"
       aria-label={title}
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>{title}</title>
-      <g id="F" className="fh-logo-letter fh-logo-f" fill="currentColor">
-        <rect x="84" y="54" width="44" height="252" rx="10" />
-        <rect x="84" y="54" width="202" height="44" rx="10" />
-        <rect x="84" y="158" width="166" height="44" rx="10" />
-      </g>
-      <g id="H" className="fh-logo-letter fh-logo-h" fill="currentColor">
-        <rect x="366" y="54" width="44" height="252" rx="10" />
-        <rect x="590" y="54" width="44" height="252" rx="10" />
-        <rect x="366" y="158" width="268" height="44" rx="10" />
-      </g>
-      <circle id="CenterDot" className="fh-logo-dot" cx={house.dotX} cy={house.dotY} r={house.dotRadius} fill="var(--fh-logo-accent)" />
-      <g id="House" className={`fh-logo-house fh-logo-house-${markVariant}`} fill="none" stroke="var(--fh-logo-accent)" strokeLinecap="round" strokeLinejoin="round">
-        <path id="Roof" className="fh-logo-roof" d={house.roof} pathLength="1" />
-        {house.sides ? <path id="HouseSides" className="fh-logo-sides" d={house.sides} pathLength="1" /> : null}
-      </g>
-      <g id="Window" className="fh-logo-window" fill="var(--fh-logo-accent)">
-        {house.windows.map((tile) => (
-          <rect className="fh-logo-window-tile" x={tile.x} y={tile.y} width={tile.size} height={tile.size} rx={tile.radius} key={`${tile.x}-${tile.y}`} />
-        ))}
-      </g>
+      {minimal ? (
+        <g className="fh-logo-minimal-mark">
+          <g className="fh-logo-minimal-f" fill="currentColor">
+            <rect x="270" y="54" width="44" height="252" rx="10" />
+            <rect x="270" y="54" width="180" height="44" rx="10" />
+            <rect x="270" y="158" width="148" height="44" rx="10" />
+          </g>
+          {minimalHouse ? (
+            <g className="fh-logo-minimal-house" fill="none" stroke="var(--fh-logo-accent)" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M 300 174 L 360 116 L 420 174 L 420 246 L 300 246 Z" />
+              <rect x="344" y="194" width="32" height="52" rx="5" />
+            </g>
+          ) : (
+            <circle className="fh-logo-minimal-dot" cx="360" cy="180" r="11" fill="var(--fh-logo-accent)" />
+          )}
+          <g className="fh-logo-minimal-h" fill="currentColor">
+            <rect x="270" y="54" width="44" height="252" rx="10" />
+            <rect x="406" y="54" width="44" height="252" rx="10" />
+            <rect x="270" y="158" width="180" height="44" rx="10" />
+          </g>
+        </g>
+      ) : (
+        <>
+          <g id="F" className="fh-logo-letter fh-logo-f" fill="currentColor">
+            <rect x="84" y="54" width="44" height="252" rx="10" />
+            <rect x="84" y="54" width="202" height="44" rx="10" />
+            <rect x="84" y="158" width="166" height="44" rx="10" />
+          </g>
+          <g id="H" className="fh-logo-letter fh-logo-h" fill="currentColor">
+            <rect x="366" y="54" width="44" height="252" rx="10" />
+            <rect x="590" y="54" width="44" height="252" rx="10" />
+            <rect x="366" y="158" width="268" height="44" rx="10" />
+          </g>
+          <circle id="CenterDot" className="fh-logo-dot" cx={house.dotX} cy={house.dotY} r={house.dotRadius} fill="var(--fh-logo-accent)" />
+          <g id="House" className={`fh-logo-house fh-logo-house-${markVariant}`} fill="none" stroke="var(--fh-logo-accent)" strokeLinecap="round" strokeLinejoin="round">
+            <path id="Roof" className="fh-logo-roof" d={house.roof} pathLength="1" />
+            {house.sides ? <path id="HouseSides" className="fh-logo-sides" d={house.sides} pathLength="1" /> : null}
+          </g>
+          <g id="Window" className="fh-logo-window" fill="var(--fh-logo-accent)">
+            {house.windows.map((tile) => (
+              <rect className="fh-logo-window-tile" x={tile.x} y={tile.y} width={tile.size} height={tile.size} rx={tile.radius} key={`${tile.x}-${tile.y}`} />
+            ))}
+          </g>
+        </>
+      )}
     </svg>
   )
 }

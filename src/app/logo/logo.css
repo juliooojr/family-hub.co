@@ -134,6 +134,80 @@ body:has(.logo-lab) {
   opacity: 0;
 }
 
+.fh-logo-animate-minimal .fh-logo-minimal-f,
+.fh-logo-animate-minimal .fh-logo-minimal-h,
+.fh-logo-animate-minimal .fh-logo-minimal-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-duration: 2.8s;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.fh-logo-animate-minimal-house .fh-logo-minimal-f,
+.fh-logo-animate-minimal-house .fh-logo-minimal-h,
+.fh-logo-animate-minimal-house .fh-logo-minimal-house {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-duration: 2.8s;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.fh-logo-animate-minimal-house .fh-logo-minimal-f {
+  animation-name: fhLogoMinimalF;
+}
+
+.fh-logo-animate-minimal-house .fh-logo-minimal-house {
+  stroke-width: 12;
+  animation-name: fhLogoMinimalHouse;
+}
+
+.fh-logo-animate-minimal-house .fh-logo-minimal-h {
+  animation-name: fhLogoMinimalH;
+}
+
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-f,
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-h,
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-duration: 3.6s;
+  animation-timing-function: cubic-bezier(.65, 0, .35, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  will-change: opacity, transform, filter;
+}
+
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-f {
+  animation-name: fhLogoFluidF;
+}
+
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-dot {
+  animation-name: fhLogoFluidDot;
+}
+
+.fh-logo-animate-minimal-fluid .fh-logo-minimal-h {
+  animation-name: fhLogoFluidH;
+}
+
+.fh-logo-animate-minimal .fh-logo-minimal-f {
+  animation-name: fhLogoMinimalF;
+}
+
+.fh-logo-animate-minimal .fh-logo-minimal-dot {
+  animation-name: fhLogoMinimalDot;
+}
+
+.fh-logo-animate-minimal .fh-logo-minimal-h {
+  animation-name: fhLogoMinimalH;
+}
+
 .fh-logo-animate-full .fh-logo-f,
 .fh-logo-animate-full .fh-logo-h {
   opacity: 0;
@@ -518,6 +592,150 @@ body:has(.logo-lab) {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes fhLogoMinimalF {
+  0%, 4% {
+    opacity: 0;
+    transform: scale(.82);
+  }
+  14%, 25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: scale(.08);
+  }
+}
+
+@keyframes fhLogoMinimalDot {
+  0%, 25% {
+    opacity: 0;
+    transform: scale(.25);
+  }
+  36%, 49% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  61%, 100% {
+    opacity: 0;
+    transform: scale(6);
+  }
+}
+
+@keyframes fhLogoMinimalHouse {
+  0%, 25% {
+    opacity: 0;
+    transform: scale(.08);
+  }
+  38%, 50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  61%, 100% {
+    opacity: 0;
+    transform: scale(.12);
+  }
+}
+
+@keyframes fhLogoMinimalH {
+  0%, 48% {
+    opacity: 0;
+    transform: scale(.08);
+  }
+  62%, 82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  94%, 100% {
+    opacity: 0;
+    transform: scale(.88);
+  }
+}
+
+@keyframes fhLogoFluidF {
+  0% {
+    opacity: .35;
+    transform: scale(.78) rotate(-3deg);
+    filter: blur(4px);
+  }
+  10%, 24% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+    filter: blur(0);
+  }
+  37% {
+    opacity: .72;
+    transform: scale(.5) rotate(2deg);
+    filter: blur(2px);
+  }
+  48%, 88% {
+    opacity: 0;
+    transform: scale(.06) rotate(5deg);
+    filter: blur(7px);
+  }
+  100% {
+    opacity: .35;
+    transform: scale(.78) rotate(-3deg);
+    filter: blur(4px);
+  }
+}
+
+@keyframes fhLogoFluidDot {
+  0%, 25% {
+    opacity: 0;
+    transform: scale(.15);
+    filter: blur(4px) drop-shadow(0 0 0 transparent);
+  }
+  39% {
+    opacity: 1;
+    transform: scale(1.25);
+    filter: blur(0) drop-shadow(0 0 12px color-mix(in srgb, var(--fh-logo-accent) 72%, transparent));
+  }
+  51% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) drop-shadow(0 0 5px color-mix(in srgb, var(--fh-logo-accent) 48%, transparent));
+  }
+  65% {
+    opacity: .55;
+    transform: scale(5.5);
+    filter: blur(3px) drop-shadow(0 0 14px color-mix(in srgb, var(--fh-logo-accent) 38%, transparent));
+  }
+  75%, 100% {
+    opacity: 0;
+    transform: scale(8);
+    filter: blur(8px) drop-shadow(0 0 0 transparent);
+  }
+}
+
+@keyframes fhLogoFluidH {
+  0% {
+    opacity: .35;
+    transform: scale(.9);
+    filter: blur(4px);
+  }
+  8%, 48% {
+    opacity: 0;
+    transform: scale(.08) rotate(-2deg);
+    filter: blur(7px);
+  }
+  63% {
+    opacity: .78;
+    transform: scale(.68) rotate(-1deg);
+    filter: blur(2px);
+  }
+  74%, 88% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: .35;
+    transform: scale(.9);
+    filter: blur(4px);
   }
 }
 

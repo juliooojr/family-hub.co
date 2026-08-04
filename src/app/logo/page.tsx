@@ -11,7 +11,12 @@ export default async function LogoPage({
 }) {
   const params = await searchParams
   const theme = params.tema === 'dark' ? 'dark' : 'light'
-  const animation = params.animacao === 'house' ? 'house' : 'full'
+  const animation = params.animacao === 'house'
+    || params.animacao === 'minimal'
+    || params.animacao === 'minimal-house'
+    || params.animacao === 'minimal-fluid'
+    ? params.animacao
+    : 'full'
   const replayKey = Number(params.r ?? '0')
 
   return <LogoLab theme={theme} animation={animation} replayKey={Number.isFinite(replayKey) ? replayKey : 0} />

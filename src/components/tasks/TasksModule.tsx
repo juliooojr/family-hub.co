@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { subscribeCurrentDevice } from '@/lib/push-notifications'
+import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 import {
   calculateTaskStreak,
   createTask,
@@ -59,6 +60,7 @@ export default function TasksModule({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(initialError)
   const [manualAmounts, setManualAmounts] = useState<Record<string, string>>({})
+  useGlobalLoading(busy, 'tasks')
 
   const activeTasks = useMemo(() => tasks.filter((task) => task.status === 'active'), [tasks])
   const entriesByTaskDate = useMemo(() => {

@@ -4,7 +4,7 @@ import FamilyHubSplash from '@/components/brand/FamilyHubSplash'
 import './logo.css'
 
 type ThemeMode = 'light' | 'dark'
-type AnimationMode = 'full' | 'house'
+type AnimationMode = 'full' | 'house' | 'minimal' | 'minimal-house' | 'minimal-fluid'
 
 export default function LogoLab({
   theme,
@@ -32,6 +32,9 @@ export default function LogoLab({
           <div className="logo-segmented" role="group" aria-label="Animacao">
             <Link className={animation === 'full' ? 'active' : ''} href={logoHref(theme, 'full', nextReplayKey)}>Completa</Link>
             <Link className={animation === 'house' ? 'active' : ''} href={logoHref(theme, 'house', nextReplayKey)}>Casa</Link>
+            <Link className={animation === 'minimal' ? 'active' : ''} href={logoHref(theme, 'minimal', nextReplayKey)}>F.H</Link>
+            <Link className={animation === 'minimal-house' ? 'active' : ''} href={logoHref(theme, 'minimal-house', nextReplayKey)}>F Casa H</Link>
+            <Link className={animation === 'minimal-fluid' ? 'active' : ''} href={logoHref(theme, 'minimal-fluid', nextReplayKey)}>F.H Fluido</Link>
           </div>
           <Link className="logo-replay" href={logoHref(theme, animation, nextReplayKey)}>Reproduzir</Link>
         </div>
@@ -45,6 +48,18 @@ export default function LogoLab({
         <article>
           <span>Logo estatica</span>
           <FamilyHubLogo className="logo-static" />
+        </article>
+        <article className="logo-option-card">
+          <span>F vira ponto vira H</span>
+          <FamilyHubLogo animated animationStyle="minimal" markVariant="reference" className="logo-static" />
+        </article>
+        <article className="logo-option-card">
+          <span>F vira casa vira H</span>
+          <FamilyHubLogo animated animationStyle="minimal-house" markVariant="reference" className="logo-static" />
+        </article>
+        <article className="logo-option-card">
+          <span>F ponto H · transicao fluida</span>
+          <FamilyHubLogo animated animationStyle="minimal-fluid" markVariant="reference" className="logo-static" />
         </article>
         <article className="logo-option-card">
           <span>Principal referencia</span>

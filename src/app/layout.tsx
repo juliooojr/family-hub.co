@@ -9,7 +9,7 @@ import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/500.css'
 import '@fontsource/jetbrains-mono/700.css'
 import './globals.css'
-import FamilyHubInitialSplash from '@/components/brand/FamilyHubInitialSplash'
+import GlobalLoadingOverlay from '@/components/brand/GlobalLoadingOverlay'
 import PwaInstallPrompt from '@/components/pwa/PwaInstallPrompt'
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister'
 
@@ -80,7 +80,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body>
         <ServiceWorkerRegister />
-        <FamilyHubInitialSplash />
+        <GlobalLoadingOverlay />
         {children}
         <PwaInstallPrompt />
       </body>

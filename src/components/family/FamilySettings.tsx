@@ -14,6 +14,7 @@ import {
   type FamilyRole,
 } from '@/lib/family'
 import { createClient } from '@/lib/supabase/client'
+import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 
 type Confirmation =
   | { type: 'invite'; invite: FamilyInvite }
@@ -47,6 +48,7 @@ export default function FamilySettings({
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
   const [deletingInviteId, setDeletingInviteId] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation>(null)
+  useGlobalLoading(busy || removingMemberId !== null || deletingInviteId !== null, 'family')
   const canManage = canManageFamily(currentMember.role)
 
   async function submitFamilyName(event: FormEvent) {
