@@ -77,8 +77,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
-      <body>
+    <html lang="pt-BR" style={{ backgroundColor: '#10110f' }}>
+      <body style={{ backgroundColor: '#10110f' }}>
         <ServiceWorkerRegister />
         <GlobalLoadingOverlay />
         {children}

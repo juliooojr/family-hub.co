@@ -63,6 +63,10 @@ Regras permanentes:
   npm.cmd exec tsc -- --noEmit
   npm.cmd run build
 - Quando a versao candidata estiver estavel, seguir o fluxo: branch -> push -> Preview -> configuracao OAuth do Preview se necessario -> Pull Request -> revisao -> merge na master -> Production.
+- O carregador oficial e a animacao compacta `F -> ponto -> H` sobre overlay translucido, com atraso de 180 ms em operacoes comuns. Nao usar uma tela preta opaca que substitua o conteudo.
+- Ao restaurar a home pelo historico depois do OAuth, limpar estados pendentes de autenticacao e navegacao.
+- Exclusoes de transacoes, contas e categorias/orcamentos no Financeiro precisam do modal padrao de confirmacao.
+- Para publicar uma versao pronta, usar os comandos curtos registrados no README.
 
 Primeira tarefa da nova sessao:
 - Inspecionar Git, README.md e TASKS.md.

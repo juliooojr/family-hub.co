@@ -381,3 +381,16 @@ Este bloco prevalece sobre trechos historicos acima quando houver divergencia.
 - `VAPID_PRIVATE_KEY` e `CRON_SECRET` ficam no Supabase; somente a chave publica vai ao frontend/Vercel.
 - O rotulo de origem do sistema operacional nao e controlavel pelo app.
 - Migrations: `202607140001_task_push_subscriptions.sql` e `202607140002_task_reminder_reschedule.sql`.
+
+---
+
+## ATUALIZACAO DE ESTADO REAL - 03/08/2026
+
+Este bloco prevalece sobre referencias anteriores ao carregamento e a branch de animacao.
+
+- O carregador oficial usa a marca compacta e fluida `F -> ponto laranja -> H`, centralizada em 72 x 84 px.
+- O overlay global bloqueia a interacao com fundo `rgba(16,17,15,.76)` e mantem o conteudo da pagina visivel. Nao usar um `loading.tsx` raiz que substitua a interface por fundo preto.
+- Operacoes comuns possuem debounce visual de 180 ms; a abertura inicial pode mostrar o carregador imediatamente por ate 900 ms.
+- Retornos pelo historico do navegador encerram estados pendentes de autenticacao e navegacao no `pageshow`, evitando loading infinito depois do OAuth.
+- Toda exclusao implementada no Financeiro — transacao, conta e categoria/orcamento — passa pelo modal padrao de confirmacao.
+- Publicacao deve seguir o fluxo curto registrado no README. Rollback deve ser feito por redeploy estavel na Vercel ou `git revert` em novo PR, sem reescrever a `master`.

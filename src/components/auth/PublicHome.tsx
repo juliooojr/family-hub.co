@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 
@@ -18,6 +18,15 @@ export default function PublicHome({
   const [localError, setLocalError] = useState('')
   useGlobalLoading(loading, 'auth')
   const error = localError || initialError
+
+  useEffect(() => {
+    function restorePage() {
+      setLoading(false)
+    }
+
+    window.addEventListener('pageshow', restorePage)
+    return () => window.removeEventListener('pageshow', restorePage)
+  }, [])
 
   function toggleTheme() {
     setTheme((current) => current === 'light' ? 'dark' : 'light')

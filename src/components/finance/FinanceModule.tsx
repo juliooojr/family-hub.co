@@ -14,6 +14,10 @@ type TransactionType = 'expense' | 'income' | 'reserve_deposit' | 'reserve_withd
 type Transaction = FinanceTransaction
 type Budget = FinanceBudget
 type CategoryOption = { name: string; emoji: string }
+type DeleteCandidate =
+  | { type: 'transaction'; id: string; name: string }
+  | { type: 'bill'; id: string; name: string }
+  | { type: 'budget'; id: string; name: string }
 
 const defaultCategories: CategoryOption[] = [
   { name: 'Cartão', emoji: '💳' }, { name: 'Moradia', emoji: '🏠' },
@@ -59,7 +63,9 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
   const [summariesCollapsed, setSummariesCollapsed] = useState(false)
   const [pendingBillIds, setPendingBillIds] = useState<string[]>([])
   const [refreshing, setRefreshing] = useState(false)
-  useGlobalLoading(refreshing || pendingBillIds.length > 0, 'finance')
+  const [deleteCandidate, setDeleteCandidate] = useState<DeleteCandidate | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  useGlobalLoading(refreshing || pendingBillIds.length > 0 || deleting, 'finance')
   const touchStartY = useRef<number | null>(null)
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[0]
@@ -169,6 +175,7 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
     if (error) return setNotice(`Não foi possível excluir a transação: ${error.message}`)
     setTransactions((current) => current.filter((item) => item.id !== id))
     setTransactionModal(null)
+    setDeleteCandidate(null)
   }
 
   async function saveBudget(budget: Budget) {
@@ -221,6 +228,7 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
     if (error) return setNotice(`Não foi possível excluir o orçamento: ${error.message}`)
     setBudgets((current) => current.filter((item) => item.id !== id))
     setBudgetModal(null)
+    setDeleteCandidate(null)
   }
 
   async function saveReserveMovement(type: 'deposit' | 'withdrawal', amount: number, date: string, notes: string) {
@@ -264,6 +272,19 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
     if (error) return setNotice(`Não foi possível excluir a conta: ${error.message}`)
     setBills((current) => current.filter((item) => item.id !== id))
     setBillModal(null)
+    setDeleteCandidate(null)
+  }
+
+  async function confirmDelete() {
+    if (!deleteCandidate || deleting) return
+    setDeleting(true)
+    try {
+      if (deleteCandidate.type === 'transaction') await deleteTransaction(deleteCandidate.id)
+      if (deleteCandidate.type === 'bill') await deleteBill(deleteCandidate.id)
+      if (deleteCandidate.type === 'budget') await deleteBudget(deleteCandidate.id)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function toggleBill(id: string) {
@@ -316,12 +337,18 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
 
-      {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} responsibleOptions={responsibleOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={deleteBill} onSave={saveBill} onToggle={toggleBill} /> : null}
-      {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} responsibleOptions={responsibleOptions} onClose={() => setTransactionModal(null)} onDelete={deleteTransaction} onSave={saveTransaction} /> : null}
-      {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} monthIndex={monthIndex} onClose={() => setBudgetModal(null)} onDelete={deleteBudget} onSave={saveBudget} /> : null}
+      {billModal ? <BillModal bill={billModal === 'new' ? null : billModal} categories={categoryOptions} responsibleOptions={responsibleOptions} monthIndex={monthIndex} onClose={() => setBillModal(null)} onDelete={(id) => setDeleteCandidate({ type: 'bill', id, name: billModal === 'new' ? 'esta conta' : billModal.name })} onSave={saveBill} onToggle={toggleBill} /> : null}
+      {transactionModal ? <TransactionModal transaction={transactionModal === 'new' ? null : transactionModal} categories={categoryOptions} responsibleOptions={responsibleOptions} onClose={() => setTransactionModal(null)} onDelete={(id) => setDeleteCandidate({ type: 'transaction', id, name: transactionModal === 'new' ? 'esta transação' : transactionModal.name })} onSave={saveTransaction} /> : null}
+      {budgetModal ? <BudgetModal budget={budgetModal === 'new' ? null : budgetModal} monthIndex={monthIndex} onClose={() => setBudgetModal(null)} onDelete={(id) => setDeleteCandidate({ type: 'budget', id, name: budgetModal === 'new' ? 'esta categoria' : budgetModal.name })} onSave={saveBudget} /> : null}
       {reserveModal ? <ReserveModal mode={reserveModal} goal={reserveGoal} balance={calculateReserveBalance(transactions, bills, monthIndex)} averageMonthlyExpenses={calculateAverageMonthlyExpenses(transactions, bills, monthIndex)} onClose={() => setReserveModal(null)} onGoal={saveReserveGoal} onSave={saveReserveMovement} /> : null}
+      {deleteCandidate ? <FinanceDeleteModal candidate={deleteCandidate} busy={deleting} onClose={() => setDeleteCandidate(null)} onConfirm={() => void confirmDelete()} /> : null}
     </main>
   )
+}
+
+function FinanceDeleteModal({ candidate, busy, onClose, onConfirm }: { candidate: DeleteCandidate; busy: boolean; onClose: () => void; onConfirm: () => void }) {
+  const label = candidate.type === 'transaction' ? 'transação' : candidate.type === 'bill' ? 'conta' : 'categoria'
+  return <div className="modal-overlay task-delete-overlay" role="presentation" onMouseDown={(event) => { if (!busy && event.target === event.currentTarget) onClose() }}><section className="modal-card task-delete-modal" role="dialog" aria-modal="true" aria-label={`Confirmar exclusão de ${label}`}><header><h2>CONFIRMAR EXCLUSÃO</h2><button type="button" onClick={onClose} disabled={busy} aria-label="Fechar">×</button></header><div className="confirm-copy"><p>Tem certeza que deseja excluir <strong>{candidate.name}</strong>?</p><p>Essa ação não poderá ser desfeita.</p></div><div className="modal-actions"><button type="button" className="button button-ghost" onClick={onClose} disabled={busy}>Cancelar</button><button type="button" className="button button-danger" onClick={onConfirm} disabled={busy}>{busy ? 'Excluindo...' : `Excluir ${label}`}</button></div></section></div>
 }
 
 function MonthPicker({ month, monthIndex, onMonth }: { month: string; monthIndex: number; onMonth: (value: number) => void }) {
