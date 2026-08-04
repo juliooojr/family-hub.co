@@ -1,18 +1,16 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getRequestOrigin } from '@/lib/request-origin'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const { searchParams } = requestUrl
-  if (requestUrl.hostname === '0.0.0.0') {
-    requestUrl.hostname = 'localhost'
-  }
-  const origin = requestUrl.origin
+  const origin = getRequestOrigin(request)
   const code = searchParams.get('code')
-  const requestedPath = searchParams.get('next')
+  const requestedPath = searchParams.get('next') ?? request.cookies.get('fh-auth-next')?.value
   const nextPath = requestedPath?.startsWith('/') && !requestedPath.startsWith('//')
     ? requestedPath
     : '/hub'
@@ -46,9 +44,12 @@ export async function GET(request: NextRequest) {
       cookiesToSet.forEach(({ name, value, options }) =>
         response.cookies.set(name, value, options)
       )
+      response.cookies.delete('fh-auth-next')
       return response
     }
   }
 
-  return NextResponse.redirect(`${origin}/?erro=auth`)
+  const response = NextResponse.redirect(`${origin}/?erro=auth`)
+  response.cookies.delete('fh-auth-next')
+  return response
 }

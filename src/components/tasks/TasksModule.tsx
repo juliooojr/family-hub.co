@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { subscribeCurrentDevice } from '@/lib/push-notifications'
 import {
   calculateTaskStreak,
   createTask,
@@ -116,7 +117,7 @@ export default function TasksModule({
     try {
       if (modal && modal !== 'new') {
         await updateTask(supabase, modal.id, userId, input)
-        setTasks((current) => current.map((task) => task.id === modal.id ? { ...task, ...input, notificationEnabled: false } : task))
+        setTasks((current) => current.map((task) => task.id === modal.id ? { ...task, ...input } : task))
       } else {
         const created = await createTask(supabase, familyId, userId, input)
         setTasks((current) => [...current, created])
@@ -218,6 +219,7 @@ export default function TasksModule({
           todayKey={todayKey}
           onClose={() => setModal(null)}
           onSubmit={submitTask}
+          onError={setError}
           onDelete={modal === 'new' ? undefined : () => setDeleteCandidate(modal)}
         />
       ) : null}
@@ -318,6 +320,7 @@ function TaskModal({
   todayKey,
   onClose,
   onSubmit,
+  onError,
   onDelete,
 }: {
   initial: RoutineTask | null
@@ -325,6 +328,7 @@ function TaskModal({
   todayKey: string
   onClose: () => void
   onSubmit: (input: TaskInput) => void
+  onError: (message: string) => void
   onDelete?: () => void
 }) {
   const [emoji, setEmoji] = useState(initial?.emoji ?? '✓')
@@ -340,7 +344,9 @@ function TaskModal({
   const [frequency, setFrequency] = useState<TaskFrequency>(initial?.frequency ?? 'daily')
   const [weekdays, setWeekdays] = useState<number[]>(initial?.weekdays ?? [new Date(`${todayKey}T12:00:00`).getDay()])
   const [startDate, setStartDate] = useState(initial?.startDate ?? todayKey)
-  const [notificationTime, setNotificationTime] = useState(initial?.notificationTime ?? '')
+  const [notificationEnabled, setNotificationEnabled] = useState(initial?.notificationEnabled ?? false)
+  const [notificationTime, setNotificationTime] = useState(initial?.notificationTime?.slice(0, 5) ?? '12:00')
+  const [enablingNotification, setEnablingNotification] = useState(false)
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -358,8 +364,8 @@ function TaskModal({
       frequency,
       weekdays: frequency === 'weekly' ? weekdays : null,
       startDate,
-      notificationEnabled: false,
-      notificationTime: notificationTime || null,
+      notificationEnabled,
+      notificationTime: notificationEnabled ? notificationTime : null,
     })
   }
 
@@ -368,6 +374,24 @@ function TaskModal({
       if (current.includes(value)) return current.length === 1 ? current : current.filter((item) => item !== value)
       return [...current, value].sort((a, b) => a - b)
     })
+  }
+
+  async function toggleNotification() {
+    if (notificationEnabled) {
+      setNotificationEnabled(false)
+      return
+    }
+    setNotificationEnabled(true)
+    setEnablingNotification(true)
+    try {
+      await subscribeCurrentDevice()
+      if (!notificationTime) setNotificationTime('12:00')
+    } catch (error) {
+      setNotificationEnabled(false)
+      onError(error instanceof Error ? error.message : 'Não foi possível ativar as notificações.')
+    } finally {
+      setEnablingNotification(false)
+    }
   }
 
   return (
@@ -429,16 +453,35 @@ function TaskModal({
             </>
           ) : null}
 
-          <div className="task-notification-locked">
-            <div><strong>Notificação</strong></div>
-            <input type="time" value={notificationTime} onChange={(event) => setNotificationTime(event.target.value)} disabled />
-            <span>Bloqueado</span>
+          <div className={`task-notification ${notificationEnabled ? 'enabled' : ''}`}>
+            <div>
+              <strong>Lembrete no celular</strong>
+              <small>{enablingNotification ? 'Ativando neste aparelho…' : notificationEnabled ? 'Lembrete ativo para esta tarefa' : 'Receba um aviso mesmo com o app fechado'}</small>
+            </div>
+            <button
+              type="button"
+              className="task-notification-switch"
+              role="switch"
+              aria-checked={notificationEnabled}
+              aria-label="Ativar lembrete no celular"
+              disabled={enablingNotification}
+              onClick={() => void toggleNotification()}
+            ><span /></button>
           </div>
+          {notificationEnabled ? (
+            <div className="task-reminder-time">
+              <label htmlFor="task-notification-time">
+                <strong>Horário do lembrete</strong>
+                <small>Use o formato de 24 horas</small>
+              </label>
+              <input id="task-notification-time" type="time" lang="pt-BR" value={notificationTime} onChange={(event) => setNotificationTime(event.target.value)} required />
+            </div>
+          ) : null}
 
           <div className="modal-actions">
             {onDelete ? <button type="button" className="button button-danger" onClick={onDelete} disabled={busy}>Excluir</button> : null}
             <button type="button" className="button button-ghost" onClick={onClose}>Cancelar</button>
-            <button className="button button-primary" disabled={busy}>{busy ? 'Salvando...' : 'Salvar'}</button>
+            <button className="button button-primary" disabled={busy || enablingNotification}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : 'Salvar'}</button>
           </div>
         </form>
       </section>

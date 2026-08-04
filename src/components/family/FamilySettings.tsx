@@ -217,7 +217,7 @@ export default function FamilySettings({
                       {copied ? 'Link copiado' : 'Copiar link'}
                     </button>
                   ) : <b>{accepted ? 'aceito' : 'expirado'}</b>}
-                  {!accepted && canManage ? (
+                  {canManage ? (
                     <button className="button button-danger family-remove-member" type="button" disabled={deletingInviteId === invite.id} onClick={() => setConfirmation({ type: 'invite', invite })}>
                       {deletingInviteId === invite.id ? 'Excluindo...' : 'Excluir'}
                     </button>
@@ -240,7 +240,7 @@ export default function FamilySettings({
           {confirmation.type === 'invite' ? (
             <>
               <p>O convite para <strong>{confirmation.invite.email}</strong> sera excluido.</p>
-              <p>O link deixa de funcionar imediatamente e a pessoa precisara receber um novo convite.</p>
+              <p>{confirmation.invite.acceptedAt ? 'O registro será removido desta lista; o acesso atual da pessoa não será alterado.' : 'O link deixa de funcionar imediatamente e a pessoa precisara receber um novo convite.'}</p>
             </>
           ) : (
             <>

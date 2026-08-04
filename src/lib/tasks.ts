@@ -253,7 +253,7 @@ function toTaskPayload(familyId: string | undefined, userId: string, input: Task
     frequency: input.frequency,
     weekdays: input.frequency === 'weekly' ? input.weekdays : null,
     start_date: input.startDate,
-    notification_enabled: false,
+    notification_enabled: input.notificationEnabled,
     notification_time: input.notificationTime,
     status: 'active',
   }

@@ -9,6 +9,7 @@ export type ShoppingItem = {
   familyId: string
   name: string
   estimatedPrice: number | null
+  productUrl: string | null
   checked: boolean
   checkedAt: string | null
   createdAt: string
@@ -46,6 +47,7 @@ type ItemRow = {
   family_id: string
   name: string
   estimated_price: number | string | null
+  product_url: string | null
   checked: boolean
   checked_at: string | null
   created_at: string
@@ -54,6 +56,7 @@ type ItemRow = {
 export type ItemInput = {
   name: string
   estimatedPrice: number | null
+  productUrl: string | null
 }
 
 export type ListInput = {
@@ -70,6 +73,7 @@ function mapItem(row: ItemRow): ShoppingItem {
     familyId: row.family_id,
     name: row.name,
     estimatedPrice: row.estimated_price == null ? null : Number(row.estimated_price),
+    productUrl: row.product_url,
     checked: row.checked,
     checkedAt: row.checked_at,
     createdAt: row.created_at,
@@ -158,6 +162,7 @@ export async function createShoppingItem(
       family_id: list.familyId,
       name: input.name.trim(),
       estimated_price: input.estimatedPrice,
+      product_url: input.productUrl,
     })
     .select('*')
     .single()
@@ -175,6 +180,7 @@ export async function updateShoppingItem(
     .update({
       name: input.name.trim(),
       estimated_price: input.estimatedPrice,
+      product_url: input.productUrl,
     })
     .eq('id', itemId)
   if (error) throw error
@@ -209,6 +215,19 @@ export async function archiveShoppingList(
     .update({ status: 'archived', archived_at: new Date().toISOString() })
     .eq('id', listId)
   if (error) throw error
+}
+
+export async function finishShoppingList(
+  supabase: SupabaseClient,
+  listId: string,
+  movePendingItems: boolean,
+): Promise<ShoppingList[]> {
+  const { error } = await supabase.rpc('finish_shopping_list', {
+    target_list_id: listId,
+    move_pending_items: movePendingItems,
+  })
+  if (error) throw error
+  return getShoppingLists(supabase)
 }
 
 export async function reopenShoppingList(
