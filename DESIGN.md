@@ -179,6 +179,20 @@ background: var(--bg); border-bottom: 1px solid var(--border);
 /* linha de acento */ ::after { linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.3; }
 ```
 
+### Carregamento global
+
+- Marca compacta central com transicao continua `F -> ponto laranja -> H`.
+- Tamanho de referencia: 72 px de largura por 84 px de altura, inclusive no desktop.
+- Overlay bloqueante com `rgba(16,17,15,.76)`, preservando o conteudo visivel abaixo; nao substituir a rota por uma tela preta opaca.
+- Operacoes comuns aguardam 180 ms antes de exibir o overlay para evitar piscadas em respostas rapidas.
+- A abertura inicial pode exibir o carregador imediatamente por ate 900 ms.
+- Animar apenas `opacity` e `transform`; evitar blur, sombras animadas e filtros que prejudiquem a fluidez.
+- Em `prefers-reduced-motion`, apresentar uma marca estatica.
+
+### Confirmacao de exclusao
+
+Exclusoes destrutivas devem usar o modal padrao com titulo de confirmacao, identificacao do item, aviso de que a acao nao pode ser desfeita e botoes `Cancelar` e `Excluir`. No Financeiro, isso vale para transacoes, contas e categorias/orcamentos.
+
 ---
 
 ## HUB ORBITAL — ESPECIFICAÇÃO

@@ -12,18 +12,30 @@ type LoadingEvent = CustomEvent<{ id?: string }>
 export default function GlobalLoadingOverlay() {
   const pathname = usePathname()
   const activeIds = useRef(new Set<string>(['initial']))
-  const initialLoad = useRef(true)
+  const showTimer = useRef<number | null>(null)
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
+    function scheduleShow() {
+      if (showTimer.current !== null) return
+      showTimer.current = window.setTimeout(() => {
+        showTimer.current = null
+        if (activeIds.current.size > 0) setVisible(true)
+      }, 180)
+    }
+
     function start(event: Event) {
       activeIds.current.add((event as LoadingEvent).detail?.id ?? 'manual')
-      setVisible(true)
+      scheduleShow()
     }
 
     function end(event: Event) {
       activeIds.current.delete((event as LoadingEvent).detail?.id ?? 'manual')
-      setVisible(activeIds.current.size > 0)
+      if (activeIds.current.size === 0) {
+        if (showTimer.current !== null) window.clearTimeout(showTimer.current)
+        showTimer.current = null
+        setVisible(false)
+      }
     }
 
     function followLink(event: MouseEvent) {
@@ -36,7 +48,7 @@ export default function GlobalLoadingOverlay() {
       if (nextUrl.pathname === window.location.pathname && nextUrl.search === window.location.search) return
 
       activeIds.current.add('navigation')
-      setVisible(true)
+      scheduleShow()
       if (nextUrl.pathname === window.location.pathname) {
         window.setTimeout(() => {
           activeIds.current.delete('navigation')
@@ -45,23 +57,41 @@ export default function GlobalLoadingOverlay() {
       }
     }
 
+    function restorePage(event: PageTransitionEvent) {
+      if (!event.persisted) return
+      activeIds.current.delete('initial')
+      activeIds.current.delete('navigation')
+      if (showTimer.current !== null) window.clearTimeout(showTimer.current)
+      showTimer.current = null
+      setVisible(activeIds.current.size > 0)
+    }
+
     window.addEventListener(LOADING_START, start)
     window.addEventListener(LOADING_END, end)
+    window.addEventListener('pageshow', restorePage)
     document.addEventListener('click', followLink, true)
     return () => {
       window.removeEventListener(LOADING_START, start)
       window.removeEventListener(LOADING_END, end)
+      window.removeEventListener('pageshow', restorePage)
       document.removeEventListener('click', followLink, true)
+      if (showTimer.current !== null) window.clearTimeout(showTimer.current)
     }
   }, [])
 
   useEffect(() => {
-    const delay = initialLoad.current ? 900 : 80
     const timer = window.setTimeout(() => {
-      activeIds.current.delete(initialLoad.current ? 'initial' : 'navigation')
-      initialLoad.current = false
+      activeIds.current.delete('initial')
       setVisible(activeIds.current.size > 0)
-    }, delay)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      activeIds.current.delete('navigation')
+      setVisible(activeIds.current.size > 0)
+    }, 80)
     return () => window.clearTimeout(timer)
   }, [pathname])
 

@@ -19,3 +19,10 @@ Use estes arquivos apenas pelo Supabase SQL Editor, com revisao manual.
 ## Observacao
 
 O melhor backup continua sendo backup/PITR do Supabase antes da migration. Estes scripts sao uma camada adicional de seguranca logica dentro do banco.
+
+## Migrations de Compras de 13/07/2026
+
+- `202607130001_shopping_finish_and_product_urls.sql`: aditiva; cria `product_url` e a funcao atomica `finish_shopping_list`.
+- `202607130002_shopping_realtime.sql`: aditiva; inclui `shopping_lists` e `shopping_items` na publicacao `supabase_realtime` somente quando ainda nao estiverem presentes.
+- Aplicar na ordem acima e confirmar no Network do navegador que `finish_shopping_list` nao retorna `PGRST202`.
+- Depois, testar sincronizacao com dois membros reais da mesma familia, sem criar dados ficticios.

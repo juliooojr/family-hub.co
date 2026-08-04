@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 14/07/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
 
 ## Concluido
 
@@ -47,6 +47,10 @@ Atualizado em 14/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Modo Mercado mobile isolado da navegacao inferior, com rolagem propria, folga apos o ultimo item e saida fixa acessivel.
 - [x] Callback OAuth preserva o host recebido e guarda o destino interno em cookie temporario.
 - [x] PR #9 integrado na `master` com os refinamentos de Compras e Familia.
+- [x] Animacao compacta `F -> ponto -> H` adotada como carregador global no centro da tela.
+- [x] Carregamentos comuns possuem atraso de 180 ms para evitar piscadas em operacoes rapidas e usam fundo translucido sobre o conteudo existente.
+- [x] Restauracao pelo historico do navegador limpa estados pendentes do login e da navegacao, evitando loading infinito ao voltar do Google OAuth.
+- [x] Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao.
 
 ## Publicacao de Compras colaborativa
 
@@ -103,6 +107,8 @@ Atualizado em 14/07/2026. Este arquivo acompanha o estado real do projeto. O pla
 - Toda mudanca de schema deve ser uma migration versionada e revisavel.
 - Desenvolvimento permanece local ate existir uma versao estavel para Preview.
 - Fluxo de entrega: branch, Preview, Pull Request, revisao, merge na `master`, Production.
+- Para publicar uma entrega pronta, preferir o fluxo curto documentado no README: push, criacao do PR, merge squash, retorno para `master` e pull.
+- Rollback de producao deve ser recuperavel: redeploy do ultimo deployment estavel ou `git revert` em novo PR; nunca reescrever a `master`.
 - Mudancas em PWA, manifest, icones, splash screen e status bar devem ser testadas no iPhone removendo e adicionando novamente o atalho.
 
 ## Operacao de notificacoes de Tarefas

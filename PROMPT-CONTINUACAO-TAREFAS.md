@@ -45,3 +45,10 @@ npm.cmd run build
 - `202607140001_task_push_subscriptions.sql` e `202607140002_task_reminder_reschedule.sql` devem estar aplicadas; a Edge Function deve estar publicada na versao atual.
 - Compras e navegacao usam Lucide; Familia fica no menu mobile; logout exige confirmacao; controles de tema usam lua/sol vetoriais.
 - O PR #11 foi integrado em `master`; proximas mudancas devem partir da `master` atualizada.
+
+## Atualizacao de interface e operacao - 03/08/2026
+
+- O carregamento global atual e a marca compacta `F -> ponto -> H` sobre overlay translucido. Operacoes comuns so o exibem apos 180 ms; a abertura inicial pode exibi-lo imediatamente por ate 900 ms.
+- Retorno pelo historico do navegador deve limpar estados pendentes de login/navegacao para nao deixar o app em loading infinito.
+- Financeiro exige confirmacao antes de excluir transacao, conta ou categoria/orcamento.
+- Na publicacao, seguir o fluxo curto do README: push, criar PR, merge squash, voltar para `master` e pull.

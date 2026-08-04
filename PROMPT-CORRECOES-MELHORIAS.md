@@ -15,7 +15,9 @@ Contexto:
 - Movimentacoes diretas de Reserva aparecem em Transacoes como reserva, mas nao somam em receitas, despesas, saldo comum ou margem planejada.
 - Financeiro mobile ja recebeu cards minimizaveis, filtros recolhiveis, abas sem scrollbar aparente cortando itens, pull-to-refresh interno, feedback visual ao pagar contas e dropdown no Orcamento para ver itens por categoria.
 - Compras e Tarefas receberam ajustes mobile recentes e devem continuar funcionando bem no PWA instalado.
-- A branch `codex/logo-splash-animada` esta pausada. Nao misturar a finalizacao da nova logo/splash com esta rodada; esse tema fica para retomada separada.
+- O carregador global usa a animacao compacta `F -> ponto -> H`, overlay translucido e atraso para operacoes rapidas. Nao criar fallbacks de rota que substituam o conteudo por fundo preto.
+- Ao voltar do Google OAuth pelo historico do navegador, estados de login e navegacao devem ser encerrados no evento `pageshow` quando a pagina for restaurada.
+- Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem o modal padrao de confirmacao.
 
 Objetivo:
 
@@ -31,6 +33,7 @@ Forma de trabalho:
 - Nao mexer em migrations, RLS ou dados reais sem confirmar o impacto.
 - Garantir que ajustes mobile nao quebrem desktop, e vice-versa.
 - Se mexer em PWA, splash, manifest, icones, status bar ou safe area, registrar que precisa testar no iPhone removendo e adicionando novamente o atalho.
+- Para a entrega final, usar o fluxo curto de PR documentado no README e nao incluir mudancas locais fora do escopo.
 
 Validacao recomendada:
 

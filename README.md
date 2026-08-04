@@ -24,9 +24,12 @@ Producao: https://family-hub-co.vercel.app
 - Financeiro possui Visao Geral, Transacoes, Contas, Orcamento e Reserva persistidos no Supabase.
 - Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos/recolhiveis no mobile, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
 - Financeiro mobile possui cards visiveis por padrao com opcao de minimizar, abas sem scrollbar aparente cortando os itens, gesto interno de puxar para atualizar e feedback visual ao marcar contas como pagas.
+- Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao antes de alterar os dados.
 - Orcamento permite expandir categorias para ver contas e transacoes do mes que compoem o valor gasto.
 - Movimentacoes de Reserva aparecem em Transacoes, mas nao entram nos totais de receita, despesa, saldo comum ou margem planejada.
 - Fluxo de login Google aplica os cookies de sessao no redirect e preserva o host recebido. OAuth mobile deve ser validado em Preview HTTPS; o Supabase compartilhado pode rejeitar callback por IP local e voltar ao Site URL de Production.
+- Ao retornar do provedor de login pelo historico do navegador, estados pendentes de autenticacao e navegacao sao limpos para evitar carregamento infinito.
+- O carregamento global usa a animacao compacta `F -> ponto -> H`, aparece somente depois de 180 ms em operacoes comuns e bloqueia a tela com uma camada translucida sobre o conteudo existente. A abertura inicial pode exibi-lo imediatamente por ate 900 ms.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
 - Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
@@ -229,6 +232,18 @@ Como o banco ainda e compartilhado, testes na Preview devem evitar dados fictici
 
 Criar um PR da branch de trabalho para `master`. O PR deve explicar o que mudou, quais riscos existem e como a mudanca foi validada.
 
+Com as alteracoes ja commitadas na branch, o fluxo curto preferido e:
+
+```powershell
+git push -u origin NOME-DA-BRANCH
+gh pr create --base master --head NOME-DA-BRANCH --title "TIPO: TITULO" --body "RESUMO DA ENTREGA"
+gh pr merge --squash --delete-branch
+git switch master
+git pull origin master
+```
+
+Se a alteracao ainda nao estiver commitada, criar uma branch, adicionar somente os arquivos do escopo e fazer o commit antes desses comandos. Nao incluir arquivos locais, temporarios ou mudancas de outra tarefa apenas para limpar o `git status`.
+
 ### 6. Revisar e aprovar
 
 Confirmar antes do merge:
@@ -248,6 +263,8 @@ Fazer o merge somente depois da aprovacao. A `master` deve permanecer utilizavel
 ### 8. Publicar em producao
 
 A Vercel detecta a atualizacao da `master` e cria um deploy Production. Confirmar que o deploy esta `Ready`, que o dominio oficial aponta para ele e que o fluxo principal continua funcionando.
+
+Se for necessario rollback, preferir o rollback/redeploy do ultimo deployment estavel na Vercel. Se a correcao tambem precisar ficar registrada no GitHub, reverter o commit do merge em uma nova branch e abrir outro PR; nao usar `git reset --hard` nem reescrever o historico da `master`.
 
 ## Resumo do fluxo
 
