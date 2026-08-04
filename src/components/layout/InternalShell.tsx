@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { CalendarDays, ClipboardList, FileText, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, TriangleAlert, Users, Wallet, type LucideIcon } from 'lucide-react'
+import { CalendarDays, CircleHelp, ClipboardList, FileText, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, TriangleAlert, Users, Wallet, type LucideIcon } from 'lucide-react'
+import GuidedTour, { startGuidedTour } from '@/components/onboarding/GuidedTour'
 
 type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
 type NavigationItem = {
@@ -84,13 +85,16 @@ export default function InternalShell({
                 <i><Icon aria-hidden /></i><strong>{item.label}</strong><small><Lock aria-hidden /></small>
               </span>
             ) : (
-              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} title={item.label} key={item.id}>
+              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} data-tour={item.id === 'finance' ? 'finance-navigation' : undefined} title={item.label} key={item.id}>
                 <i><Icon aria-hidden /></i><strong>{item.label}</strong>
               </Link>
             )})}
           </nav>
 
           <div className="internal-side-bottom">
+            <button className="internal-side-action" type="button" onClick={startGuidedTour} data-tooltip="Refazer tutorial" title="Refazer tutorial">
+              <span><CircleHelp aria-hidden /></span><strong>Refazer tutorial</strong>
+            </button>
             <button className="internal-side-action" type="button" onClick={toggleTheme}>
               <span>{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}</span><strong>Alternar tema</strong>
             </button>
@@ -109,18 +113,20 @@ export default function InternalShell({
       </div>
 
       {mobileMenuOpen ? <div className="internal-mobile-menu" role="dialog" aria-label="Menu rápido">
+        <button type="button" onClick={() => { setMobileMenuOpen(false); startGuidedTour() }}><CircleHelp aria-hidden /><span>Refazer tutorial</span></button>
         <button type="button" onClick={() => { toggleTheme(); setMobileMenuOpen(false) }}>{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}<span>Alternar tema</span></button>
         {canManageFamily ? <Link href="/familia" prefetch onClick={() => setMobileMenuOpen(false)}><Users aria-hidden /><span>Gerenciar família</span></Link> : null}
         <button type="button" onClick={() => { setMobileMenuOpen(false); setLogoutConfirmationOpen(true) }}><LogOut aria-hidden /><span>Sair</span></button>
       </div> : null}
       <nav className="internal-mobile-nav" aria-label="Navegação principal">
         <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início"><House aria-hidden /></Link>
-        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças"><Wallet aria-hidden /></Link>
+        <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças" data-tour="finance-navigation"><Wallet aria-hidden /></Link>
         <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras"><ShoppingCart aria-hidden /></Link>
         <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas"><ClipboardList aria-hidden /></Link>
         <button className={mobileMenuOpen ? 'active' : ''} type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label="Abrir menu" aria-expanded={mobileMenuOpen}><Menu aria-hidden /></button>
       </nav>
       {logoutConfirmationOpen ? <LogoutConfirmation onClose={() => setLogoutConfirmationOpen(false)} /> : null}
+      <GuidedTour />
     </div>
   )
 }

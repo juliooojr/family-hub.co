@@ -317,11 +317,11 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
         <div className="finance-topbar-main">
           <Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link>
           <div className="finance-heading"><h1>FINANCEIRO</h1><p>{months[monthIndex]} 2026</p></div>
-          <nav className="finance-tabs" aria-label="Áreas do Financeiro">
-            {tabs.map((item) => <button className={tab === item.id ? 'active' : ''} disabled={item.id === 'investimentos'} title={item.id === 'investimentos' ? 'Disponível futuramente' : undefined} key={item.id} onClick={() => { setTab(item.id); setNotice('') }}>{item.label}{item.id === 'investimentos' ? ' 🔒' : ''}</button>)}
+          <nav className="finance-tabs" aria-label="Áreas do Financeiro" data-tour="finance-tabs">
+            {tabs.map((item) => <button className={tab === item.id ? 'active' : ''} disabled={item.id === 'investimentos'} title={item.id === 'investimentos' ? 'Disponível futuramente' : undefined} data-tour-tab={item.id} key={item.id} onClick={() => { setTab(item.id); setNotice('') }}>{item.label}{item.id === 'investimentos' ? ' 🔒' : ''}</button>)}
           </nav>
         </div>
-        <div className="finance-actions">
+        <div className="finance-actions" data-tour="finance-actions">
           <button className="button button-ghost finance-summary-toggle" type="button" onClick={() => setSummariesCollapsed((collapsed) => !collapsed)}>{summariesCollapsed ? 'Mostrar cards' : 'Ocultar cards'}</button>
           <div className="finance-export"><button className="button button-ghost" onClick={() => setExportOpen((open) => !open)} aria-expanded={exportOpen}>Exportar ▾</button>{exportOpen ? <div><button onClick={() => exportFinance('png')}>Imagem PNG</button><button onClick={() => exportFinance('csv')}>Planilha CSV</button><button onClick={() => exportFinance('json')}>Dados JSON</button></div> : null}</div>
           <button className="button button-primary" onClick={() => tab === 'contas' ? setBillModal('new') : tab === 'visao' || tab === 'transacoes' ? setTransactionModal('new') : tab === 'orcamento' ? setBudgetModal('new') : demoAction(selectedTab.action)}>{selectedTab.action}</button>
@@ -331,9 +331,9 @@ export default function FinanceModule({ familyId, responsibleOptions, transactio
       <section className="finance-content">
         {notice ? <div className="finance-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Fechar">×</button></div> : null}
         {tab === 'visao' ? <Overview transactions={transactions} bills={bills} categories={categoryOptions} month={months[monthIndex]} monthIndex={monthIndex} onMonth={setMonthIndex} reserveGoal={reserveGoal} onReserve={setReserveModal} /> : null}
-        {tab === 'transacoes' ? <Transactions transactions={transactions} categories={categoryOptions} responsibleOptions={responsibleOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setTransactionModal('new')} onEdit={setTransactionModal} /> : null}
-        {tab === 'contas' ? <Bills bills={bills} responsibleOptions={responsibleOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} pendingBillIds={pendingBillIds} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /> : null}
-        {tab === 'orcamento' ? <Budgets budgets={activeBudgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /> : null}
+        {tab === 'transacoes' ? <div data-tour="finance-transactions-content"><Transactions transactions={transactions} categories={categoryOptions} responsibleOptions={responsibleOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setTransactionModal('new')} onEdit={setTransactionModal} /></div> : null}
+        {tab === 'contas' ? <div data-tour="finance-bills-content"><Bills bills={bills} responsibleOptions={responsibleOptions} owner={owner} onOwner={setOwner} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} pendingBillIds={pendingBillIds} onCreate={() => setBillModal('new')} onEdit={setBillModal} onToggle={toggleBill} /></div> : null}
+        {tab === 'orcamento' ? <div data-tour="finance-budget-content"><Budgets budgets={activeBudgets} bills={bills} transactions={transactions} categories={categoryOptions} month={months[monthIndex]} onMonth={setMonthIndex} monthIndex={monthIndex} onCreate={() => setBudgetModal('new')} onEdit={setBudgetModal} /></div> : null}
         {tab === 'investimentos' ? <Investments onAction={demoAction} /> : null}
       </section>
 
@@ -371,7 +371,7 @@ function Overview({ transactions, bills, categories: categoryOptions, month, mon
 
   return <>
     <SectionToolbar title="VISÃO GERAL" subtitle={`Resumo financeiro · ${month} 2026`}><MonthPicker month={month} monthIndex={monthIndex} onMonth={onMonth} /></SectionToolbar>
-    <div className="finance-summary-grid finance-overview-summary">
+    <div className="finance-summary-grid finance-overview-summary" data-tour="finance-summary">
       <Stat label={`Receita ${month}`} value={formatMoney(summary.income)} tone="income" note={`${summary.incomeCount} receitas no mês`} />
       <Stat label={`Despesas ${month}`} value={formatMoney(summary.expenses)} tone="expense"><div className="finance-tags"><span>Fixo {formatMoney(summary.fixed)}</span><span>Variável {formatMoney(summary.variable)}</span></div></Stat>
       <Stat label="Saldo do mês" value={formatMoney(summary.balance)} tone={summary.balance >= 0 ? 'balance' : 'expense'}><div className="finance-tags"><span className={summary.balance >= 0 ? 'paid' : ''}>{balancePercentage}% da receita</span></div></Stat>

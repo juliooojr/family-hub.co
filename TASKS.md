@@ -51,6 +51,7 @@ Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Carregamentos comuns possuem atraso de 180 ms para evitar piscadas em operacoes rapidas e usam fundo translucido sobre o conteudo existente.
 - [x] Restauracao pelo historico do navegador limpa estados pendentes do login e da navegacao, evitando loading infinito ao voltar do Google OAuth.
 - [x] Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao.
+- [x] Primeira versao do tutorial de primeiro acesso, com tour guiado pelo Financeiro, avancar/voltar, pular e opcao de refazer no menu desktop e mobile.
 
 ## Publicacao de Compras colaborativa
 
