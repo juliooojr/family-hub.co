@@ -64,6 +64,7 @@
 .guided-tour-close{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:999px;background:transparent;color:var(--text2);font-size:22px}
 .guided-tour-close:hover{background:var(--surface2);color:var(--text)}
 .guided-tour-progress{padding-right:34px}
+.guided-tour-button-spinner{width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:guidedTourSpin .7s linear infinite}.guided-tour-actions .button-primary{display:inline-flex;align-items:center;justify-content:center;gap:7px}@keyframes guidedTourSpin{to{transform:rotate(360deg)}}
 
 /* Loader global: compacto, central e bloqueante em qualquer viewport. */
 .app-loading-overlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow:hidden;overscroll-behavior:none;touch-action:none;background:rgba(16,17,15,.76);color:#f1f2ec;cursor:wait;contain:strict;isolation:isolate}

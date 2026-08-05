@@ -157,7 +157,7 @@ export default function TasksModule({
             <h1>Tarefas</h1>
             <p>{formatLongDate(selectedDate)}</p>
           </div>
-          <div className="tasks-tabs" role="tablist" aria-label="Visualização de tarefas">
+          <div className="tasks-tabs" role="tablist" aria-label="Visualização de tarefas" data-tour="tasks-tabs">
             <button className={tab === 'today' ? 'active' : ''} onClick={() => setTab('today')}>Hoje</button>
             <button className={tab === 'all' ? 'active' : ''} onClick={() => setTab('all')}>Todas</button>
           </div>
@@ -175,7 +175,7 @@ export default function TasksModule({
       <section className="tasks-content">
         {error ? <div className="error-banner module-error" role="alert">{error}<button onClick={() => setError('')}>×</button></div> : null}
 
-        <div className="tasks-day-status">
+        <div className="tasks-day-status" data-tour="tasks-progress">
           <span>{completedToday} de {dueTasks.length} concluídas</span>
           <div className="progress-track"><span style={{ width: `${dueTasks.length ? Math.round((completedToday / dueTasks.length) * 100) : 0}%` }} /></div>
         </div>

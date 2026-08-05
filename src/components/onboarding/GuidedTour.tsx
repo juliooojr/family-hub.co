@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
-const STORAGE_KEY = 'fh-guided-tour-v2'
+const STORAGE_KEY = 'fh-guided-tour-v3'
+const ACTIVE_KEY = 'fh-guided-tour-active'
 const TOUR_EVENT = 'fh-start-guided-tour'
 
 type TourStep = { title: string; description: string; target?: string; path?: string; tab?: string }
@@ -17,6 +18,13 @@ const steps: TourStep[] = [
   { title: 'Contas que se repetem', description: 'Use Contas para compromissos fixos ou recorrentes que precisam ser acompanhados e pagos todos os meses, como aluguel, energia e cartão.', target: '[data-tour="finance-bills-content"] .finance-page-toolbar', path: '/financeiro', tab: 'contas' },
   { title: 'Acompanhe o resultado', description: 'A Visão Geral reúne receitas, despesas, saldo e margem planejada do mês para você entender rapidamente como a família está.', target: '[data-tour="finance-summary"]', path: '/financeiro', tab: 'visao' },
   { title: 'Construa sua reserva', description: 'Configure uma meta e registre depósitos ou retiradas. A reserva é uma movimentação patrimonial e não altera o saldo comum do mês.', target: '.finance-reserve', path: '/financeiro', tab: 'visao' },
+  { title: 'Organize as Compras', description: 'Em Compras, toda a família acompanha listas compartilhadas e vê as alterações sincronizadas.', target: '[data-tour="shopping-navigation"]', path: '/compras' },
+  { title: 'Crie e consulte suas listas', description: 'Crie uma lista para cada ocasião. O Arquivo guarda listas finalizadas para consulta, e os cards mostram o progresso dos itens.', target: '[data-tour="shopping-actions"]', path: '/compras' },
+  { title: 'Leve a lista ao mercado', description: 'Abra uma lista para adicionar e marcar produtos. No detalhe, o Modo Mercado oferece controles maiores e próprios para usar durante a compra.', target: '[data-tour="shopping-lists"] .shopping-grid', path: '/compras' },
+  { title: 'Crie hábitos e organize rotinas', description: 'Use Tarefas para construir hábitos, organizar suas rotinas pessoais e acompanhar o que está previsto para cada dia.', target: '[data-tour="tasks-navigation"]', path: '/tarefas' },
+  { title: 'Hoje e Todas', description: 'A aba Hoje mostra somente o que deve ser feito na data escolhida. Em Todas, você consulta e edita todas as rotinas cadastradas.', target: '[data-tour="tasks-tabs"]', path: '/tarefas' },
+  { title: 'Acompanhe seu progresso', description: 'Marque tarefas concluídas ou registre quantidades. O progresso do dia é atualizado automaticamente.', target: '[data-tour="tasks-progress"]', path: '/tarefas' },
+  { title: 'Seu resumo no Hub', description: 'O Hub reúne atalhos e um resumo rápido de contas, compras, tarefas e reserva para você saber o que precisa de atenção.', target: '[data-tour="hub-summary"]', path: '/hub' },
   { title: 'Tudo pronto!', description: 'Use “Refazer tutorial” no menu lateral.' },
 ]
 
@@ -29,14 +37,22 @@ export default function GuidedTour() {
   const router = useRouter()
   const [stepIndex, setStepIndex] = useState<number | null>(null)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [transitioning, setTransitioning] = useState(false)
 
   const start = useCallback(() => {
+    window.sessionStorage.setItem(ACTIVE_KEY, '0')
     setTargetRect(null)
+    setTransitioning(false)
     setStepIndex(0)
   }, [])
 
   useEffect(() => {
-    const initialTimer = !window.localStorage.getItem(STORAGE_KEY) ? window.setTimeout(start, 0) : null
+    const storedActiveStep = window.sessionStorage.getItem(ACTIVE_KEY)
+    const activeStep = Number(storedActiveStep)
+    const hasActiveTour = storedActiveStep !== null && Number.isInteger(activeStep) && activeStep >= 0 && activeStep < steps.length
+    const initialTimer = hasActiveTour
+      ? window.setTimeout(() => { setTransitioning(true); setStepIndex(activeStep) }, 0)
+      : !window.localStorage.getItem(STORAGE_KEY) ? window.setTimeout(start, 0) : null
     window.addEventListener(TOUR_EVENT, start)
     return () => {
       if (initialTimer !== null) window.clearTimeout(initialTimer)
@@ -47,7 +63,9 @@ export default function GuidedTour() {
   useEffect(() => {
     if (stepIndex === null) return
     const step = steps[stepIndex]
-    if (step.path && pathname !== step.path) router.push(step.path)
+    if (step.path && pathname !== step.path) {
+      router.push(step.path)
+    }
     if (step.tab && pathname === '/financeiro') {
       document.querySelector<HTMLButtonElement>(`[data-tour-tab="${step.tab}"]`)?.click()
     }
@@ -55,8 +73,14 @@ export default function GuidedTour() {
 
   const updateTarget = useCallback(() => {
     if (stepIndex === null) return
-    const selector = steps[stepIndex].target
-    if (!selector) return setTargetRect(null)
+    const step = steps[stepIndex]
+    const selector = step.target
+    if (!selector) {
+      setTargetRect(null)
+      setTransitioning(false)
+      return
+    }
+    if (step.path && pathname !== step.path) return
     const element = Array.from(document.querySelectorAll<HTMLElement>(selector)).find((candidate) => {
       const rect = candidate.getBoundingClientRect()
       return rect.width > 0 && rect.height > 0
@@ -66,7 +90,8 @@ export default function GuidedTour() {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
     setTargetRect(rect ?? null)
-  }, [stepIndex])
+    if (rect) setTransitioning(false)
+  }, [pathname, stepIndex])
 
   useLayoutEffect(() => {
     const frame = window.requestAnimationFrame(updateTarget)
@@ -88,13 +113,22 @@ export default function GuidedTour() {
 
   function finish() {
     window.localStorage.setItem(STORAGE_KEY, 'completed')
+    window.sessionStorage.removeItem(ACTIVE_KEY)
     setStepIndex(null)
     setTargetRect(null)
+    setTransitioning(false)
   }
 
   function advance() {
     if (isLast) finish()
-    else setStepIndex((current) => current === null ? 0 : current + 1)
+    else goToStep((stepIndex ?? 0) + 1)
+  }
+
+  function goToStep(index: number) {
+    window.sessionStorage.setItem(ACTIVE_KEY, String(index))
+    setTargetRect(null)
+    setTransitioning(true)
+    setStepIndex(index)
   }
 
   const style = showTarget && targetRect ? {
@@ -115,8 +149,8 @@ export default function GuidedTour() {
         <p>{step.description}</p>
         <div className="guided-tour-actions">
           <button className="button button-ghost" type="button" onClick={finish}>Pular tutorial</button><span />
-          <button className="button button-ghost" type="button" onClick={() => setStepIndex((current) => Math.max(0, (current ?? 0) - 1))} disabled={stepIndex === 0}>Voltar</button>
-          <button className="button button-primary" type="button" onClick={advance}>{isLast ? 'Concluir' : 'Avançar'}</button>
+          <button className="button button-ghost" type="button" onClick={() => goToStep(Math.max(0, stepIndex - 1))} disabled={stepIndex === 0 || transitioning}>Voltar</button>
+          <button className="button button-primary" type="button" onClick={advance} disabled={transitioning}>{transitioning ? <><i className="guided-tour-button-spinner" aria-hidden />Carregando...</> : isLast ? 'Concluir' : 'Avançar'}</button>
         </div>
       </section>
     </div>

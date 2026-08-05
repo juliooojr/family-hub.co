@@ -394,7 +394,7 @@ export default function ShoppingModule({
             <p className="topbar-subtitle">{subtitle}</p>
           </div>
         </div>
-        <div className="topbar-actions">
+        <div className="topbar-actions" data-tour="shopping-actions">
           {currentView === 'lists' ? (
             <>
               <button className="button button-ghost" onClick={() => openView('archive')}>Arquivo</button>
@@ -417,7 +417,7 @@ export default function ShoppingModule({
         {loading ? <EmptyState title="CARREGANDO LISTAS" copy="Buscando os dados da família..." /> : null}
 
         {!loading && currentView === 'lists' ? (
-          <ListsView
+          <div data-tour="shopping-lists"><ListsView
             lists={activeLists}
             onOpen={openDetail}
             onToggle={toggleItem}
@@ -425,7 +425,7 @@ export default function ShoppingModule({
             onEdit={openEditItem}
             onAdd={openNewItem}
             onNew={() => { setEditing(false); setModal('list') }}
-          />
+          /></div>
         ) : null}
 
         {!loading && currentView === 'detail' && selected ? (
