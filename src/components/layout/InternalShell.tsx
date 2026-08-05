@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { CalendarDays, CircleHelp, ClipboardList, FileText, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, TriangleAlert, Users, Wallet, type LucideIcon } from 'lucide-react'
+import { CalendarDays, CircleHelp, ClipboardList, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, Wallet, type LucideIcon } from 'lucide-react'
 import GuidedTour, { startGuidedTour } from '@/components/onboarding/GuidedTour'
 
 type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
@@ -21,8 +21,6 @@ const navigation: NavigationItem[] = [
   { id: 'shopping', label: 'Compras', icon: ShoppingCart, href: '/compras' },
   { id: 'tasks', label: 'Tarefas', icon: ClipboardList, href: '/tarefas' },
   { id: 'calendar', label: 'Agenda', icon: CalendarDays, locked: true },
-  { id: 'documents', label: 'Documentos', icon: FileText, locked: true },
-  { id: 'emergency', label: 'Emergência', icon: TriangleAlert, locked: true },
 ]
 
 export default function InternalShell({

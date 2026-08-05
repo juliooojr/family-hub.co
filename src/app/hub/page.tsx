@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import InternalShell from '@/components/layout/InternalShell'
+import FamilyActivityFeed from '@/components/activity/FamilyActivityFeed'
+import { getFamilyActivities } from '@/lib/activity'
 import { canManageFamily, getCurrentFamilyContext } from '@/lib/family'
 import { getFinanceData, type FinanceBill, type FinanceTransaction } from '@/lib/finance'
 import { getShoppingLists, type ShoppingList } from '@/lib/shopping'
@@ -90,16 +92,19 @@ export default async function HubPage() {
   let shoppingLists: ShoppingList[] = []
   let financeData: Awaited<ReturnType<typeof getFinanceData>> | null = null
   let taskData: Awaited<ReturnType<typeof getTasksData>> | null = null
+  let activities: Awaited<ReturnType<typeof getFamilyActivities>> = []
 
-  const [shoppingResult, financeResult, tasksResult] = await Promise.allSettled([
+  const [shoppingResult, financeResult, tasksResult, activitiesResult] = await Promise.allSettled([
     getShoppingLists(supabase),
     getFinanceData(supabase, user.id),
     getTasksData(supabase, user.id),
+    getFamilyActivities(supabase, familyContext.family.id, familyContext.members, 8),
   ])
 
   if (shoppingResult.status === 'fulfilled') shoppingLists = shoppingResult.value
   if (financeResult.status === 'fulfilled') financeData = financeResult.value
   if (tasksResult.status === 'fulfilled') taskData = tasksResult.value
+  if (activitiesResult.status === 'fulfilled') activities = activitiesResult.value
 
   const pendingLists = countOpenShoppingLists(shoppingLists)
   const taskSummary = taskData ? countCompletedTasks(taskData.tasks, taskData.entries, todayKey) : null
@@ -125,26 +130,24 @@ export default async function HubPage() {
           <Link className="dashboard-quick-card" href="/compras"><span>🛒</span><strong>Compras</strong><small>Listas da família</small></Link>
           <Link className="dashboard-quick-card" href="/tarefas"><span>📋</span><strong>Tarefas</strong><small>{taskSummary ? `${taskSummary.completed}/${taskSummary.due} hoje` : 'Rotina pessoal'}</small></Link>
           <div className="dashboard-quick-card locked"><span>📅</span><strong>Agenda</strong><small>Em breve</small><b>🔒</b></div>
-          <div className="dashboard-quick-card locked"><span>📁</span><strong>Documentos</strong><small>Em breve</small><b>🔒</b></div>
-          <div className="dashboard-quick-card locked"><span>🚨</span><strong>Emergência</strong><small>Em breve</small><b>🔒</b></div>
         </section>
 
         <section className="dashboard-stats" aria-label="Resumo do mês" data-tour="hub-summary">
-          <article>
+          <Link className="dashboard-stat-card" href="/financeiro" aria-label={`Abrir Finanças: ${openBills} ${openBills === 1 ? 'conta aberta' : 'contas abertas'}`}>
             <span>Contas</span>
             <strong className="dashboard-value-accent">{openBills}</strong>
             <small>{openBills === 1 ? 'conta aberta no mês' : 'contas abertas no mês'}</small>
-          </article>
-          <article>
+          </Link>
+          <Link className="dashboard-stat-card" href="/compras" aria-label={`Abrir Compras: ${pendingLists} ${pendingLists === 1 ? 'lista aberta' : 'listas abertas'}`}>
             <span>Compras</span>
             <strong className="dashboard-value-accent">{pendingLists}</strong>
             <small>{pendingLists === 1 ? 'lista aberta' : 'listas abertas'}</small>
-          </article>
-          <article>
+          </Link>
+          <Link className="dashboard-stat-card" href="/tarefas" aria-label={`Abrir Tarefas: ${taskSummary?.due ?? 0} previstas hoje`}>
             <span>Tarefas</span>
             <strong className="dashboard-value-accent">{taskSummary?.due ?? 0}</strong>
             <small>{taskSummary?.due === 1 ? 'tarefa prevista hoje' : 'tarefas previstas hoje'}</small>
-          </article>
+          </Link>
           <article>
             <span>Reserva</span>
             <strong className="dashboard-value-reserve">{formatMoney(reserveBalance)}</strong>
@@ -157,21 +160,9 @@ export default async function HubPage() {
             <h2>Resumo da casa</h2>
             <div><span>⌂</span><strong>Em construção</strong><small>Novos resumos familiares aparecerão aqui.</small></div>
           </article>
-          <article className="dashboard-future-card">
-            <h2>Hoje em Tarefas</h2>
-            {taskSummary && taskSummary.preview.length > 0 ? (
-              <div className="dashboard-task-list">
-                {taskSummary.preview.map(({ task, completed }) => (
-                  <Link className={completed ? 'done' : ''} href="/tarefas" key={task.id}>
-                    <span>{task.emoji}</span>
-                    <strong>{task.name}</strong>
-                    <small>{completed ? 'Concluída hoje' : 'Pendente hoje'}</small>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div><span>📋</span><strong>Nada previsto</strong><small>Abra Tarefas para criar ou ajustar sua rotina pessoal.</small></div>
-            )}
+          <article className="dashboard-future-card family-activity-card">
+            <header><h2>Atividade da Família</h2><Link href="/atividades">Ver histórico <span aria-hidden>→</span></Link></header>
+            <FamilyActivityFeed activities={activities} />
           </article>
         </section>
       </main>
