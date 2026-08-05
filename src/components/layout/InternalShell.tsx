@@ -85,7 +85,7 @@ export default function InternalShell({
                 <i><Icon aria-hidden /></i><strong>{item.label}</strong><small><Lock aria-hidden /></small>
               </span>
             ) : (
-              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} data-tour={item.id === 'finance' ? 'finance-navigation' : undefined} title={item.label} key={item.id}>
+              <Link className={`internal-nav-item ${active === item.id ? 'active' : ''}`} href={item.href!} prefetch data-tooltip={item.label} data-tour={`${item.id}-navigation`} title={item.label} key={item.id}>
                 <i><Icon aria-hidden /></i><strong>{item.label}</strong>
               </Link>
             )})}
@@ -119,10 +119,10 @@ export default function InternalShell({
         <button type="button" onClick={() => { setMobileMenuOpen(false); setLogoutConfirmationOpen(true) }}><LogOut aria-hidden /><span>Sair</span></button>
       </div> : null}
       <nav className="internal-mobile-nav" aria-label="Navegação principal">
-        <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início"><House aria-hidden /></Link>
+        <Link className={active === 'home' ? 'active' : ''} href="/hub" prefetch aria-label="Início" data-tour="home-navigation"><House aria-hidden /></Link>
         <Link className={active === 'finance' ? 'active' : ''} href="/financeiro" prefetch aria-label="Finanças" data-tour="finance-navigation"><Wallet aria-hidden /></Link>
-        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras"><ShoppingCart aria-hidden /></Link>
-        <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas"><ClipboardList aria-hidden /></Link>
+        <Link className={active === 'shopping' ? 'active' : ''} href="/compras" prefetch aria-label="Compras" data-tour="shopping-navigation"><ShoppingCart aria-hidden /></Link>
+        <Link className={active === 'tasks' ? 'active' : ''} href="/tarefas" prefetch aria-label="Tarefas" data-tour="tasks-navigation"><ClipboardList aria-hidden /></Link>
         <button className={mobileMenuOpen ? 'active' : ''} type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label="Abrir menu" aria-expanded={mobileMenuOpen}><Menu aria-hidden /></button>
       </nav>
       {logoutConfirmationOpen ? <LogoutConfirmation onClose={() => setLogoutConfirmationOpen(false)} /> : null}

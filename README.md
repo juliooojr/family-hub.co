@@ -25,7 +25,8 @@ Producao: https://family-hub-co.vercel.app
 - Financeiro recebeu melhorias de UX de uso real: data atual ao criar transacao, ordenacao por data registrada, grafico mensal clicavel com valores, filtros compactos/recolhiveis no mobile, recorrencias/categorias preservando meses anteriores e composicao de despesas por Fixos, Variaveis recorrentes e Transacoes avulsas.
 - Financeiro mobile possui cards visiveis por padrao com opcao de minimizar, abas sem scrollbar aparente cortando os itens, gesto interno de puxar para atualizar e feedback visual ao marcar contas como pagas.
 - Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao antes de alterar os dados.
-- Usuarios recebem um tour guiado no primeiro acesso pelo navegador, iniciado pelo modulo Financeiro, com destaque das funcoes, passos de avancar/voltar, opcao de pular e atalho para refazer no menu.
+- Usuarios recebem um tour guiado no primeiro acesso pelo navegador, passando por Financeiro, Compras, Tarefas e Hub, com destaque das funcoes, passos de avancar/voltar, opcao de pular e atalho para refazer no menu.
+- O tour preserva o passo ativo ao navegar entre modulos e mostra carregamento nos controles ate a nova rota, aba e area de destaque estarem prontas.
 - Orcamento permite expandir categorias para ver contas e transacoes do mes que compoem o valor gasto.
 - Movimentacoes de Reserva aparecem em Transacoes, mas nao entram nos totais de receita, despesa, saldo comum ou margem planejada.
 - Fluxo de login Google aplica os cookies de sessao no redirect e preserva o host recebido. OAuth mobile deve ser validado em Preview HTTPS; o Supabase compartilhado pode rejeitar callback por IP local e voltar ao Site URL de Production.

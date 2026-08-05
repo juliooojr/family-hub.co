@@ -129,7 +129,7 @@ export default async function HubPage() {
           <div className="dashboard-quick-card locked"><span>🚨</span><strong>Emergência</strong><small>Em breve</small><b>🔒</b></div>
         </section>
 
-        <section className="dashboard-stats" aria-label="Resumo do mês">
+        <section className="dashboard-stats" aria-label="Resumo do mês" data-tour="hub-summary">
           <article>
             <span>Contas</span>
             <strong className="dashboard-value-accent">{openBills}</strong>
