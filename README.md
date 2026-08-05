@@ -34,6 +34,7 @@ Producao: https://family-hub-co.vercel.app
 - O carregamento global usa a animacao compacta `F -> ponto -> H`, aparece somente depois de 180 ms em operacoes comuns e bloqueia a tela com uma camada translucida sobre o conteudo existente. A abertura inicial pode exibi-lo imediatamente por ate 900 ms.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
+- A Home possui o feed `Atividade da Familia`, com ate oito acontecimentos relevantes de Compras, Tarefas e Financas, tempos relativos, estado vazio e tela de historico em `/atividades`.
 - Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
 - Convites podem ser removidos da listagem; pendentes sao invalidados imediatamente e aceitos podem ser limpos sem revogar o acesso do membro.
 - `master` e a branch oficial do GitHub e da producao na Vercel.
@@ -96,6 +97,7 @@ Leia nesta ordem antes de iniciar qualquer tarefa:
 6. `PRIMEIRA-VERSAO.md`: registro historico da primeira entrega.
 7. `TASKS.md`: backlog historico, sempre conferindo o que ja foi concluido.
 8. `PROMPT-CONTINUACAO-TAREFAS.md`: prompt pronto para retomar Tarefas em um novo chat.
+9. `ATIVIDADE-DA-FAMILIA.md`: regras funcionais, fonte de dados, seguranca e evolucao do feed familiar.
 
 O codigo funcional atual e este README prevalecem quando documentos antigos estiverem desatualizados.
 

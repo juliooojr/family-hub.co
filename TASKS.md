@@ -53,6 +53,7 @@ Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao.
 - [x] Tutorial de primeiro acesso com tour guiado pelo Financeiro, Compras, Tarefas e Hub, avancar/voltar, pular e opcao de refazer no menu desktop e mobile.
 - [x] Continuidade do tutorial entre rotas, com preservacao do passo atual e feedback de carregamento durante o direcionamento ao proximo componente.
+- [x] Home com `Atividade da Familia`, exibindo ate oito eventos relevantes, tempo relativo, estado vazio e acesso ao historico completo.
 
 ## Publicacao de Compras colaborativa
 
