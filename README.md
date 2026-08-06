@@ -31,7 +31,7 @@ Producao: https://family-hub-co.vercel.app
 - Movimentacoes de Reserva aparecem em Transacoes, mas nao entram nos totais de receita, despesa, saldo comum ou margem planejada.
 - Fluxo de login Google aplica os cookies de sessao no redirect e preserva o host recebido. OAuth mobile deve ser validado em Preview HTTPS; o Supabase compartilhado pode rejeitar callback por IP local e voltar ao Site URL de Production.
 - Ao retornar do provedor de login pelo historico do navegador, estados pendentes de autenticacao e navegacao sao limpos para evitar carregamento infinito.
-- O carregamento global usa a animacao compacta `F -> ponto -> H`, aparece somente depois de 180 ms em operacoes comuns e bloqueia a tela com uma camada translucida sobre o conteudo existente. A abertura inicial pode exibi-lo imediatamente por ate 900 ms.
+- O carregamento global usa a casa animada oficial em movimento `breath`, com cores adaptadas aos temas claro e escuro. Ele aparece somente depois de 180 ms em operacoes comuns e bloqueia a tela com uma camada translucida sobre o conteudo existente. A abertura inicial pode exibi-lo imediatamente por ate 900 ms. O loader anterior `F -> ponto -> H` permanece arquivado em `src/components/brand/legacy`.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
 - A Home possui o feed `Atividade da Familia`, com ate oito acontecimentos relevantes de Compras, Tarefas e Financas, tempos relativos, estado vazio e tela de historico em `/atividades`.

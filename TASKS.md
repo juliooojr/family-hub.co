@@ -47,7 +47,8 @@ Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Modo Mercado mobile isolado da navegacao inferior, com rolagem propria, folga apos o ultimo item e saida fixa acessivel.
 - [x] Callback OAuth preserva o host recebido e guarda o destino interno em cookie temporario.
 - [x] PR #9 integrado na `master` com os refinamentos de Compras e Familia.
-- [x] Animacao compacta `F -> ponto -> H` adotada como carregador global no centro da tela.
+- [x] Primeira versao do carregador global criada com a animacao compacta `F -> ponto -> H`.
+- [x] Casa animada adotada como loader oficial, com cores por tema e versao anterior preservada em `src/components/brand/legacy`.
 - [x] Carregamentos comuns possuem atraso de 180 ms para evitar piscadas em operacoes rapidas e usam fundo translucido sobre o conteudo existente.
 - [x] Restauracao pelo historico do navegador limpa estados pendentes do login e da navegacao, evitando loading infinito ao voltar do Google OAuth.
 - [x] Exclusoes de transacoes, contas e categorias/orcamentos do Financeiro exigem confirmacao no modal padrao.
