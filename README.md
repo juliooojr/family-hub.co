@@ -165,6 +165,8 @@ Consequencias praticas:
 - Nao inserir dados ficticios ou destrutivos no banco de producao.
 - Mudancas de schema devem ser criadas como migrations versionadas.
 - Toda migration precisa ser revisada antes de ser aplicada.
+- Seguir obrigatoriamente o fluxo de dry-run, aplicacao e validacao descrito em [`SUPABASE-MIGRATIONS.md`](./SUPABASE-MIGRATIONS.md).
+- Usar o SQL Editor para consultas e auditorias. Alteracoes manuais exigem migration versionada e reconciliacao explicita do historico.
 - Novas tabelas, colunas, indices, triggers e policies devem preservar os dados existentes.
 - Fazer mudancas aditivas e compativeis sempre que possivel.
 - Um Supabase separado para desenvolvimento continua recomendado para o futuro.

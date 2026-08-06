@@ -8,6 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - Leia `README.md` antes de qualquer alteracao.
 - Consulte `PRODUCT.md`, `DESIGN.md` e `TASKS.md` conforme o escopo da alteracao.
+- Antes de qualquer alteracao no Supabase, leia `SUPABASE-MIGRATIONS.md` por completo e siga seu checklist. Sempre forneca ao usuario os comandos exatos de dry-run, aplicacao e validacao.
 - Siga o fluxo de branch, Preview, Pull Request, merge e Production definido no README.
 - Nao altere diretamente a `master` para desenvolver funcionalidades.
 - Lembre que, por enquanto, os ambientes podem compartilhar o banco Supabase de producao.
@@ -15,5 +16,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Diferencie sempre os ambientes: IP local serve apenas o codigo local; URL Preview serve a branch publicada; dominio oficial e PWA instalado servem Production.
 - Fluxos Google OAuth no celular devem ser validados por HTTPS em Preview. Nao conclua que o codigo local esta carregado quando a barra do navegador mostra o dominio de Production.
 - Quando frontend depender de migration, confirme que a migration foi aplicada antes de validar a funcionalidade. Codigo e banco devem permanecer compativeis durante a publicacao.
+- Nunca execute `supabase db reset --linked` em Production. Nao use `migration repair` sem comprovar previamente que o efeito da migration ja existe no banco.
 - Ao entregar comandos de publicacao, use o fluxo curto do README e adapte apenas branch, titulo e resumo. Inclua criacao de branch/commit somente quando as alteracoes ainda estiverem na `master` ou sem commit.
 - Preserve mudancas locais fora do escopo e nunca inclua arquivos temporarios ou documentacao de outra tarefa em um commit sem necessidade.

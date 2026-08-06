@@ -87,9 +87,9 @@ Atualizado em 06/08/2026. Este arquivo acompanha o estado real do projeto; plano
 
 ## Controle de migrations
 
-- [ ] Confirmar no SQL Editor se `202608050001_activity_audit_transitions.sql` foi aplicada ao banco compartilhado.
-- [ ] Reconciliar a tabela de historico de migrations do Supabase: a CLI conectou ao projeto em 06/08/2026, mas nao encontrou nenhuma versao remota registrada, embora o schema publicado ja contenha estruturas das migrations anteriores.
-- [ ] Nao executar `supabase db push` enquanto o historico remoto estiver vazio; revisar e marcar as migrations existentes antes para evitar reaplicacao insegura.
+- [x] Confirmar no SQL Editor que `202608050001_activity_audit_transitions.sql` foi aplicada ao banco compartilhado.
+- [x] Reconciliar em 06/08/2026 a tabela de historico de migrations do Supabase com as migrations locais, apos auditoria do schema e dos dados existentes.
+- [x] Documentar em `SUPABASE-MIGRATIONS.md` o fluxo obrigatorio de dry-run, aplicacao, validacao e reparo excepcional do historico.
 
 ## Proximas entregas
 
