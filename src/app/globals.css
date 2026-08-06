@@ -362,3 +362,12 @@
 .family-activity-empty{width:100%;min-height:190px;border:1px dashed var(--border2);border-radius:16px;background:transparent}
 .family-activity-feed.is-history .family-activity-empty{min-height:280px}
 
+/* Loader oficial: casa em SVG, sem fundo embutido e com cores adaptadas ao tema. */
+.app-house-loader{display:block;width:76px;height:76px;overflow:visible;--house-loader-main:#c45f08;--house-loader-detail:#f1f2ec}
+body:has(.internal-app.light) .app-house-loader,body:has(.public-home.light) .app-house-loader{--house-loader-main:#f5f1e9;--house-loader-detail:#393b35}
+.app-house-loader-scale{transform-origin:50px 50px;transform:scale(.8)}
+.app-house-loader-circle{fill:var(--house-loader-main);transform-box:fill-box;transform-origin:center;animation:houseLoaderBreath 1.4s cubic-bezier(.65,.71,.32,.38) .5s infinite both}
+.app-house-loader-home{fill:var(--house-loader-detail);transform-box:fill-box;transform-origin:center;animation:houseLoaderBreath 1.4s cubic-bezier(.65,.71,.32,.38) .25s infinite both}
+@keyframes houseLoaderBreath{0%,100%{transform:scale(.91)}50%{transform:scale(1.03)}}
+@media(prefers-reduced-motion:reduce){.app-house-loader-circle,.app-house-loader-home{animation:none;transform:none}}
+
