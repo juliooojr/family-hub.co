@@ -56,7 +56,7 @@ Producao: https://family-hub-co.vercel.app
 - A Visao Geral compara os ultimos seis meses e permite exportar PNG, CSV e JSON.
 - O grafico da Visao Geral permite ver valores por barra e clicar em um mes para focar o periodo.
 - Categorias exibidas em Transacoes e Contas seguem as categorias criadas no Orcamento; categorias padrao aparecem apenas quando ainda nao ha categorias cadastradas.
-- A reserva de emergencia possui configuracao completa no padrao visual do `family-hub-v3.html`, com custo mensal, meses de cobertura, meta calculada e aporte mensal planejado.
+- A reserva de emergencia possui configuracao completa, com custo mensal, meses de cobertura, meta calculada e aporte mensal planejado.
 - As tabelas financeiras iniciaram vazias; a migration nao inseriu dados ficticios.
 
 ## Modulo Compras
@@ -91,15 +91,13 @@ Leia nesta ordem antes de iniciar qualquer tarefa:
 
 1. `AGENTS.md`: regras obrigatorias do ambiente e do Next.js.
 2. `README.md`: contexto atual, operacao e fluxo oficial do projeto.
-3. `family-hub-v3.html`: referencia visual e comportamental aprovada.
-4. `DESIGN.md`: tokens, componentes e identidade visual.
-5. `BRAIN.md`: visao do produto, seguranca e especificacoes dos modulos.
-6. `PRIMEIRA-VERSAO.md`: registro historico da primeira entrega.
-7. `TASKS.md`: backlog historico, sempre conferindo o que ja foi concluido.
-8. `PROMPT-CONTINUACAO-TAREFAS.md`: prompt pronto para retomar Tarefas em um novo chat.
-9. `ATIVIDADE-DA-FAMILIA.md`: regras funcionais, fonte de dados, seguranca e evolucao do feed familiar.
+3. `PRODUCT.md`: proposito, regras de negocio, seguranca e experiencia.
+4. `DESIGN.md`: tokens, componentes e identidade visual atual.
+5. `TASKS.md`: entregas concluidas, validacoes e proximas prioridades.
+6. `PUSH-NOTIFICATIONS.md`: operacao e diagnostico dos lembretes Web Push.
+7. `ATIVIDADE-DA-FAMILIA.md`: regras funcionais e evolucao do feed familiar.
 
-O codigo funcional atual e este README prevalecem quando documentos antigos estiverem desatualizados.
+O codigo funcional e estes documentos atuais substituem os prompts e mockups historicos removidos do repositorio.
 
 ## Stack
 

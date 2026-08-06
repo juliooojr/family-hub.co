@@ -1,6 +1,6 @@
 # FAMILY HUB - ESTADO ATUAL E PROXIMOS PASSOS
 
-Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O planejamento original permanece em `PRIMEIRA-VERSAO.md` apenas como registro historico.
+Atualizado em 06/08/2026. Este arquivo acompanha o estado real do projeto; planos e prompts historicos foram removidos depois de consolidados na documentacao atual.
 
 ## Concluido
 
@@ -16,7 +16,7 @@ Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Exportacao financeira em PNG, CSV e JSON.
 - [x] Aba Investimentos preservada e bloqueada para entrega futura.
 - [x] Categorias financeiras exibidas conforme cadastro real do Orcamento.
-- [x] Modal de configuracao da reserva alinhada ao layout completo do `family-hub-v3.html`.
+- [x] Modal de configuracao da reserva alinhada ao sistema visual atual.
 - [x] Modulo Financeiro integrado na `master` e publicado em producao.
 - [x] Nova home publica com entrada pelo Google.
 - [x] Novo Hub interno com resumo de Compras, Contas e Reserva.
@@ -84,6 +84,12 @@ Atualizado em 03/08/2026. Este arquivo acompanha o estado real do projeto. O pla
 - [x] Validacao desktop das melhorias de Financeiro, Compras e login.
 - [x] Testar desktop e mobile nos breakpoints relevantes durante a validacao do Financeiro.
 - [x] Confirmar isolamento por familia e ausencia de secrets no navegador.
+
+## Controle de migrations
+
+- [ ] Confirmar no SQL Editor se `202608050001_activity_audit_transitions.sql` foi aplicada ao banco compartilhado.
+- [ ] Reconciliar a tabela de historico de migrations do Supabase: a CLI conectou ao projeto em 06/08/2026, mas nao encontrou nenhuma versao remota registrada, embora o schema publicado ja contenha estruturas das migrations anteriores.
+- [ ] Nao executar `supabase db push` enquanto o historico remoto estiver vazio; revisar e marcar as migrations existentes antes para evitar reaplicacao insegura.
 
 ## Proximas entregas
 

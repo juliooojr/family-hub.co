@@ -7,7 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Regras do Family Hub
 
 - Leia `README.md` antes de qualquer alteracao.
-- Use `PRIMEIRA-VERSAO.md` apenas como registro historico da primeira entrega.
+- Consulte `PRODUCT.md`, `DESIGN.md` e `TASKS.md` conforme o escopo da alteracao.
 - Siga o fluxo de branch, Preview, Pull Request, merge e Production definido no README.
 - Nao altere diretamente a `master` para desenvolver funcionalidades.
 - Lembre que, por enquanto, os ambientes podem compartilhar o banco Supabase de producao.
