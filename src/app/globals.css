@@ -383,4 +383,5 @@ body:has(.internal-app.light) .app-house-loader,body:has(.public-home.light) .ap
 @media(display-mode:standalone) and (max-width:860px){.internal-content .calendar-topbar{position:relative;top:auto}}
 
 .calendar-modal{width:min(560px,calc(100vw - 28px))}.calendar-members label>span{background:var(--accent-dim);color:var(--accent)}.calendar-modal .calendar-audience button.active{border-color:var(--accent);background:var(--accent-dim);color:var(--text)}.calendar-modal .task-reminder-time select{width:170px}
+.calendar-modal .task-reminder-time select{font-family:Inter,sans-serif;font-size:12px;font-weight:500;color-scheme:normal}.calendar-modal-error{margin-bottom:14px}.calendar-modal header button:disabled{opacity:.45}
 

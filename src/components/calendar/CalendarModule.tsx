@@ -4,7 +4,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 import {
   addDays, cancelCalendarOccurrence, createCalendarEvent, deleteCalendarEvent, deleteCalendarFuture, expandCalendarEvents,
   getCalendarData, splitCalendarSeries, updateCalendarEvent, updateCalendarOccurrence,
@@ -32,7 +31,6 @@ export default function CalendarModule({ familyId, userId, canManageAll, members
   const [deleteTarget, setDeleteTarget] = useState<CalendarOccurrence | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(initialError)
-  useGlobalLoading(busy, 'calendar')
 
   async function refresh() {
     try { const data = await getCalendarData(supabase); setEvents(data.events); setOverrides(data.overrides); setError('') }
@@ -108,7 +106,7 @@ export default function CalendarModule({ familyId, userId, canManageAll, members
       <div className="tasks-tabs calendar-filters" role="tablist" aria-label="Filtrar eventos"><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos</button><button className={filter === 'mine' ? 'active' : ''} onClick={() => setFilter('mine')}>Meus eventos</button></div>
       {view === 'month' ? <MonthView month={month} occurrences={occurrences} onMonth={setMonth} onSelect={setModal} /> : <AgendaView grouped={grouped} onSelect={setModal} />}
     </section>
-    {modal ? <EventModal initial={modal === 'new' ? null : modal} members={members} userId={userId} busy={busy} canManage={modal === 'new' || canManageAll || modal.createdBy === userId} onClose={() => setModal(null)} onSave={save} onError={setError} onDelete={modal === 'new' ? undefined : () => setDeleteTarget(modal)} /> : null}
+    {modal ? <EventModal initial={modal === 'new' ? null : modal} members={members} userId={userId} busy={busy} error={error} canManage={modal === 'new' || canManageAll || modal.createdBy === userId} onClose={() => setModal(null)} onSave={save} onError={setError} onDelete={modal === 'new' ? undefined : () => setDeleteTarget(modal)} /> : null}
     {deleteTarget ? <ScopeModal title="EXCLUIR EVENTO" recurrence={deleteTarget.recurrence} destructive busy={busy} onClose={() => setDeleteTarget(null)} onChoose={remove} /> : null}
   </main>
 }
@@ -128,7 +126,7 @@ function EventCard({ event, onClick }: { event: CalendarOccurrence; onClick: () 
   return <button className="calendar-event-card" onClick={onClick}><span className="calendar-event-time">{event.allDay ? 'Dia inteiro' : event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}</span><div><strong>{event.name}</strong>{event.location ? <small><MapPin />{event.location}</small> : null}</div><span className="calendar-event-audience"><Users />{audienceLabel(event)}</span></button>
 }
 
-function EventModal({ initial, members, userId, busy, canManage, onClose, onSave, onError, onDelete }: { initial: CalendarOccurrence | null; members: FamilyMember[]; userId: string; busy: boolean; canManage: boolean; onClose: () => void; onSave: (input: CalendarEventInput, scope: CalendarEditScope) => void; onError: (message: string) => void; onDelete?: () => void }) {
+function EventModal({ initial, members, userId, busy, error, canManage, onClose, onSave, onError, onDelete }: { initial: CalendarOccurrence | null; members: FamilyMember[]; userId: string; busy: boolean; error: string; canManage: boolean; onClose: () => void; onSave: (input: CalendarEventInput, scope: CalendarEditScope) => void; onError: (message: string) => void; onDelete?: () => void }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [date, setDate] = useState(initial?.occurrenceDate ?? todayKey())
   const [allDay, setAllDay] = useState(initial?.allDay ?? false)
@@ -158,7 +156,8 @@ function EventModal({ initial, members, userId, busy, canManage, onClose, onSave
     catch (error) { setNotificationEnabled(false); onError(error instanceof Error ? error.message : 'Não foi possível ativar as notificações.') }
     finally { setEnablingNotification(false) }
   }
-  return <><div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section className="modal-card task-modal calendar-modal" role="dialog" aria-modal="true" aria-label={initial ? 'Editar evento' : 'Novo evento'}><header><h2>{initial ? 'EDITAR EVENTO' : 'NOVO EVENTO'}</h2><button onClick={onClose} aria-label="Fechar">×</button></header><form onSubmit={submit}>
+  return <><div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}><section className="modal-card task-modal calendar-modal" role="dialog" aria-modal="true" aria-label={initial ? 'Editar evento' : 'Novo evento'}><header><h2>{initial ? 'EDITAR EVENTO' : 'NOVO EVENTO'}</h2><button onClick={onClose} aria-label="Fechar" disabled={busy}>×</button></header><form onSubmit={submit}>
+    {error ? <div className="error-banner calendar-modal-error" role="alert">{error}</div> : null}
     <label className="field-label" htmlFor="event-name">NOME</label><input id="event-name" className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required disabled={!canManage} placeholder="Ex: Almoço em família" />
     <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-date">DATA</label><input id="event-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={!canManage} required /></div><label className="calendar-check"><input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} disabled={!canManage} /> Dia inteiro</label></div>
     {!allDay ? <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-start">INÍCIO</label><input id="event-start" className="field" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={!canManage} required /></div><div><label className="field-label" htmlFor="event-end">TÉRMINO</label><input id="event-end" className="field" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={!canManage} /></div></div> : null}
