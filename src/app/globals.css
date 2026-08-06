@@ -385,5 +385,5 @@ body:has(.internal-app.light) .app-house-loader,body:has(.public-home.light) .ap
 .calendar-modal{width:min(560px,calc(100vw - 28px))}.calendar-members label>span{background:var(--accent-dim);color:var(--accent)}.calendar-modal .calendar-audience button.active{border-color:var(--accent);background:var(--accent-dim);color:var(--text)}.calendar-modal .task-reminder-time select{width:170px}
 .calendar-modal .task-reminder-time select{font-family:Inter,sans-serif;font-size:12px;font-weight:500;color-scheme:normal}.calendar-modal-error{margin-bottom:14px}.calendar-modal header button:disabled{opacity:.45}
 .calendar-modal-overlay{background:rgba(0,0,0,.46)}
-.calendar-save-button{position:relative;z-index:3;pointer-events:auto!important;touch-action:manipulation}
+.calendar-scope-overlay{z-index:120}
 
