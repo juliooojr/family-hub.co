@@ -144,15 +144,18 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
   const [scopeOpen, setScopeOpen] = useState(false)
   const [pendingInput, setPendingInput] = useState<CalendarEventInput | null>(null)
   const [formError, setFormError] = useState('')
+  const [validating, setValidating] = useState(false)
   function saveForm() {
-    if (!name.trim()) { setFormError('Informe o nome do evento.'); return }
-    if (!date) { setFormError('Informe a data do evento.'); return }
-    if (!allDay && !startTime) { setFormError('Informe o horário de início.'); return }
-    if (!allDay && endTime && endTime <= startTime) { setFormError('O horário de término deve ser posterior ao início.'); return }
-    if (audience === 'selected' && !participants.length) { setFormError('Selecione pelo menos uma pessoa.'); return }
+    if (busy || enablingNotification || validating) return
+    setValidating(true)
+    if (!name.trim()) { setFormError('Informe o nome do evento.'); setValidating(false); return }
+    if (!date) { setFormError('Informe a data do evento.'); setValidating(false); return }
+    if (!allDay && !startTime) { setFormError('Informe o horário de início.'); setValidating(false); return }
+    if (!allDay && endTime && endTime <= startTime) { setFormError('O horário de término deve ser posterior ao início.'); setValidating(false); return }
+    if (audience === 'selected' && !participants.length) { setFormError('Selecione pelo menos uma pessoa.'); setValidating(false); return }
     setFormError('')
     const input: CalendarEventInput = { name: name.trim(), description: description.trim() || null, location: location.trim() || null, audience, allDay, startsOn: date, startTime: allDay ? null : startTime, endTime: allDay ? null : endTime || null, recurrence, recurrenceUntil: recurrence === 'none' ? null : until || null, reminderMinutes: notificationEnabled ? Number(reminder) : null, participantIds: audience === 'selected' ? participants : [] }
-    if (initial?.recurrence !== 'none') { setPendingInput(input); setScopeOpen(true) } else onSave(input, 'series')
+    if (initial?.recurrence !== 'none') { setPendingInput(input); setScopeOpen(true); setValidating(false) } else { onSave(input, 'series'); setValidating(false) }
   }
   async function toggleNotification() {
     if (notificationEnabled) { setNotificationEnabled(false); return }
@@ -177,7 +180,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     </div>
     {notificationEnabled ? <div className="task-reminder-time"><label htmlFor="event-reminder"><strong>Quando lembrar</strong><small>Escolha a antecedência do aviso</small></label><select id="event-reminder" value={reminder} onChange={(e) => setReminder(e.target.value)} disabled={!canManage}><option value="0">Na hora</option><option value="15">15 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></div> : null}
     {!canManage ? <p className="calendar-readonly">Somente quem criou o evento ou um administrador pode alterá-lo.</p> : null}
-    <div className="modal-actions">{onDelete && canManage ? <button className="button button-danger button-left" type="button" onClick={onDelete}>Excluir</button> : null}<button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button>{canManage ? <button type="button" className="button button-primary calendar-save-button" disabled={busy || enablingNotification} onClick={saveForm}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : 'Salvar'}</button> : null}</div>
+    <div className="modal-actions">{onDelete && canManage ? <button className="button button-danger button-left" type="button" onClick={onDelete}>Excluir</button> : null}<button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button>{canManage ? <button type="button" className="button button-primary calendar-save-button" disabled={busy || enablingNotification || validating} onPointerDown={(event) => { event.preventDefault(); saveForm() }}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : validating ? 'Validando...' : 'Salvar'}</button> : null}</div>
   </form></section></div>{scopeOpen && pendingInput ? <ScopeModal title="APLICAR ALTERAÇÃO" recurrence={initial?.recurrence ?? 'none'} busy={busy} onClose={() => setScopeOpen(false)} onChoose={(scope) => onSave(pendingInput, scope)} /> : null}</>
 }
 
