@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, Users, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, MapPin, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useGlobalLoading } from '@/components/brand/GlobalLoadingOverlay'
 import {
@@ -16,7 +16,7 @@ import { subscribeCurrentDevice } from '@/lib/push-notifications'
 import { createClient } from '@/lib/supabase/client'
 
 type View = 'agenda' | 'month'
-type Filter = 'all' | 'mine' | string
+type Filter = 'all' | 'mine'
 
 export default function CalendarModule({ familyId, userId, canManageAll, members, initialEvents, initialOverrides, initialError = '' }: {
   familyId: string; userId: string; canManageAll: boolean; members: FamilyMember[]; initialEvents: CalendarEvent[]; initialOverrides: CalendarOverride[]; initialError?: string
@@ -95,16 +95,17 @@ export default function CalendarModule({ familyId, userId, canManageAll, members
   }
 
   return <main className="calendar-shell">
-    <header className="calendar-topbar">
-      <div className="calendar-title-row"><Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link><div><h1>Agenda</h1><p>Os compromissos da família em um só lugar.</p></div></div>
-      <div className="calendar-toolbar">
-        <div className="calendar-view-toggle"><button className={view === 'agenda' ? 'active' : ''} onClick={() => setView('agenda')}>Agenda</button><button className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>Mês</button></div>
-        <button className="button button-primary" onClick={() => setModal('new')}><Plus aria-hidden /> Evento</button>
+    <header className="tasks-topbar calendar-topbar">
+      <div className="tasks-topbar-main">
+        <Link className="finance-back" href="/hub" aria-label="Voltar ao início">‹</Link>
+        <div className="tasks-heading"><h1>Agenda</h1><p>Compromissos da família</p></div>
+        <div className="tasks-tabs" role="tablist" aria-label="Visualização da agenda"><button className={view === 'agenda' ? 'active' : ''} onClick={() => setView('agenda')}>Agenda</button><button className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>Mês</button></div>
       </div>
+      <div className="tasks-actions calendar-actions"><button className="button button-primary" onClick={() => setModal('new')}>+ Evento</button></div>
     </header>
     <section className="calendar-content">
       {error ? <div className="error-banner module-error" role="alert">{error}<button onClick={() => setError('')}>×</button></div> : null}
-      <div className="calendar-filters"><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos</button><button className={filter === 'mine' ? 'active' : ''} onClick={() => setFilter('mine')}>Meus eventos</button>{members.map((member) => <button className={filter === member.userId ? 'active' : ''} onClick={() => setFilter(member.userId)} key={member.id}>{displayMemberName(member)}</button>)}</div>
+      <div className="tasks-tabs calendar-filters" role="tablist" aria-label="Filtrar eventos"><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos</button><button className={filter === 'mine' ? 'active' : ''} onClick={() => setFilter('mine')}>Meus eventos</button></div>
       {view === 'month' ? <MonthView month={month} occurrences={occurrences} onMonth={setMonth} onSelect={setModal} /> : <AgendaView grouped={grouped} onSelect={setModal} />}
     </section>
     {modal ? <EventModal initial={modal === 'new' ? null : modal} members={members} userId={userId} busy={busy} canManage={modal === 'new' || canManageAll || modal.createdBy === userId} onClose={() => setModal(null)} onSave={save} onDelete={modal === 'new' ? undefined : () => setDeleteTarget(modal)} /> : null}
@@ -168,7 +169,7 @@ function ScopeModal({ title, recurrence, busy, destructive = false, onClose, onC
 }
 
 function EmptyState() { return <div className="calendar-empty"><CalendarDays /><strong>Nenhum evento por aqui</strong><small>Crie um compromisso e escolha quem deve vê-lo na agenda.</small></div> }
-function matchesFilter(event: CalendarOccurrence, filter: Filter, userId: string) { if (filter === 'all') return true; if (filter === 'mine') return event.createdBy === userId || event.participantIds.includes(userId); return event.audience === 'family' || event.createdBy === filter || event.participantIds.includes(filter) }
+function matchesFilter(event: CalendarOccurrence, filter: Filter, userId: string) { return filter === 'all' || event.createdBy === userId || event.participantIds.includes(userId) }
 function audienceLabel(event: CalendarOccurrence) { if (event.audience === 'family') return 'Família'; if (event.audience === 'self') return 'Pessoal'; return `${event.participantIds.length + 1} pessoas` }
 function groupOccurrences(items: CalendarOccurrence[]) { const map = new Map<string, CalendarOccurrence[]>(); items.forEach((item) => map.set(item.occurrenceDate, [...(map.get(item.occurrenceDate) ?? []), item])); return [...map.entries()] }
 function todayKey() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) }
