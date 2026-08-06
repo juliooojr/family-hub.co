@@ -9,7 +9,7 @@ type AuditRow = {
   record_id: string | null; payload: Record<string, unknown> | null; created_at: string
 }
 
-const SOURCE_TABLES = ['shopping_lists', 'shopping_items', 'routine_tasks', 'routine_entries', 'finance_transactions', 'finance_bills', 'finance_bill_payments']
+const SOURCE_TABLES = ['shopping_lists', 'shopping_items', 'routine_tasks', 'routine_entries', 'finance_transactions', 'finance_bills', 'finance_bill_payments', 'calendar_events']
 
 export async function getFamilyActivities(supabase: SupabaseClient, familyId: string, members: FamilyMember[], limit?: number): Promise<FamilyActivity[]> {
   const { data, error } = await supabase.from('audit_log')
@@ -69,6 +69,12 @@ function toActivity(row: AuditRow, actors: Map<string, string>, lists: Map<strin
     const detail = Number.isFinite(amount) ? ` de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}` : ''
     const name = textValue(payload, 'name')
     return make('finance', `${actor} registrou ${name ? `a receita “${name}”` : 'uma receita'}${detail}.`)
+  }
+  if (row.table_name === 'calendar_events') {
+    const name = textValue(payload, 'name') ?? 'Novo evento'
+    if (row.action === 'insert') return make('calendar', `${actor} criou o evento “${name}”.`)
+    if (row.action === 'update') return make('calendar', `${actor} alterou o evento “${name}”.`)
+    if (row.action === 'delete') return make('calendar', `${actor} cancelou o evento “${name}”.`)
   }
   return null
 }

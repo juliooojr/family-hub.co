@@ -129,7 +129,7 @@ export default async function HubPage() {
           <Link className="dashboard-quick-card" href="/financeiro"><span>💰</span><strong>Finanças</strong><small>Resumo mensal</small></Link>
           <Link className="dashboard-quick-card" href="/compras"><span>🛒</span><strong>Compras</strong><small>Listas da família</small></Link>
           <Link className="dashboard-quick-card" href="/tarefas"><span>📋</span><strong>Tarefas</strong><small>{taskSummary ? `${taskSummary.completed}/${taskSummary.due} hoje` : 'Rotina pessoal'}</small></Link>
-          <div className="dashboard-quick-card locked"><span>📅</span><strong>Agenda</strong><small>Em breve</small><b>🔒</b></div>
+          <Link className="dashboard-quick-card" href="/agenda"><span>📅</span><strong>Agenda</strong><small>Compromissos da família</small></Link>
         </section>
 
         <section className="dashboard-stats" aria-label="Resumo do mês" data-tour="hub-summary">

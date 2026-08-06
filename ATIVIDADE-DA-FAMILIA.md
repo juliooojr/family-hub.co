@@ -28,7 +28,7 @@ A migration `202608050001_activity_audit_transitions.sql` passa a guardar os est
 
 ## Evoluções previstas
 
-Agenda, Documentos e Emergência entram quando tiverem persistência e auditoria. Atribuição de tarefas depende da evolução do modelo atual, ainda pessoal. Alertas automáticos e marcos de reserva deverão ser persistidos ao serem gerados para aparecer uma única vez e manter ordenação confiável. Filtros por módulo, período e membro poderão ser adicionados em `/atividades`.
+Agenda registra criação, alteração e cancelamento de eventos. Ocorrências automáticas de séries recorrentes não geram novas linhas. Documentos e Emergência entram quando tiverem persistência e auditoria. Atribuição de tarefas depende da evolução do modelo atual, ainda pessoal. Alertas automáticos e marcos de reserva deverão ser persistidos ao serem gerados para aparecer uma única vez e manter ordenação confiável. Filtros por módulo, período e membro poderão ser adicionados em `/atividades`.
 
 ## Validação
 

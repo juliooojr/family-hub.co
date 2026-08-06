@@ -1,4 +1,4 @@
-# Notificações push de Tarefas
+# Notificações push de Tarefas e Agenda
 
 Esta entrega usa Web Push nativo. Não exige conta em um serviço de notificações: navegador/PWA, Supabase e Vercel já cobrem a infraestrutura. O agendamento roda no Supabase para não expor a chave administrativa e para evitar a limitação de cron diário do plano Hobby da Vercel.
 
@@ -63,6 +63,8 @@ Envie o cabeçalho `Authorization: Bearer <CRON_SECRET>`. O job também pode ser
 - Se houver `routine_entries.completed = true` para a tarefa na data local, o aviso não é enviado.
 - A chave de deduplicação é tarefa + assinatura + data + horário. O mesmo minuto não duplica; editar para mais tarde permite novo envio no dia.
 - Ao tocar, abrir ou focar `/tarefas`.
+- Eventos da Agenda usam as mesmas assinaturas por aparelho e aceitam lembrete na hora, 15 minutos antes, 1 hora antes ou 1 dia antes.
+- O lembrete de Agenda é entregue somente ao criador, à família ou aos participantes selecionados conforme a audiência do evento; ao tocar, abre `/agenda`.
 - O texto `From` ou equivalente é uma identificação de segurança do navegador/sistema e não pode ser alterado pelo payload.
 - `lang: pt-BR` ajuda tecnologias assistivas e metadados de idioma, mas não traduz a interface do sistema operacional.
 

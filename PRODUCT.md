@@ -11,8 +11,9 @@ O Family Hub centraliza rotinas importantes de uma família em um ambiente priva
 - **Tarefas:** rotinas pessoais por usuário, frequência, metas de quantidade ou conclusão e lembretes Web Push.
 - **Família:** criação aberta, papéis `owner`, `admin` e `member`, convites com expiração e gerenciamento de membros.
 - **Atividade da Família:** feed dos acontecimentos relevantes, com até oito eventos na Home e histórico dedicado.
+- **Agenda:** eventos pessoais ou compartilhados com toda a família ou membros selecionados, recorrência, lembretes e visualizações em lista e mês.
 
-Agenda permanece como módulo futuro. Investimentos só deve ser ativado quando houver escopo aprovado.
+Investimentos só deve ser ativado quando houver escopo aprovado.
 
 ## Regras de produto
 

@@ -7,6 +7,12 @@ type TaskRow = {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly'; weekdays: number[] | null
   start_date: string; notification_time: string | null
 }
+type CalendarEventRow = {
+  id: string; family_id: string; created_by: string; name: string; description: string | null; audience: 'family' | 'selected' | 'self'
+  all_day: boolean; starts_on: string; start_time: string | null; recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
+  recurrence_until: string | null; reminder_minutes: number | null
+  calendar_event_participants: { user_id: string; reminder_minutes: number | null }[]
+}
 
 Deno.serve(async (request) => {
   const cronSecret = Deno.env.get('CRON_SECRET')
@@ -22,11 +28,13 @@ Deno.serve(async (request) => {
 
   webpush.setVapidDetails(subject, publicKey, privateKey)
   const supabase = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
-  const [{ data: subscriptions, error: subscriptionError }, { data: tasks, error: taskError }] = await Promise.all([
+  const [{ data: subscriptions, error: subscriptionError }, { data: tasks, error: taskError }, { data: calendarEvents, error: calendarError }, { data: familyMembers, error: membersError }] = await Promise.all([
     supabase.from('push_subscriptions').select('*'),
     supabase.from('routine_tasks').select('id,user_id,emoji,name,description,frequency,weekdays,start_date,notification_time').eq('status', 'active').eq('notification_enabled', true).not('notification_time', 'is', null),
+    supabase.from('calendar_events').select('id,family_id,created_by,name,description,audience,all_day,starts_on,start_time,recurrence,recurrence_until,reminder_minutes,calendar_event_participants(user_id,reminder_minutes)').not('reminder_minutes', 'is', null),
+    supabase.from('family_members').select('family_id,user_id'),
   ])
-  if (subscriptionError || taskError) return json({ error: subscriptionError?.message || taskError?.message }, 500)
+  if (subscriptionError || taskError || calendarError || membersError) return json({ error: subscriptionError?.message || taskError?.message || calendarError?.message || membersError?.message }, 500)
 
   let delivered = 0
   for (const subscription of (subscriptions ?? []) as SubscriptionRow[]) {
@@ -61,6 +69,31 @@ Deno.serve(async (request) => {
         if (expired(error)) await supabase.from('push_subscriptions').delete().eq('id', subscription.id)
       }
     }
+    for (const event of (calendarEvents ?? []) as CalendarEventRow[]) {
+      if (!calendarEventVisibleTo(event, subscription.user_id, familyMembers ?? [])) continue
+      const participant = event.calendar_event_participants.find((item) => item.user_id === subscription.user_id)
+      const reminderMinutes = participant?.reminder_minutes ?? event.reminder_minutes
+      if (reminderMinutes === null) continue
+      const target = addLocalMinutes(local, reminderMinutes)
+      const eventTime = event.all_day ? '09:00' : event.start_time?.slice(0, 5)
+      if (!eventTime || target.time !== eventTime || !isCalendarDue(event, target.date)) continue
+      const { data: override } = await supabase.from('calendar_event_overrides').select('cancelled,start_time,all_day,starts_on').eq('event_id', event.id).eq('occurrence_date', target.date).maybeSingle()
+      if (override?.cancelled) continue
+      const { data: claim } = await supabase.from('calendar_notification_deliveries').insert({ event_id: event.id, user_id: subscription.user_id, subscription_id: subscription.id, occurrence_date: target.date, reminder_minutes: reminderMinutes }).select('id').maybeSingle()
+      if (!claim) continue
+      try {
+        await webpush.sendNotification({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } }, JSON.stringify({
+          title: `📅 ${event.name}`,
+          body: event.description || calendarReminderCopy(reminderMinutes),
+          tag: `calendar-event-${event.id}-${target.date}`,
+          url: '/agenda',
+        }))
+        delivered += 1
+      } catch (error) {
+        await supabase.from('calendar_notification_deliveries').delete().eq('event_id', event.id).eq('subscription_id', subscription.id).eq('occurrence_date', target.date).eq('reminder_minutes', reminderMinutes)
+        if (expired(error)) await supabase.from('push_subscriptions').delete().eq('id', subscription.id)
+      }
+    }
   }
   return json({ ok: true, delivered })
 })
@@ -73,6 +106,40 @@ function isDue(task: TaskRow, dateKey: string) {
   if (task.frequency === 'weekly') return (task.weekdays?.length ? task.weekdays : [start.getUTCDay()]).includes(date.getUTCDay())
   if (task.frequency === 'biweekly') return Math.round((date.getTime() - start.getTime()) / 86400000) % 14 === 0
   return date.getUTCDate() === start.getUTCDate()
+}
+
+function calendarEventVisibleTo(event: CalendarEventRow, userId: string, members: { family_id: string; user_id: string }[]) {
+  if (event.created_by === userId) return true
+  if (event.audience === 'family') return members.some((member) => member.family_id === event.family_id && member.user_id === userId)
+  return event.audience === 'selected' && event.calendar_event_participants.some((participant) => participant.user_id === userId)
+}
+
+function isCalendarDue(event: CalendarEventRow, dateKey: string) {
+  if (dateKey < event.starts_on || (event.recurrence_until && dateKey > event.recurrence_until)) return false
+  if (event.recurrence === 'none') return dateKey === event.starts_on
+  const date = new Date(`${dateKey}T12:00:00Z`); const start = new Date(`${event.starts_on}T12:00:00Z`)
+  const days = Math.round((date.getTime() - start.getTime()) / 86400000)
+  if (event.recurrence === 'daily') return true
+  if (event.recurrence === 'weekly') return days % 7 === 0
+  if (event.recurrence === 'biweekly') return days % 14 === 0
+  if (event.recurrence === 'monthly') {
+    const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate()
+    return date.getUTCDate() === Math.min(start.getUTCDate(), lastDay)
+  }
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), start.getUTCMonth() + 1, 0)).getUTCDate()
+  return date.getUTCMonth() === start.getUTCMonth() && date.getUTCDate() === Math.min(start.getUTCDate(), lastDay)
+}
+
+function addLocalMinutes(local: { date: string; time: string }, minutes: number) {
+  const date = new Date(`${local.date}T${local.time}:00Z`); date.setUTCMinutes(date.getUTCMinutes() + minutes)
+  return { date: date.toISOString().slice(0, 10), time: date.toISOString().slice(11, 16) }
+}
+
+function calendarReminderCopy(minutes: number) {
+  if (minutes === 0) return 'Seu evento começa agora.'
+  if (minutes === 15) return 'Seu evento começa em 15 minutos.'
+  if (minutes === 60) return 'Seu evento começa em 1 hora.'
+  return 'Seu evento acontece amanhã.'
 }
 
 function localSchedule(now: Date, timezone: string) {
