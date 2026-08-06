@@ -122,9 +122,9 @@
 .task-notification.enabled .task-notification-switch{border-color:var(--accent);background:var(--accent-dim)}
 .task-notification.enabled .task-notification-switch span{left:23px;background:var(--accent)}
 .task-reminder-time{margin-top:8px;background:var(--surface)}
-.task-reminder-time input{width:96px;min-height:36px;padding:7px 9px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text);font:500 13px "JetBrains Mono",monospace;color-scheme:dark}
+.task-reminder-time input,.task-reminder-time select{width:96px;min-height:36px;padding:7px 9px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text);font:500 13px "JetBrains Mono",monospace;color-scheme:dark}
 
-@media(max-width:560px){.task-notification,.task-reminder-time{gap:10px;padding:12px}.task-reminder-time input{width:104px;min-height:38px;font-size:16px}}
+@media(max-width:560px){.task-notification,.task-reminder-time{gap:10px;padding:12px}.task-reminder-time input,.task-reminder-time select{width:130px;min-height:38px;font-size:16px}}
 
 /* Compras: alvos de toque, modais e navegação adaptados para telas pequenas. */
 @media(max-width:620px){
@@ -381,4 +381,6 @@ body:has(.internal-app.light) .app-house-loader,body:has(.public-home.light) .ap
 @media(max-width:860px){.internal-content>.calendar-shell{padding-bottom:92px}.internal-content .calendar-topbar{top:62px;padding-right:16px}.calendar-topbar{flex-direction:row}.calendar-content{padding-inline:14px}.calendar-actions{width:100%;justify-content:flex-end}}
 @media(max-width:560px){.internal-content .calendar-topbar{padding-inline:12px}.calendar-topbar{flex-direction:row}.calendar-filters{width:100%}.calendar-filters button{flex:1}.calendar-actions .button{white-space:nowrap}}
 @media(display-mode:standalone) and (max-width:860px){.internal-content .calendar-topbar{position:relative;top:auto}}
+
+.calendar-modal{width:min(560px,calc(100vw - 28px))}.calendar-members label>span{background:var(--accent-dim);color:var(--accent)}.calendar-modal .calendar-audience button.active{border-color:var(--accent);background:var(--accent-dim);color:var(--text)}.calendar-modal .task-reminder-time select{width:170px}
 
