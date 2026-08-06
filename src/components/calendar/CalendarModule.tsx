@@ -144,8 +144,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
   const [scopeOpen, setScopeOpen] = useState(false)
   const [pendingInput, setPendingInput] = useState<CalendarEventInput | null>(null)
   const [formError, setFormError] = useState('')
-  function submit(event: FormEvent) {
-    event.preventDefault()
+  function saveForm() {
     if (!name.trim()) { setFormError('Informe o nome do evento.'); return }
     if (!date) { setFormError('Informe a data do evento.'); return }
     if (!allDay && !startTime) { setFormError('Informe o horário de início.'); return }
@@ -162,7 +161,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     catch (error) { setNotificationEnabled(false); onError(error instanceof Error ? error.message : 'Não foi possível ativar as notificações.') }
     finally { setEnablingNotification(false) }
   }
-  return <><div className="modal-overlay calendar-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}><section className="modal-card task-modal calendar-modal" role="dialog" aria-modal="true" aria-label={initial ? 'Editar evento' : 'Novo evento'}><header><h2>{initial ? 'EDITAR EVENTO' : 'NOVO EVENTO'}</h2><button type="button" onClick={onClose} aria-label="Fechar" disabled={busy}>×</button></header><form onSubmit={submit} noValidate>
+  return <><div className="modal-overlay calendar-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}><section className="modal-card task-modal calendar-modal" role="dialog" aria-modal="true" aria-label={initial ? 'Editar evento' : 'Novo evento'}><header><h2>{initial ? 'EDITAR EVENTO' : 'NOVO EVENTO'}</h2><button type="button" onClick={onClose} aria-label="Fechar" disabled={busy}>×</button></header><form onSubmit={(event: FormEvent) => { event.preventDefault(); saveForm() }} noValidate>
     {formError || error ? <div className="error-banner calendar-modal-error" role="alert">{formError || error}</div> : null}
     <label className="field-label" htmlFor="event-name">NOME</label><input id="event-name" className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required disabled={!canManage} placeholder="Ex: Almoço em família" />
     <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-date">DATA</label><input id="event-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={!canManage} required /></div><label className="calendar-check"><input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} disabled={!canManage} /> Dia inteiro</label></div>
@@ -178,7 +177,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     </div>
     {notificationEnabled ? <div className="task-reminder-time"><label htmlFor="event-reminder"><strong>Quando lembrar</strong><small>Escolha a antecedência do aviso</small></label><select id="event-reminder" value={reminder} onChange={(e) => setReminder(e.target.value)} disabled={!canManage}><option value="0">Na hora</option><option value="15">15 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></div> : null}
     {!canManage ? <p className="calendar-readonly">Somente quem criou o evento ou um administrador pode alterá-lo.</p> : null}
-    <div className="modal-actions">{onDelete && canManage ? <button className="button button-danger button-left" type="button" onClick={onDelete}>Excluir</button> : null}<button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button>{canManage ? <button type="submit" className="button button-primary" disabled={busy || enablingNotification}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : 'Salvar'}</button> : null}</div>
+    <div className="modal-actions">{onDelete && canManage ? <button className="button button-danger button-left" type="button" onClick={onDelete}>Excluir</button> : null}<button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button>{canManage ? <button type="button" className="button button-primary calendar-save-button" disabled={busy || enablingNotification} onClick={saveForm}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : 'Salvar'}</button> : null}</div>
   </form></section></div>{scopeOpen && pendingInput ? <ScopeModal title="APLICAR ALTERAÇÃO" recurrence={initial?.recurrence ?? 'none'} busy={busy} onClose={() => setScopeOpen(false)} onChoose={(scope) => onSave(pendingInput, scope)} /> : null}</>
 }
 
