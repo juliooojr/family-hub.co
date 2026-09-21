@@ -10,8 +10,8 @@ type TaskRow = {
 type CalendarEventRow = {
   id: string; family_id: string; created_by: string; name: string; description: string | null; audience: 'family' | 'selected' | 'self'
   all_day: boolean; starts_on: string; start_time: string | null; recurrence: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
-  recurrence_until: string | null; reminder_minutes: number | null
-  calendar_event_participants: { user_id: string; reminder_minutes: number | null }[]
+  recurrence_until: string | null; reminder_minutes: number | null; reminder_at: string | null
+  calendar_event_participants: { user_id: string; reminder_minutes: number | null; reminder_at: string | null }[]
 }
 
 Deno.serve(async (request) => {
@@ -31,14 +31,15 @@ Deno.serve(async (request) => {
   const [{ data: subscriptions, error: subscriptionError }, { data: tasks, error: taskError }, { data: calendarEvents, error: calendarError }, { data: familyMembers, error: membersError }] = await Promise.all([
     supabase.from('push_subscriptions').select('*'),
     supabase.from('routine_tasks').select('id,user_id,emoji,name,description,frequency,weekdays,start_date,notification_time').eq('status', 'active').eq('notification_enabled', true).not('notification_time', 'is', null),
-    supabase.from('calendar_events').select('id,family_id,created_by,name,description,audience,all_day,starts_on,start_time,recurrence,recurrence_until,reminder_minutes,calendar_event_participants(user_id,reminder_minutes)').not('reminder_minutes', 'is', null),
+    supabase.from('calendar_events').select('id,family_id,created_by,name,description,audience,all_day,starts_on,start_time,recurrence,recurrence_until,reminder_minutes,reminder_at,calendar_event_participants(user_id,reminder_minutes,reminder_at)').or('reminder_minutes.not.is.null,reminder_at.not.is.null'),
     supabase.from('family_members').select('family_id,user_id'),
   ])
   if (subscriptionError || taskError || calendarError || membersError) return json({ error: subscriptionError?.message || taskError?.message || calendarError?.message || membersError?.message }, 500)
 
   let delivered = 0
+  const requestNow = new Date()
   for (const subscription of (subscriptions ?? []) as SubscriptionRow[]) {
-    const local = localSchedule(new Date(), subscription.timezone)
+    const local = localSchedule(requestNow, subscription.timezone)
     const { data: completedEntries, error: completedEntriesError } = await supabase
       .from('routine_entries')
       .select('task_id')
@@ -73,24 +74,37 @@ Deno.serve(async (request) => {
       if (!calendarEventVisibleTo(event, subscription.user_id, familyMembers ?? [])) continue
       const participant = event.calendar_event_participants.find((item) => item.user_id === subscription.user_id)
       const reminderMinutes = participant?.reminder_minutes ?? event.reminder_minutes
-      if (reminderMinutes === null) continue
-      const target = addLocalMinutes(local, reminderMinutes)
-      const eventTime = event.all_day ? '09:00' : event.start_time?.slice(0, 5)
-      if (!eventTime || target.time !== eventTime || !isCalendarDue(event, target.date)) continue
-      const { data: override } = await supabase.from('calendar_event_overrides').select('cancelled,start_time,all_day,starts_on').eq('event_id', event.id).eq('occurrence_date', target.date).maybeSingle()
+      const reminderAt = participant?.reminder_at ?? event.reminder_at
+      let occurrenceDate: string
+      let deliveryKey: string
+      let reminderBody: string
+      if (reminderAt) {
+        if (utcMinute(requestNow) !== utcMinute(new Date(reminderAt))) continue
+        occurrenceDate = event.starts_on
+        deliveryKey = `custom:${reminderAt}`
+        reminderBody = 'Este é o lembrete personalizado do seu evento.'
+      } else if (reminderMinutes !== null) {
+        const target = addLocalMinutes(local, reminderMinutes)
+        const eventTime = event.all_day ? '09:00' : event.start_time?.slice(0, 5)
+        if (!eventTime || target.time !== eventTime || !isCalendarDue(event, target.date)) continue
+        occurrenceDate = target.date
+        deliveryKey = `relative:${target.date}:${reminderMinutes}`
+        reminderBody = calendarReminderCopy(reminderMinutes)
+      } else continue
+      const { data: override } = await supabase.from('calendar_event_overrides').select('cancelled,start_time,all_day,starts_on').eq('event_id', event.id).eq('occurrence_date', occurrenceDate).maybeSingle()
       if (override?.cancelled) continue
-      const { data: claim } = await supabase.from('calendar_notification_deliveries').insert({ event_id: event.id, user_id: subscription.user_id, subscription_id: subscription.id, occurrence_date: target.date, reminder_minutes: reminderMinutes }).select('id').maybeSingle()
+      const { data: claim } = await supabase.from('calendar_notification_deliveries').insert({ event_id: event.id, user_id: subscription.user_id, subscription_id: subscription.id, occurrence_date: occurrenceDate, reminder_minutes: reminderMinutes, reminder_at: reminderAt, delivery_key: deliveryKey }).select('id').maybeSingle()
       if (!claim) continue
       try {
         await webpush.sendNotification({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } }, JSON.stringify({
           title: `📅 ${event.name}`,
-          body: event.description || calendarReminderCopy(reminderMinutes),
-          tag: `calendar-event-${event.id}-${target.date}`,
+          body: event.description || reminderBody,
+          tag: `calendar-event-${event.id}-${deliveryKey}`,
           url: '/agenda',
         }))
         delivered += 1
       } catch (error) {
-        await supabase.from('calendar_notification_deliveries').delete().eq('event_id', event.id).eq('subscription_id', subscription.id).eq('occurrence_date', target.date).eq('reminder_minutes', reminderMinutes)
+        await supabase.from('calendar_notification_deliveries').delete().eq('event_id', event.id).eq('subscription_id', subscription.id).eq('delivery_key', deliveryKey)
         if (expired(error)) await supabase.from('push_subscriptions').delete().eq('id', subscription.id)
       }
     }
@@ -133,6 +147,10 @@ function isCalendarDue(event: CalendarEventRow, dateKey: string) {
 function addLocalMinutes(local: { date: string; time: string }, minutes: number) {
   const date = new Date(`${local.date}T${local.time}:00Z`); date.setUTCMinutes(date.getUTCMinutes() + minutes)
   return { date: date.toISOString().slice(0, 10), time: date.toISOString().slice(11, 16) }
+}
+
+function utcMinute(date: Date) {
+  return date.toISOString().slice(0, 16)
 }
 
 function calendarReminderCopy(minutes: number) {

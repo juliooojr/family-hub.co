@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
@@ -57,7 +56,7 @@ export default function CalendarModule({ familyId, userId, canManageAll, members
   async function save(input: CalendarEventInput, scope: CalendarEditScope) {
     setBusy(true)
     try {
-      if (input.reminderMinutes !== null) await subscribeCurrentDevice()
+      if (input.reminderMinutes !== null || input.reminderAt !== null) await subscribeCurrentDevice()
       if (modal === 'new') {
         const created = await createCalendarEvent(supabase, familyId, userId, input); setEvents((current) => [...current, created])
       } else if (modal) {
@@ -136,8 +135,11 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
   const [participants, setParticipants] = useState<string[]>(initial?.participantIds ?? [])
   const [recurrence, setRecurrence] = useState<CalendarRecurrence>(initial?.recurrence ?? 'none')
   const [until, setUntil] = useState(initial?.recurrenceUntil ?? '')
-  const [notificationEnabled, setNotificationEnabled] = useState(initial?.reminderMinutes !== null && initial?.reminderMinutes !== undefined)
-  const [reminder, setReminder] = useState(initial?.reminderMinutes === null || initial?.reminderMinutes === undefined ? '15' : String(initial.reminderMinutes))
+  const initialCustomReminder = localDateTimeParts(initial?.reminderAt)
+  const [notificationEnabled, setNotificationEnabled] = useState(initial?.reminderMinutes != null || initial?.reminderAt != null)
+  const [reminder, setReminder] = useState(initial?.reminderAt ? 'custom' : initial?.reminderMinutes == null ? '15' : String(initial.reminderMinutes))
+  const [customReminderDate, setCustomReminderDate] = useState(initialCustomReminder.date || initial?.occurrenceDate || todayKey())
+  const [customReminderTime, setCustomReminderTime] = useState(initialCustomReminder.time || initial?.startTime || '09:00')
   const [enablingNotification, setEnablingNotification] = useState(false)
   const [location, setLocation] = useState(initial?.location ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
@@ -151,8 +153,10 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     if (!allDay && !startTime) { setFormError('Informe o horário de início.'); return }
     if (!allDay && endTime && endTime <= startTime) { setFormError('O horário de término deve ser posterior ao início.'); return }
     if (audience === 'selected' && !participants.length) { setFormError('Selecione pelo menos uma pessoa.'); return }
+    if (notificationEnabled && reminder === 'custom' && (!customReminderDate || !customReminderTime)) { setFormError('Informe a data e o horário do lembrete.'); return }
     setFormError('')
-    const input: CalendarEventInput = { name: name.trim(), description: description.trim() || null, location: location.trim() || null, audience, allDay, startsOn: date, startTime: allDay ? null : startTime, endTime: allDay ? null : endTime || null, recurrence, recurrenceUntil: recurrence === 'none' ? null : until || null, reminderMinutes: notificationEnabled ? Number(reminder) : null, participantIds: audience === 'selected' ? participants : [] }
+    const reminderAt = notificationEnabled && reminder === 'custom' ? new Date(`${customReminderDate}T${customReminderTime}:00`).toISOString() : null
+    const input: CalendarEventInput = { name: name.trim(), description: description.trim() || null, location: location.trim() || null, audience, allDay, startsOn: date, startTime: allDay ? null : startTime, endTime: allDay ? null : endTime || null, recurrence, recurrenceUntil: recurrence === 'none' ? null : until || null, reminderMinutes: notificationEnabled && reminder !== 'custom' ? Number(reminder) : null, reminderAt, participantIds: audience === 'selected' ? participants : [] }
     if (initial && initial.recurrence !== 'none') { setPendingInput(input); setScopeOpen(true) } else onSave(input, 'series')
   }
   async function toggleNotification() {
@@ -168,7 +172,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-date">DATA</label><input id="event-date" className="field" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={!canManage} required /></div><label className="calendar-check"><input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} disabled={!canManage} /> Dia inteiro</label></div>
     {!allDay ? <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-start">INÍCIO</label><input id="event-start" className="field" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={!canManage} required /></div><div><label className="field-label" htmlFor="event-end">TÉRMINO</label><input id="event-end" className="field" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={!canManage} /></div></div> : null}
     <label className="field-label">PARA QUEM</label><div className="calendar-audience">{([['family','Toda a família'],['selected','Pessoas específicas'],['self','Somente eu']] as [CalendarAudience,string][]).map(([value,label]) => <button type="button" className={audience === value ? 'active' : ''} onClick={() => setAudience(value)} disabled={!canManage} key={value}>{label}</button>)}</div>
-    {audience === 'selected' ? <div className="calendar-members">{members.filter((member) => member.userId !== userId).map((member) => <label key={member.id}><input type="checkbox" checked={participants.includes(member.userId)} disabled={!canManage} onChange={() => setParticipants((current) => current.includes(member.userId) ? current.filter((id) => id !== member.userId) : [...current, member.userId])} />{member.avatarUrl ? <Image src={member.avatarUrl} width={25} height={25} unoptimized alt="" /> : <span>{displayMemberName(member).slice(0, 1)}</span>}<strong>{displayMemberName(member)}</strong></label>)}</div> : null}
+    {audience === 'selected' ? <div className="calendar-members">{members.filter((member) => member.userId !== userId).map((member) => <label key={member.id}><input type="checkbox" checked={participants.includes(member.userId)} disabled={!canManage} onChange={() => setParticipants((current) => current.includes(member.userId) ? current.filter((id) => id !== member.userId) : [...current, member.userId])} /><strong>{displayMemberName(member)}</strong></label>)}</div> : null}
     <div className="calendar-form-row"><div><label className="field-label" htmlFor="event-repeat">FREQUÊNCIA</label><select id="event-repeat" className="field" value={recurrence} onChange={(e) => setRecurrence(e.target.value as CalendarRecurrence)} disabled={!canManage}><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Toda semana</option><option value="biweekly">A cada duas semanas</option><option value="monthly">Todo mês</option><option value="yearly">Todo ano</option></select></div>{recurrence !== 'none' ? <div><label className="field-label" htmlFor="event-until">REPETIR ATÉ (OPCIONAL)</label><input id="event-until" className="field" type="date" min={date} value={until} onChange={(e) => setUntil(e.target.value)} disabled={!canManage} /></div> : null}</div>
     <label className="field-label" htmlFor="event-location">LOCAL OPCIONAL</label><input id="event-location" className="field" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={160} disabled={!canManage} placeholder="Ex: Consultório ou endereço" />
     <label className="field-label" htmlFor="event-notes">OBSERVAÇÕES OPCIONAIS</label><textarea id="event-notes" className="field" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} disabled={!canManage} placeholder="Informações úteis para a família" />
@@ -176,7 +180,7 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
       <div><strong>Lembrete no celular</strong><small>{enablingNotification ? 'Ativando neste aparelho…' : notificationEnabled ? 'Lembrete ativo para este evento' : 'Receba um aviso mesmo com o app fechado'}</small></div>
       <button type="button" className="task-notification-switch" role="switch" aria-checked={notificationEnabled} aria-label="Ativar lembrete no celular" disabled={!canManage || enablingNotification} onClick={() => void toggleNotification()}><span /></button>
     </div>
-    {notificationEnabled ? <div className="task-reminder-time"><label htmlFor="event-reminder"><strong>Quando lembrar</strong><small>Escolha a antecedência do aviso</small></label><select id="event-reminder" value={reminder} onChange={(e) => setReminder(e.target.value)} disabled={!canManage}><option value="0">Na hora</option><option value="15">15 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></div> : null}
+    {notificationEnabled ? <><div className="task-reminder-time"><label htmlFor="event-reminder"><strong>Quando lembrar</strong><small>Escolha a antecedência ou defina um momento</small></label><select id="event-reminder" value={reminder} onChange={(e) => setReminder(e.target.value)} disabled={!canManage}><option value="0">Na hora</option><option value="15">15 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option><option value="custom">Personalizado</option></select></div>{reminder === 'custom' ? <div className="calendar-custom-reminder"><div><label className="field-label" htmlFor="event-reminder-date">DATA DO LEMBRETE</label><input id="event-reminder-date" className="field" type="date" value={customReminderDate} onChange={(e) => setCustomReminderDate(e.target.value)} disabled={!canManage} required /></div><div><label className="field-label" htmlFor="event-reminder-time">HORÁRIO</label><input id="event-reminder-time" className="field" type="time" value={customReminderTime} onChange={(e) => setCustomReminderTime(e.target.value)} disabled={!canManage} required /></div>{recurrence !== 'none' ? <small>Em eventos recorrentes, o personalizado é enviado uma vez. Para todas as ocorrências, use uma antecedência.</small> : null}</div> : null}</> : null}
     {!canManage ? <p className="calendar-readonly">Somente quem criou o evento ou um administrador pode alterá-lo.</p> : null}
     <div className="modal-actions">{onDelete && canManage ? <button className="button button-danger button-left" type="button" onClick={onDelete}>Excluir</button> : null}<button className="button button-ghost" type="button" onClick={onClose}>Cancelar</button>{canManage ? <button type="submit" className="button button-primary calendar-save-button" disabled={busy || enablingNotification}>{busy ? 'Salvando...' : enablingNotification ? 'Ativando...' : 'Salvar'}</button> : null}</div>
   </form></section></div>{scopeOpen && pendingInput ? <ScopeModal title="APLICAR ALTERAÇÃO" recurrence={initial?.recurrence ?? 'none'} busy={busy} onClose={() => setScopeOpen(false)} onChoose={(scope) => onSave(pendingInput, scope)} /> : null}</>
@@ -191,6 +195,7 @@ function matchesFilter(event: CalendarOccurrence, filter: Filter, userId: string
 function audienceLabel(event: CalendarOccurrence) { if (event.audience === 'family') return 'Família'; if (event.audience === 'self') return 'Pessoal'; return `${event.participantIds.length + 1} pessoas` }
 function groupOccurrences(items: CalendarOccurrence[]) { const map = new Map<string, CalendarOccurrence[]>(); items.forEach((item) => map.set(item.occurrenceDate, [...(map.get(item.occurrenceDate) ?? []), item])); return [...map.entries()] }
 function todayKey() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) }
+function localDateTimeParts(value?: string | null) { if (!value) return { date: '', time: '' }; const date = new Date(value); if (Number.isNaN(date.getTime())) return { date: '', time: '' }; const part = (type: Intl.DateTimeFormatPartTypes) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date).find((item) => item.type === type)?.value ?? ''; return { date: `${part('year')}-${part('month')}-${part('day')}`, time: `${part('hour')}:${part('minute')}` } }
 function formatDate(value: string) { return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long' }).format(new Date(`${value}T12:00:00`)) }
 function formatDayHeading(value: string) { const diff = Math.round((new Date(`${value}T12:00:00Z`).getTime() - new Date(`${todayKey()}T12:00:00Z`).getTime()) / 86400000); if (diff === 0) return 'Hoje'; if (diff === 1) return 'Amanhã'; return new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(new Date(`${value}T12:00:00`)).replace(/^./, (letter) => letter.toUpperCase()) }
 function monthRange(month: string) { const first = `${month}-01`; const start = addDays(first, -new Date(`${first}T12:00:00Z`).getUTCDay()); return { from: start, to: addDays(start, 41) } }

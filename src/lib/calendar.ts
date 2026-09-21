@@ -7,7 +7,7 @@ export type CalendarEditScope = 'occurrence' | 'future' | 'series'
 export type CalendarEvent = {
   id: string; familyId: string; createdBy: string; name: string; description: string | null; location: string | null
   audience: CalendarAudience; allDay: boolean; startsOn: string; startTime: string | null; endTime: string | null
-  recurrence: CalendarRecurrence; recurrenceUntil: string | null; reminderMinutes: number | null
+  recurrence: CalendarRecurrence; recurrenceUntil: string | null; reminderMinutes: number | null; reminderAt: string | null
   participantIds: string[]; createdAt: string; updatedAt: string
 }
 
@@ -23,7 +23,7 @@ export type CalendarOccurrence = CalendarEvent & { occurrenceDate: string; sourc
 type EventRow = {
   id: string; family_id: string; created_by: string; name: string; description: string | null; location: string | null
   audience: CalendarAudience; all_day: boolean; starts_on: string; start_time: string | null; end_time: string | null
-  recurrence: CalendarRecurrence; recurrence_until: string | null; reminder_minutes: number | null; created_at: string; updated_at: string
+  recurrence: CalendarRecurrence; recurrence_until: string | null; reminder_minutes: number | null; reminder_at: string | null; created_at: string; updated_at: string
   calendar_event_participants?: { user_id: string }[]
 }
 type OverrideRow = {
@@ -49,7 +49,7 @@ export async function createCalendarEvent(supabase: SupabaseClient, familyId: st
   const { data, error } = await supabase.from('calendar_events').insert(toRow(familyId, userId, values)).select('*').single()
   if (error) throw error
   const event = mapEvent(data as EventRow)
-  if (input.audience === 'selected' && participantIds.length) await replaceParticipants(supabase, event.id, familyId, participantIds, input.reminderMinutes)
+  if (input.audience === 'selected' && participantIds.length) await replaceParticipants(supabase, event.id, familyId, participantIds, input.reminderMinutes, input.reminderAt)
   return { ...event, participantIds: input.audience === 'selected' ? participantIds : [] }
 }
 
@@ -57,7 +57,7 @@ export async function updateCalendarEvent(supabase: SupabaseClient, event: Calen
   const { participantIds, ...values } = input
   const { data, error } = await supabase.from('calendar_events').update(toUpdateRow(values)).eq('id', event.id).select('*').single()
   if (error) throw error
-  await replaceParticipants(supabase, event.id, event.familyId, input.audience === 'selected' ? participantIds : [], input.reminderMinutes)
+  await replaceParticipants(supabase, event.id, event.familyId, input.audience === 'selected' ? participantIds : [], input.reminderMinutes, input.reminderAt)
   return { ...mapEvent(data as EventRow), participantIds: input.audience === 'selected' ? participantIds : [] }
 }
 
@@ -97,11 +97,11 @@ export async function deleteCalendarFuture(supabase: SupabaseClient, eventId: st
   if (error) throw error
 }
 
-async function replaceParticipants(supabase: SupabaseClient, eventId: string, familyId: string, participantIds: string[], reminderMinutes: number | null) {
+async function replaceParticipants(supabase: SupabaseClient, eventId: string, familyId: string, participantIds: string[], reminderMinutes: number | null, reminderAt: string | null) {
   const { error: deleteError } = await supabase.from('calendar_event_participants').delete().eq('event_id', eventId)
   if (deleteError) throw deleteError
   if (!participantIds.length) return
-  const { error } = await supabase.from('calendar_event_participants').insert(participantIds.map((userId) => ({ event_id: eventId, family_id: familyId, user_id: userId, reminder_minutes: reminderMinutes })))
+  const { error } = await supabase.from('calendar_event_participants').insert(participantIds.map((userId) => ({ event_id: eventId, family_id: familyId, user_id: userId, reminder_minutes: reminderMinutes, reminder_at: reminderAt })))
   if (error) throw error
 }
 
@@ -165,7 +165,7 @@ function nextOccurrence(dateKey: string, recurrence: CalendarRecurrence, anchorK
 function mapEvent(row: EventRow): CalendarEvent {
   return { id: row.id, familyId: row.family_id, createdBy: row.created_by, name: row.name, description: row.description, location: row.location,
     audience: row.audience, allDay: row.all_day, startsOn: row.starts_on, startTime: row.start_time?.slice(0, 5) ?? null, endTime: row.end_time?.slice(0, 5) ?? null,
-    recurrence: row.recurrence, recurrenceUntil: row.recurrence_until, reminderMinutes: row.reminder_minutes,
+    recurrence: row.recurrence, recurrenceUntil: row.recurrence_until, reminderMinutes: row.reminder_minutes, reminderAt: row.reminder_at,
     participantIds: row.calendar_event_participants?.map((item) => item.user_id) ?? [], createdAt: row.created_at, updatedAt: row.updated_at }
 }
 function mapOverride(row: OverrideRow): CalendarOverride {
@@ -177,5 +177,5 @@ function toRow(familyId: string, userId: string, values: Omit<CalendarEventInput
 function toUpdateRow(values: Omit<CalendarEventInput, 'participantIds'>) {
   return { name: values.name.trim(), description: values.description || null, location: values.location || null, audience: values.audience,
     all_day: values.allDay, starts_on: values.startsOn, start_time: values.allDay ? null : values.startTime, end_time: values.allDay ? null : values.endTime,
-    recurrence: values.recurrence, recurrence_until: values.recurrence === 'none' ? null : values.recurrenceUntil, reminder_minutes: values.reminderMinutes }
+    recurrence: values.recurrence, recurrence_until: values.recurrence === 'none' ? null : values.recurrenceUntil, reminder_minutes: values.reminderMinutes, reminder_at: values.reminderAt }
 }

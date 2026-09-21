@@ -14,12 +14,14 @@ create table if not exists public.calendar_events (
   recurrence text not null default 'none' check (recurrence in ('none', 'daily', 'weekly', 'biweekly', 'monthly', 'yearly')),
   recurrence_until date,
   reminder_minutes integer check (reminder_minutes is null or reminder_minutes in (0, 15, 60, 1440)),
+  reminder_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (all_day or start_time is not null),
   check (all_day or end_time is null or end_time > start_time),
   check (recurrence <> 'none' or recurrence_until is null),
-  check (recurrence_until is null or recurrence_until >= starts_on)
+  check (recurrence_until is null or recurrence_until >= starts_on),
+  check (reminder_minutes is null or reminder_at is null)
 );
 
 create table if not exists public.calendar_event_participants (
@@ -27,8 +29,10 @@ create table if not exists public.calendar_event_participants (
   family_id uuid not null references public.families(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   reminder_minutes integer check (reminder_minutes is null or reminder_minutes in (0, 15, 60, 1440)),
+  reminder_at timestamptz,
   created_at timestamptz not null default now(),
-  primary key (event_id, user_id)
+  primary key (event_id, user_id),
+  check (reminder_minutes is null or reminder_at is null)
 );
 
 create table if not exists public.calendar_event_overrides (
@@ -58,9 +62,12 @@ create table if not exists public.calendar_notification_deliveries (
   user_id uuid not null references auth.users(id) on delete cascade,
   subscription_id uuid not null references public.push_subscriptions(id) on delete cascade,
   occurrence_date date not null,
-  reminder_minutes integer not null,
+  reminder_minutes integer,
+  reminder_at timestamptz,
+  delivery_key text not null,
   created_at timestamptz not null default now(),
-  unique (event_id, user_id, subscription_id, occurrence_date, reminder_minutes)
+  unique (event_id, user_id, subscription_id, delivery_key),
+  check (reminder_minutes is null or reminder_at is null)
 );
 
 create index if not exists calendar_events_family_date_idx on public.calendar_events (family_id, starts_on);
