@@ -16,13 +16,25 @@ export default function HubCalendarPreview({ days, familyId }: { days: HubCalend
 
   useEffect(() => {
     const refresh = () => router.refresh()
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh() }
     const channel = supabase.channel(`hub-calendar-${familyId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events', filter: `family_id=eq.${familyId}` }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_event_participants', filter: `family_id=eq.${familyId}` }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_event_overrides', filter: `family_id=eq.${familyId}` }, refresh)
       .subscribe()
     window.addEventListener('focus', refresh)
-    return () => { window.removeEventListener('focus', refresh); void supabase.removeChannel(channel) }
+    window.addEventListener('pageshow', refresh)
+    window.addEventListener('online', refresh)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    const refreshInterval = window.setInterval(refreshWhenVisible, 30000)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('pageshow', refresh)
+      window.removeEventListener('online', refresh)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      window.clearInterval(refreshInterval)
+      void supabase.removeChannel(channel)
+    }
   }, [familyId, router, supabase])
 
   return <>
