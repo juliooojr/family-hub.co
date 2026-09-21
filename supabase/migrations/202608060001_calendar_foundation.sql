@@ -11,6 +11,7 @@ create table if not exists public.calendar_events (
   starts_on date not null,
   start_time time,
   end_time time,
+  ends_next_day boolean not null default false,
   recurrence text not null default 'none' check (recurrence in ('none', 'daily', 'weekly', 'biweekly', 'monthly', 'yearly')),
   recurrence_until date,
   reminder_minutes integer check (reminder_minutes is null or reminder_minutes in (0, 15, 60, 1440)),
@@ -18,7 +19,7 @@ create table if not exists public.calendar_events (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (all_day or start_time is not null),
-  check (all_day or end_time is null or end_time > start_time),
+  check (all_day or end_time is null or ends_next_day or end_time > start_time),
   check (recurrence <> 'none' or recurrence_until is null),
   check (recurrence_until is null or recurrence_until >= starts_on),
   check (reminder_minutes is null or reminder_at is null)
@@ -48,12 +49,13 @@ create table if not exists public.calendar_event_overrides (
   starts_on date,
   start_time time,
   end_time time,
+  ends_next_day boolean,
   updated_by uuid not null references auth.users(id) on delete restrict,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (event_id, occurrence_date),
   check (all_day is not false or start_time is not null),
-  check (end_time is null or start_time is null or end_time > start_time)
+  check (end_time is null or start_time is null or ends_next_day or end_time > start_time)
 );
 
 create table if not exists public.calendar_notification_deliveries (

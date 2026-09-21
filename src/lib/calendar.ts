@@ -6,7 +6,7 @@ export type CalendarEditScope = 'occurrence' | 'future' | 'series'
 
 export type CalendarEvent = {
   id: string; familyId: string; createdBy: string; name: string; description: string | null; location: string | null
-  audience: CalendarAudience; allDay: boolean; startsOn: string; startTime: string | null; endTime: string | null
+  audience: CalendarAudience; allDay: boolean; startsOn: string; startTime: string | null; endTime: string | null; endsNextDay: boolean
   recurrence: CalendarRecurrence; recurrenceUntil: string | null; reminderMinutes: number | null; reminderAt: string | null
   participantIds: string[]; createdAt: string; updatedAt: string
 }
@@ -14,7 +14,7 @@ export type CalendarEvent = {
 export type CalendarOverride = {
   id: string; eventId: string; occurrenceDate: string; cancelled: boolean; name: string | null
   description: string | null; location: string | null; allDay: boolean | null; startsOn: string | null
-  startTime: string | null; endTime: string | null
+  startTime: string | null; endTime: string | null; endsNextDay: boolean | null
 }
 
 export type CalendarEventInput = Omit<CalendarEvent, 'id' | 'familyId' | 'createdBy' | 'createdAt' | 'updatedAt'>
@@ -22,13 +22,13 @@ export type CalendarOccurrence = CalendarEvent & { occurrenceDate: string; sourc
 
 type EventRow = {
   id: string; family_id: string; created_by: string; name: string; description: string | null; location: string | null
-  audience: CalendarAudience; all_day: boolean; starts_on: string; start_time: string | null; end_time: string | null
+  audience: CalendarAudience; all_day: boolean; starts_on: string; start_time: string | null; end_time: string | null; ends_next_day: boolean
   recurrence: CalendarRecurrence; recurrence_until: string | null; reminder_minutes: number | null; reminder_at: string | null; created_at: string; updated_at: string
   calendar_event_participants?: { user_id: string }[]
 }
 type OverrideRow = {
   id: string; event_id: string; occurrence_date: string; cancelled: boolean; name: string | null; description: string | null
-  location: string | null; all_day: boolean | null; starts_on: string | null; start_time: string | null; end_time: string | null
+  location: string | null; all_day: boolean | null; starts_on: string | null; start_time: string | null; end_time: string | null; ends_next_day: boolean | null
 }
 
 export async function getCalendarData(supabase: SupabaseClient) {
@@ -65,7 +65,7 @@ export async function updateCalendarOccurrence(supabase: SupabaseClient, event: 
   const payload = {
     event_id: event.id, family_id: event.familyId, occurrence_date: occurrenceDate, cancelled: false,
     name: input.name, description: input.description, location: input.location, all_day: input.allDay,
-    starts_on: input.startsOn, start_time: input.allDay ? null : input.startTime, end_time: input.allDay ? null : input.endTime, updated_by: userId,
+    starts_on: input.startsOn, start_time: input.allDay ? null : input.startTime, end_time: input.allDay ? null : input.endTime, ends_next_day: input.allDay ? false : input.endsNextDay, updated_by: userId,
   }
   const { data, error } = await supabase.from('calendar_event_overrides').upsert(payload, { onConflict: 'event_id,occurrence_date' }).select('*').single()
   if (error) throw error
@@ -125,6 +125,7 @@ export function expandCalendarEvents(events: CalendarEvent[], overrides: Calenda
             startsOn: occurrenceDate,
             startTime: override?.startTime ?? event.startTime,
             endTime: override?.endTime ?? event.endTime,
+            endsNextDay: override?.endsNextDay ?? event.endsNextDay,
             occurrenceDate,
             sourceDate: cursor,
             occurrenceKey: `${event.id}:${cursor}`,
@@ -164,18 +165,18 @@ function nextOccurrence(dateKey: string, recurrence: CalendarRecurrence, anchorK
 
 function mapEvent(row: EventRow): CalendarEvent {
   return { id: row.id, familyId: row.family_id, createdBy: row.created_by, name: row.name, description: row.description, location: row.location,
-    audience: row.audience, allDay: row.all_day, startsOn: row.starts_on, startTime: row.start_time?.slice(0, 5) ?? null, endTime: row.end_time?.slice(0, 5) ?? null,
+    audience: row.audience, allDay: row.all_day, startsOn: row.starts_on, startTime: row.start_time?.slice(0, 5) ?? null, endTime: row.end_time?.slice(0, 5) ?? null, endsNextDay: row.ends_next_day,
     recurrence: row.recurrence, recurrenceUntil: row.recurrence_until, reminderMinutes: row.reminder_minutes, reminderAt: row.reminder_at,
     participantIds: row.calendar_event_participants?.map((item) => item.user_id) ?? [], createdAt: row.created_at, updatedAt: row.updated_at }
 }
 function mapOverride(row: OverrideRow): CalendarOverride {
   return { id: row.id, eventId: row.event_id, occurrenceDate: row.occurrence_date, cancelled: row.cancelled, name: row.name,
     description: row.description, location: row.location, allDay: row.all_day, startsOn: row.starts_on,
-    startTime: row.start_time?.slice(0, 5) ?? null, endTime: row.end_time?.slice(0, 5) ?? null }
+    startTime: row.start_time?.slice(0, 5) ?? null, endTime: row.end_time?.slice(0, 5) ?? null, endsNextDay: row.ends_next_day }
 }
 function toRow(familyId: string, userId: string, values: Omit<CalendarEventInput, 'participantIds'>) { return { family_id: familyId, created_by: userId, ...toUpdateRow(values) } }
 function toUpdateRow(values: Omit<CalendarEventInput, 'participantIds'>) {
   return { name: values.name.trim(), description: values.description || null, location: values.location || null, audience: values.audience,
-    all_day: values.allDay, starts_on: values.startsOn, start_time: values.allDay ? null : values.startTime, end_time: values.allDay ? null : values.endTime,
+    all_day: values.allDay, starts_on: values.startsOn, start_time: values.allDay ? null : values.startTime, end_time: values.allDay ? null : values.endTime, ends_next_day: values.allDay ? false : values.endsNextDay,
     recurrence: values.recurrence, recurrence_until: values.recurrence === 'none' ? null : values.recurrenceUntil, reminder_minutes: values.reminderMinutes, reminder_at: values.reminderAt }
 }
