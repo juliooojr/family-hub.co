@@ -79,9 +79,12 @@ Deno.serve(async (request) => {
       let deliveryKey: string
       let reminderBody: string
       if (reminderAt) {
-        if (utcMinute(requestNow) !== utcMinute(new Date(reminderAt))) continue
-        occurrenceDate = event.starts_on
-        deliveryKey = `custom:${reminderAt}`
+        const anchorReminder = localSchedule(new Date(reminderAt), subscription.timezone)
+        if (local.time !== anchorReminder.time) continue
+        const reminderDayOffset = differenceInDays(event.starts_on, anchorReminder.date)
+        occurrenceDate = shiftDate(local.date, -reminderDayOffset)
+        if (!isCalendarDue(event, occurrenceDate)) continue
+        deliveryKey = `custom:${occurrenceDate}:${anchorReminder.time}:${reminderDayOffset}`
         reminderBody = 'Este é o lembrete personalizado do seu evento.'
       } else if (reminderMinutes !== null) {
         const target = addLocalMinutes(local, reminderMinutes)
@@ -149,8 +152,14 @@ function addLocalMinutes(local: { date: string; time: string }, minutes: number)
   return { date: date.toISOString().slice(0, 10), time: date.toISOString().slice(11, 16) }
 }
 
-function utcMinute(date: Date) {
-  return date.toISOString().slice(0, 16)
+function differenceInDays(from: string, to: string) {
+  return Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000)
+}
+
+function shiftDate(dateKey: string, days: number) {
+  const date = new Date(`${dateKey}T12:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
 }
 
 function calendarReminderCopy(minutes: number) {
