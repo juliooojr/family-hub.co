@@ -6,7 +6,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react
 import { CalendarDays, CircleHelp, ClipboardList, House, Lock, LogOut, Menu, Moon, ShoppingCart, Sun, Users, Wallet, type LucideIcon } from 'lucide-react'
 import GuidedTour, { startGuidedTour } from '@/components/onboarding/GuidedTour'
 
-type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'family'
+type ActiveModule = 'home' | 'tasks' | 'finance' | 'shopping' | 'calendar' | 'family'
 type NavigationItem = {
   id: string
   label: string
@@ -20,7 +20,7 @@ const navigation: NavigationItem[] = [
   { id: 'finance', label: 'Finanças', icon: Wallet, href: '/financeiro' },
   { id: 'shopping', label: 'Compras', icon: ShoppingCart, href: '/compras' },
   { id: 'tasks', label: 'Tarefas', icon: ClipboardList, href: '/tarefas' },
-  { id: 'calendar', label: 'Agenda', icon: CalendarDays, locked: true },
+  { id: 'calendar', label: 'Agenda', icon: CalendarDays, href: '/agenda' },
 ]
 
 export default function InternalShell({
@@ -111,6 +111,7 @@ export default function InternalShell({
       </div>
 
       {mobileMenuOpen ? <div className="internal-mobile-menu" role="dialog" aria-label="Menu rápido">
+        <Link href="/agenda" prefetch onClick={() => setMobileMenuOpen(false)}><CalendarDays aria-hidden /><span>Agenda</span></Link>
         <button type="button" onClick={() => { setMobileMenuOpen(false); startGuidedTour() }}><CircleHelp aria-hidden /><span>Refazer tutorial</span></button>
         <button type="button" onClick={() => { toggleTheme(); setMobileMenuOpen(false) }}>{theme === 'light' ? <Moon aria-hidden /> : <Sun aria-hidden />}<span>Alternar tema</span></button>
         {canManageFamily ? <Link href="/familia" prefetch onClick={() => setMobileMenuOpen(false)}><Users aria-hidden /><span>Gerenciar família</span></Link> : null}

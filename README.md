@@ -34,6 +34,7 @@ Producao: https://family-hub-co.vercel.app
 - O carregamento global usa a casa animada oficial em movimento `breath`, com cores adaptadas aos temas claro e escuro. Ele aparece somente depois de 180 ms em operacoes comuns e bloqueia a tela com uma camada translucida sobre o conteudo existente. A abertura inicial pode exibi-lo imediatamente por ate 900 ms. O loader anterior `F -> ponto -> H` permanece arquivado em `src/components/brand/legacy`.
 - Investimentos permanece bloqueado para uma etapa futura.
 - Tarefas possui uma primeira versao pequena desbloqueada para teste na navegacao desktop e mobile.
+- Agenda possui eventos pessoais, para toda a familia ou membros selecionados, recorrencia, lembretes, sincronizacao em tempo real e visualizacoes em lista e mes.
 - A Home possui o feed `Atividade da Familia`, com ate oito acontecimentos relevantes de Compras, Tarefas e Financas, tempos relativos, estado vazio e tela de historico em `/atividades`.
 - Familia possui tela interna para owner/admin gerenciarem membros e convites por link copiavel, com papeis owner, admin e member.
 - Convites podem ser removidos da listagem; pendentes sao invalidados imediatamente e aceitos podem ser limpos sem revogar o acesso do membro.
@@ -329,7 +330,7 @@ Concluido:
 8. P2: Acompanhar logs da Vercel e do Supabase.
 9. P2: Considerar um Supabase separado para desenvolvimento no futuro.
 10. P3: Investimentos, somente quando houver escopo aprovado.
-11. P3: Calendario com Google Calendar.
+11. P3: Integracao opcional da Agenda com Google Calendar.
 12. P3: Documentos.
 13. P3: Emergencia.
 

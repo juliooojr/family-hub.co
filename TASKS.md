@@ -55,6 +55,7 @@ Atualizado em 06/08/2026. Este arquivo acompanha o estado real do projeto; plano
 - [x] Tutorial de primeiro acesso com tour guiado pelo Financeiro, Compras, Tarefas e Hub, avancar/voltar, pular e opcao de refazer no menu desktop e mobile.
 - [x] Continuidade do tutorial entre rotas, com preservacao do passo atual e feedback de carregamento durante o direcionamento ao proximo componente.
 - [x] Home com `Atividade da Familia`, exibindo ate oito eventos relevantes, tempo relativo, estado vazio e acesso ao historico completo.
+- [x] Agenda familiar com eventos pessoais, para toda a família ou membros selecionados, recorrência, edição por ocorrência/série, lembretes, Realtime e visões Agenda/Mês.
 
 ## Publicacao de Compras colaborativa
 
