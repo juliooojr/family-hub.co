@@ -64,7 +64,7 @@ Envie o cabeçalho `Authorization: Bearer <CRON_SECRET>`. O job também pode ser
 - A chave de deduplicação é tarefa + assinatura + data + horário. O mesmo minuto não duplica; editar para mais tarde permite novo envio no dia.
 - Ao tocar, abrir ou focar `/tarefas`.
 - Eventos da Agenda usam as mesmas assinaturas por aparelho e aceitam lembrete na hora, 15 minutos antes, 1 hora antes, 1 dia antes ou em data e horário personalizados.
-- O lembrete personalizado representa um único instante. Em séries recorrentes, as opções de antecedência devem ser usadas quando o aviso precisar acompanhar todas as ocorrências.
+- Em séries recorrentes, o lembrete personalizado repete o mesmo horário e a mesma distância em dias definidos na primeira ocorrência. Um lembrete configurado no mesmo dia às 18h, por exemplo, será enviado às 18h em cada ocorrência.
 - O lembrete de Agenda é entregue somente ao criador, à família ou aos participantes selecionados conforme a audiência do evento; ao tocar, abre `/agenda`.
 - O texto `From` ou equivalente é uma identificação de segurança do navegador/sistema e não pode ser alterado pelo payload.
 - `lang: pt-BR` ajuda tecnologias assistivas e metadados de idioma, mas não traduz a interface do sistema operacional.
