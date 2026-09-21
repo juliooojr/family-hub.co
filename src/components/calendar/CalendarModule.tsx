@@ -122,7 +122,7 @@ function MonthView({ month, occurrences, onMonth, onSelect }: { month: string; o
 }
 
 function EventCard({ event, onClick }: { event: CalendarOccurrence; onClick: () => void }) {
-  return <button className="calendar-event-card" onClick={onClick}><span className="calendar-event-time">{event.allDay ? 'Dia inteiro' : event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}</span><div><strong>{event.name}</strong>{event.location ? <small><MapPin />{event.location}</small> : null}</div><span className="calendar-event-audience"><Users />{audienceLabel(event)}</span></button>
+  return <button className="calendar-event-card" onClick={onClick}><span className="calendar-event-time">{event.allDay ? 'Dia inteiro' : event.startTime}{event.endTime ? ` – ${event.endTime}${event.endsNextDay ? ' (+1 dia)' : ''}` : ''}</span><div><strong>{event.name}</strong>{event.location ? <small><MapPin />{event.location}</small> : null}</div><span className="calendar-event-audience"><Users />{audienceLabel(event)}</span></button>
 }
 
 function EventModal({ initial, members, userId, busy, error, canManage, onClose, onSave, onError, onDelete }: { initial: CalendarOccurrence | null; members: FamilyMember[]; userId: string; busy: boolean; error: string; canManage: boolean; onClose: () => void; onSave: (input: CalendarEventInput, scope: CalendarEditScope) => void; onError: (message: string) => void; onDelete?: () => void }) {
@@ -151,12 +151,11 @@ function EventModal({ initial, members, userId, busy, error, canManage, onClose,
     if (!name.trim()) { setFormError('Informe o nome do evento.'); return }
     if (!date) { setFormError('Informe a data do evento.'); return }
     if (!allDay && !startTime) { setFormError('Informe o horário de início.'); return }
-    if (!allDay && endTime && endTime <= startTime) { setFormError('O horário de término deve ser posterior ao início.'); return }
     if (audience === 'selected' && !participants.length) { setFormError('Selecione pelo menos uma pessoa.'); return }
     if (notificationEnabled && reminder === 'custom' && (!customReminderDate || !customReminderTime)) { setFormError('Informe a data e o horário do lembrete.'); return }
     setFormError('')
     const reminderAt = notificationEnabled && reminder === 'custom' ? new Date(`${customReminderDate}T${customReminderTime}:00`).toISOString() : null
-    const input: CalendarEventInput = { name: name.trim(), description: description.trim() || null, location: location.trim() || null, audience, allDay, startsOn: date, startTime: allDay ? null : startTime, endTime: allDay ? null : endTime || null, recurrence, recurrenceUntil: recurrence === 'none' ? null : until || null, reminderMinutes: notificationEnabled && reminder !== 'custom' ? Number(reminder) : null, reminderAt, participantIds: audience === 'selected' ? participants : [] }
+    const input: CalendarEventInput = { name: name.trim(), description: description.trim() || null, location: location.trim() || null, audience, allDay, startsOn: date, startTime: allDay ? null : startTime, endTime: allDay ? null : endTime || null, endsNextDay: !allDay && Boolean(endTime) && endTime <= startTime, recurrence, recurrenceUntil: recurrence === 'none' ? null : until || null, reminderMinutes: notificationEnabled && reminder !== 'custom' ? Number(reminder) : null, reminderAt, participantIds: audience === 'selected' ? participants : [] }
     if (initial && initial.recurrence !== 'none') { setPendingInput(input); setScopeOpen(true) } else onSave(input, 'series')
   }
   async function toggleNotification() {
@@ -195,7 +194,7 @@ function matchesFilter(event: CalendarOccurrence, filter: Filter, userId: string
 function audienceLabel(event: CalendarOccurrence) { if (event.audience === 'family') return 'Família'; if (event.audience === 'self') return 'Pessoal'; return `${event.participantIds.length + 1} pessoas` }
 function groupOccurrences(items: CalendarOccurrence[]) { const map = new Map<string, CalendarOccurrence[]>(); items.forEach((item) => map.set(item.occurrenceDate, [...(map.get(item.occurrenceDate) ?? []), item])); return [...map.entries()] }
 function todayKey() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) }
-function oneHourAfter(value: string) { if (!/^\d{2}:\d{2}$/.test(value)) return ''; const [hours, minutes] = value.split(':').map(Number); if (hours >= 23) return ''; return `${String(hours + 1).padStart(2, '0')}:${String(minutes).padStart(2, '0')}` }
+function oneHourAfter(value: string) { if (!/^\d{2}:\d{2}$/.test(value)) return ''; const [hours, minutes] = value.split(':').map(Number); return `${String((hours + 1) % 24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}` }
 function localDateTimeParts(value?: string | null) { if (!value) return { date: '', time: '' }; const date = new Date(value); if (Number.isNaN(date.getTime())) return { date: '', time: '' }; const part = (type: Intl.DateTimeFormatPartTypes) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date).find((item) => item.type === type)?.value ?? ''; return { date: `${part('year')}-${part('month')}-${part('day')}`, time: `${part('hour')}:${part('minute')}` } }
 function formatDate(value: string) { return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long' }).format(new Date(`${value}T12:00:00`)) }
 function formatDayHeading(value: string) { const diff = Math.round((new Date(`${value}T12:00:00Z`).getTime() - new Date(`${todayKey()}T12:00:00Z`).getTime()) / 86400000); if (diff === 0) return 'Hoje'; if (diff === 1) return 'Amanhã'; return new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(new Date(`${value}T12:00:00`)).replace(/^./, (letter) => letter.toUpperCase()) }
