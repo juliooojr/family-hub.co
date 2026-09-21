@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import InternalShell from '@/components/layout/InternalShell'
 import FamilyActivityFeed from '@/components/activity/FamilyActivityFeed'
 import { getFamilyActivities } from '@/lib/activity'
+import { addDays, expandCalendarEvents, getCalendarData, type CalendarOccurrence } from '@/lib/calendar'
 import { canManageFamily, getCurrentFamilyContext } from '@/lib/family'
 import { getFinanceData, type FinanceBill, type FinanceTransaction } from '@/lib/finance'
 import { getShoppingLists, type ShoppingList } from '@/lib/shopping'
@@ -92,18 +93,21 @@ export default async function HubPage() {
   let shoppingLists: ShoppingList[] = []
   let financeData: Awaited<ReturnType<typeof getFinanceData>> | null = null
   let taskData: Awaited<ReturnType<typeof getTasksData>> | null = null
+  let calendarData: Awaited<ReturnType<typeof getCalendarData>> | null = null
   let activities: Awaited<ReturnType<typeof getFamilyActivities>> = []
 
-  const [shoppingResult, financeResult, tasksResult, activitiesResult] = await Promise.allSettled([
+  const [shoppingResult, financeResult, tasksResult, calendarResult, activitiesResult] = await Promise.allSettled([
     getShoppingLists(supabase),
     getFinanceData(supabase, user.id),
     getTasksData(supabase, user.id),
+    getCalendarData(supabase),
     getFamilyActivities(supabase, familyContext.family.id, familyContext.members, 8),
   ])
 
   if (shoppingResult.status === 'fulfilled') shoppingLists = shoppingResult.value
   if (financeResult.status === 'fulfilled') financeData = financeResult.value
   if (tasksResult.status === 'fulfilled') taskData = tasksResult.value
+  if (calendarResult.status === 'fulfilled') calendarData = calendarResult.value
   if (activitiesResult.status === 'fulfilled') activities = activitiesResult.value
 
   const pendingLists = countOpenShoppingLists(shoppingLists)
@@ -114,6 +118,7 @@ export default async function HubPage() {
     : 0
   const reserveGoal = financeData?.reserveGoal ?? 0
   const reservePercentage = reserveGoal > 0 ? Math.max(0, Math.round((reserveBalance / reserveGoal) * 100)) : 0
+  const calendarDays = buildCalendarDays(calendarData, todayKey)
 
   return (
     <InternalShell active="home" canManageFamily={canManageFamily(familyContext.member.role)}>
@@ -156,9 +161,14 @@ export default async function HubPage() {
         </section>
 
         <section className="dashboard-future-grid">
-          <article className="dashboard-future-card">
-            <h2>Resumo da casa</h2>
-            <div><span>⌂</span><strong>Em construção</strong><small>Novos resumos familiares aparecerão aqui.</small></div>
+          <article className="dashboard-future-card dashboard-calendar-card">
+            <header className="dashboard-calendar-header"><div><h2>Próximos eventos</h2><small>Hoje e os próximos 6 dias</small></div><Link href="/agenda">Ver agenda <span aria-hidden>→</span></Link></header>
+            <div className="dashboard-calendar" aria-label="Eventos dos próximos sete dias">
+              {calendarDays.map((day, index) => <section className={index === 0 ? 'today' : ''} key={day.date}>
+                <header><span>{index === 0 ? 'Hoje' : formatWeekday(day.date)}</span><strong>{formatDayMonth(day.date)}</strong></header>
+                <div>{day.events.slice(0, 2).map((event) => <Link href="/agenda" title={event.name} key={event.occurrenceKey}><small>{event.allDay ? 'Dia inteiro' : event.startTime}</small><strong>{event.name}</strong></Link>)}{day.events.length > 2 ? <Link className="more" href="/agenda">+{day.events.length - 2} {day.events.length - 2 === 1 ? 'evento' : 'eventos'}</Link> : null}{day.events.length === 0 ? <span className="empty" aria-label="Sem eventos">—</span> : null}</div>
+              </section>)}
+            </div>
           </article>
           <article className="dashboard-future-card family-activity-card">
             <header><h2>Atividade da Família</h2><Link href="/atividades">Ver histórico <span aria-hidden>→</span></Link></header>
@@ -168,6 +178,22 @@ export default async function HubPage() {
       </main>
     </InternalShell>
   )
+}
+
+function buildCalendarDays(data: Awaited<ReturnType<typeof getCalendarData>> | null, today: string) {
+  const dates = Array.from({ length: 7 }, (_, index) => addDays(today, index))
+  const occurrences = data ? expandCalendarEvents(data.events, data.overrides, today, dates[6]) : []
+  const eventsByDate = new Map<string, CalendarOccurrence[]>()
+  occurrences.forEach((event) => eventsByDate.set(event.occurrenceDate, [...(eventsByDate.get(event.occurrenceDate) ?? []), event]))
+  return dates.map((date) => ({ date, events: eventsByDate.get(date) ?? [] }))
+}
+
+function formatWeekday(date: string) {
+  return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(new Date(`${date}T12:00:00`)).replace('.', '').replace(/^./, (letter) => letter.toUpperCase())
+}
+
+function formatDayMonth(date: string) {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(`${date}T12:00:00`))
 }
 
 function formatMoney(value: number) {
