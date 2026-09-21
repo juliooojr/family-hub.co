@@ -163,8 +163,8 @@ export default async function HubPage() {
 
         <section className="dashboard-future-grid">
           <article className="dashboard-future-card dashboard-calendar-card">
-            <header className="dashboard-calendar-header"><div><h2>Próximos eventos</h2><small>Hoje e os próximos 6 dias</small></div><Link href="/agenda">Ver agenda <span aria-hidden>→</span></Link></header>
-            <HubCalendarPreview days={calendarDays} />
+            <header className="dashboard-calendar-header"><div><h2>Próximas agendas</h2><small>Hoje e os próximos 6 dias</small></div><Link href="/agenda">Ver agenda <span aria-hidden>→</span></Link></header>
+            <HubCalendarPreview days={calendarDays} familyId={familyContext.family.id} />
           </article>
           <article className="dashboard-future-card family-activity-card">
             <header><h2>Atividade da Família</h2><Link href="/atividades">Ver histórico <span aria-hidden>→</span></Link></header>
