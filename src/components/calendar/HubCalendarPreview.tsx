@@ -2,13 +2,28 @@
 
 import Link from 'next/link'
 import { CalendarDays, Clock, MapPin, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import type { CalendarOccurrence } from '@/lib/calendar'
+import { createClient } from '@/lib/supabase/client'
 
 export type HubCalendarDay = { date: string; events: CalendarOccurrence[] }
 
-export default function HubCalendarPreview({ days }: { days: HubCalendarDay[] }) {
+export default function HubCalendarPreview({ days, familyId }: { days: HubCalendarDay[]; familyId: string }) {
   const [selected, setSelected] = useState<CalendarOccurrence | null>(null)
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
+
+  useEffect(() => {
+    const refresh = () => router.refresh()
+    const channel = supabase.channel(`hub-calendar-${familyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events', filter: `family_id=eq.${familyId}` }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_event_participants', filter: `family_id=eq.${familyId}` }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_event_overrides', filter: `family_id=eq.${familyId}` }, refresh)
+      .subscribe()
+    window.addEventListener('focus', refresh)
+    return () => { window.removeEventListener('focus', refresh); void supabase.removeChannel(channel) }
+  }, [familyId, router, supabase])
 
   return <>
     <div className="dashboard-calendar" aria-label="Eventos dos próximos sete dias">
