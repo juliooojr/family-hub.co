@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import InternalShell from '@/components/layout/InternalShell'
 import FamilyActivityFeed from '@/components/activity/FamilyActivityFeed'
+import HubCalendarPreview from '@/components/calendar/HubCalendarPreview'
 import { getFamilyActivities } from '@/lib/activity'
 import { addDays, expandCalendarEvents, getCalendarData, type CalendarOccurrence } from '@/lib/calendar'
 import { canManageFamily, getCurrentFamilyContext } from '@/lib/family'
@@ -163,12 +164,7 @@ export default async function HubPage() {
         <section className="dashboard-future-grid">
           <article className="dashboard-future-card dashboard-calendar-card">
             <header className="dashboard-calendar-header"><div><h2>Próximos eventos</h2><small>Hoje e os próximos 6 dias</small></div><Link href="/agenda">Ver agenda <span aria-hidden>→</span></Link></header>
-            <div className="dashboard-calendar" aria-label="Eventos dos próximos sete dias">
-              {calendarDays.map((day, index) => <section className={index === 0 ? 'today' : ''} key={day.date}>
-                <header><span>{index === 0 ? 'Hoje' : formatWeekday(day.date)}</span><strong>{formatDayMonth(day.date)}</strong></header>
-                <div>{day.events.slice(0, 2).map((event) => <Link href="/agenda" title={event.name} key={event.occurrenceKey}><small>{event.allDay ? 'Dia inteiro' : event.startTime}</small><strong>{event.name}</strong></Link>)}{day.events.length > 2 ? <Link className="more" href="/agenda">+{day.events.length - 2} {day.events.length - 2 === 1 ? 'evento' : 'eventos'}</Link> : null}{day.events.length === 0 ? <span className="empty" aria-label="Sem eventos">—</span> : null}</div>
-              </section>)}
-            </div>
+            <HubCalendarPreview days={calendarDays} />
           </article>
           <article className="dashboard-future-card family-activity-card">
             <header><h2>Atividade da Família</h2><Link href="/atividades">Ver histórico <span aria-hidden>→</span></Link></header>
@@ -186,14 +182,6 @@ function buildCalendarDays(data: Awaited<ReturnType<typeof getCalendarData>> | n
   const eventsByDate = new Map<string, CalendarOccurrence[]>()
   occurrences.forEach((event) => eventsByDate.set(event.occurrenceDate, [...(eventsByDate.get(event.occurrenceDate) ?? []), event]))
   return dates.map((date) => ({ date, events: eventsByDate.get(date) ?? [] }))
-}
-
-function formatWeekday(date: string) {
-  return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(new Date(`${date}T12:00:00`)).replace('.', '').replace(/^./, (letter) => letter.toUpperCase())
-}
-
-function formatDayMonth(date: string) {
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(`${date}T12:00:00`))
 }
 
 function formatMoney(value: number) {
